@@ -131,16 +131,13 @@ for aiming vs. hip-fire, distinguished by whether the player is currently using 
 | `WEAPON-FAIL-003` | Reloading with no matching cartridge in inventory | `WEAPON-REQ-011`: ammo unchanged, no error. |
 | `WEAPON-FAIL-004` | A slot component names an attachment id a datapack has since removed | Treated as absent by the stat derivation function: that slot contributes no modifier, no crash. |
 | `WEAPON-FAIL-005` | Durability reaches zero mid-magazine | The weapon breaks exactly as any vanilla durability item does, unrepairable (`WEAPON-REQ-014`); any remaining loaded ammo is lost with it, same as an arrow left in a broken bow-equivalent item is not recovered. |
-| `WEAPON-FAIL-006` | Two damaged copies of the same weapon combined at an anvil | Vanilla's own same-item combine-repair path in `AnvilMenu.createResult()` restores some durability regardless of `REPAIRABLE`, since it checks only item identity and `isDamageableItem()`, never `isValidRepairItem`. `WEAPON-REQ-014` closes the material-repair path only; this residual gap is named, not silently closed — see §7. |
+| `WEAPON-FAIL-006` | Two damaged copies of the same weapon combined at an anvil | Vanilla's own same-item combine-repair path in `AnvilMenu.createResult()` would otherwise restore some durability regardless of `REPAIRABLE`, since it checks only item identity and `isDamageableItem()`, never `isValidRepairItem`. `WEAPON-REQ-014` closes the material-repair path by component omission alone; this residual gap is closed separately, by `firearms.mixin.AnvilMenuMixin` (`WEAPON-DEC-005`, `FA-4`). |
 
 ## 7. Open questions
 
 | Question | Blocks | Decided by |
 |---|---|---|
 | Exact crafting-table grids and material quantities for the six base weapons | `WEAPON-REQ-006` | first ticket |
-| Whether the AWM's `semi (bolt-cycle)` fire mode needs a distinct third fire-mode value from `semi`, or reuses `semi` with only a longer fire-rate stat | `WEAPON-REQ-004` | first ticket; this sheet proposes reuse, since the observable difference is fully captured by the fire-rate number already in the roster table |
-| The exact vanilla `Item.Properties` durability/cooldown-group wiring (`useCooldown` vs. a hand-rolled `ItemCooldowns` call per shot for `auto` mode) | `WEAPON-REQ-009` | first ticket; research `create-fly-potato-cannon-and-deploying-26-2.md` §C.1 confirms `useCooldown` is applied automatically from `use()`/`finishUsingItem()` but not `releaseUsing()` |
-| Whether `WEAPON-FAIL-006`'s same-item anvil combine-repair path is an acceptable residual gap or needs a narrow `AnvilMenu` mixin to close fully, against "as few new mixins as possible" | `WEAPON-REQ-014` | first ticket; confirmed present by disassembling `AnvilMenu.createResult()` against the 26.2 jar — gated only on `ItemStack.isDamageableItem()` and same-`Item` identity between the two input stacks, entirely independent of the `REPAIRABLE` component |
 
 ## 8. Decisions
 
@@ -168,3 +165,44 @@ for aiming vs. hip-fire, distinguished by whether the player is currently using 
   source components. **Cost if wrong:** re-adding either component later is one line in the item's
   registration, not a redesign — but the residual anvil combine-repair gap `WEAPON-FAIL-006` names
   needs a mixin either way if it must close too, regardless of which way this decision goes.
+- `WEAPON-DEC-005` — **The `WEAPON-FAIL-006` residual gap closes, by a narrow server mixin, not by
+  leaving it as an accepted gap** (Kevin, 2026-09-20, settling §7's own open question at `FA-4`):
+  `firearms.mixin.AnvilMenuMixin` injects at `AnvilMenu.createResult()`'s `HEAD`, cancellable, and
+  when both the input and additional slot stacks are `firearms:weapon` clears the result slot and
+  sets the anvil's cost to 0 before any of vanilla's own same-item combine-repair math runs. Scoped
+  to `firearms:weapon` alone by `Item` identity, the same identity vanilla's own gate already checks
+  — an unrelated item pair (two iron pickaxes, proven by `FA-4`'s own game test) still combines
+  exactly as vanilla intends. **Why `HEAD` over a narrower redirect**: `AnvilMenu.createResult()`
+  disassembles to one long method with no single call site a `@Redirect` could retarget without also
+  matching the method's other, unrelated `isDamageableItem()`/`is(Item)` calls (the material-repair
+  branch above the same-item branch calls `isDamageableItem()` too); cancelling at `HEAD` once both
+  stacks are already known to be `firearms:weapon` touches nothing about the method's control flow
+  for any other item and mirrors exactly what vanilla itself does on every other "no result" branch
+  of this same method. **Cost if wrong:** removing the mixin later is a one-file deletion plus the
+  matching mixin-config entry, not a redesign — the material-repair and enchanting refusals
+  (`WEAPON-REQ-014`, `015`) do not depend on it and are unaffected either way.
+- `WEAPON-DEC-006` — **The AWM's "semi (bolt-cycle)" reuses plain `semi`; no third fire-mode value**
+  (`FA-6`, settling §7's own open question; confirmed rather than re-litigated per that ticket's own
+  instruction, since testing did not show the reuse to be observably wrong): `FireMode` stays a
+  two-real-value enum (`semi`, `auto`) plus `pump`, and the AWM's `WeaponBase` constant carries
+  `FireMode.SEMI` with its own 30-tick `fireRateTicks` — the only place its bolt-cycle feel needed
+  to live, per this sheet's own original proposal. **Cost if wrong:** a fourth `FireMode` value is
+  an additive enum constant plus one new `switch` arm wherever fire mode is dispatched
+  (`firearms.item.WeaponItem`), not a redesign of the roster or the derivation function.
+- `WEAPON-DEC-007` — **Fire-rate pacing is vanilla `ItemCooldowns`, called by hand once per shot from
+  a server-side `onUseTick`, not the automatic `useCooldown` property** (`FA-6`, settling §7's own
+  open question): `useCooldown`/`UseCooldown.apply()` only fires from `ItemStack.use()`/
+  `finishUsingItem()`, once per interaction, which cannot pace `auto`'s repeated per-tick shots at
+  all and would double-apply for `semi`/`pump` (once from the component, once from this mod's own
+  call) if used at all; `firearms.item.WeaponItem` instead starts the vanilla "using item" session
+  uniformly from `use()`/`useOn()` and dispatches every fire-or-reload attempt through
+  `firearms.fire.FiringLogic#attempt` from `onUseTick`, calling `player.getCooldowns().addCooldown(...)`
+  itself with the derived `fireRateTicks`/`reloadTicks` value. Every base weapon shares the one
+  `firearms:weapon` item, so `ItemCooldowns`'s own default cooldown-group-by-item-id would collide
+  across different base weapons; `FiringLogic` keys every check and every start to a throwaway stack
+  copy carrying a `minecraft:use_cooldown` component whose `cooldownGroup` is the base weapon's own
+  id (`firearms:m1911`, and so on), never persisted back onto the real stack
+  (`docs/spec/contracts/data-contract.md` `DATA-REQ-005`). **Cost if wrong:** switching to a
+  `useCooldown`-driven `semi`/`pump` path later is a small `WeaponItem`/`FiringLogic` change, not a
+  redesign — `auto` would still need the hand-rolled per-shot call regardless, since no vanilla
+  mechanism paces a repeating interaction.
