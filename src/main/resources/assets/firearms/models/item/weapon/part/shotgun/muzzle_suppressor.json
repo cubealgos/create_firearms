@@ -1,0 +1,81 @@
+{
+  "parent": "firearms:item/weapon/class/shotgun",
+  "texture_size": [
+    32,
+    32
+  ],
+  "textures": {
+    "0": "firearms:item/weapon/part/muzzle_suppressor",
+    "particle": "firearms:item/weapon/part/muzzle_suppressor"
+  },
+  "elements": [
+    {
+      "from": [
+        7.4,
+        7.5,
+        7.4
+      ],
+      "to": [
+        8.6,
+        8.5,
+        13.4
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            14,
+            0,
+            15,
+            1
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            15,
+            0,
+            16,
+            1
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            2,
+            0,
+            8,
+            1
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            8,
+            0,
+            14,
+            1
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            1,
+            6
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            1,
+            0,
+            2,
+            6
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

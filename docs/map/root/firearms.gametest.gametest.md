@@ -5,6 +5,16 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
+### `class AimSpreadSelectionGameTest` — `src/gametest/java/firearms/gametest/AimSpreadSelectionGameTest.java`
+`docs/spec/domains/weapon.md` `WEAPON-REQ-005`: while the player holds the aim control, the derived spread cone narrows by the attached optic's own aim-spread modifier; with no optic attached, aiming narrows spread by no amount beyond the hip-fire value.
+- `void isAimingReadsTheUseItemIdentityAsTheAimSignal(GameTestHelper helper)` — `WEAPON-REQ-019`, `docs/spec/decisions/DEC-019-controls.md`: since `FA-24`, aiming is the use control held on this exact stack — isUsingItem() && getUseItem() == stack, an identity check — never sneaking, which FiringLogic#isAiming no longer reads at all.
+- `void hipFireUsesTheWiderConeAndAimingUsesTheNarrowerOne(GameTestHelper helper)`
+
+### `class AmmoCartridgeGameTest` — `src/gametest/java/firearms/gametest/AmmoCartridgeGameTest.java`
+`docs/spec/domains/ammo.md` `AMMO-REQ-002`, `AMMO-REQ-003`: every one of the six cartridge items stacks to 64 (matching vanilla arrows), and a cartridge stack carries none of this mod's own seven data components — it is identified purely by its own item id, one per calibre, never by a component the way a weapon or attachment item is (`docs/spec/contracts/data-contract.md`).
+- `void everyCartridgeStacksToSixtyFour(GameTestHelper helper)`
+- `void aCartridgeCarriesNoneOfThisModsOwnComponents(GameTestHelper helper)`
+
 ### `class AnvilCombineRefusalGameTest` — `src/gametest/java/firearms/gametest/AnvilCombineRefusalGameTest.java`
 `FA-4`: settles `WEAPON-FAIL-006` (`docs/spec/domains/weapon.md` §7's own open question, closed by Kevin's ruling recorded at `WEAPON-DEC-005`) — the anvil's same-item combine-repair path, independent of `DataComponents.REPAIRABLE`, closed for `firearms:weapon` specifically by `firearms.mixin.AnvilMenuMixin`, not by component omission.
 - `void twoDamagedWeaponStacksNeverCombineAtAnAnvil(GameTestHelper helper)`
@@ -32,6 +42,7 @@ The bullet entity's flight, hit resolution, block discard, despawn and pellet sp
 - `void aBulletFiredAtAWallDiscardsWithNoPenetration(GameTestHelper helper)` — `COMBAT-FAIL-002`: removed on the block hit, no penetration.
 - `void aBulletWithNothingToHitDespawnsAfterItsLifeWithNoDamageOrDrop(GameTestHelper helper)` — `COMBAT-REQ-003`, `UC-013`: no damage, no drop, just a clean removal after the fixed life.
 - `void aShotgunTriggerPullSpawnsEightIndependentlySpreadPellets(GameTestHelper helper)` — `COMBAT-REQ-005`: one trigger pull, eight independently-spread pellet entities.
+- `void anInvulnerableTargetTakesNoDamage(GameTestHelper helper)` — `COMBAT-FAIL-004`: an invulnerable target takes no damage — vanilla's own LivingEntity.hurtServer invulnerability check runs before this mod's damage is ever applied (BulletEntity#onHitEntity calls it unconditionally, with no special case of its own), and the bullet is still consumed cleanly, no crash.
 
 ### `class ComponentCodecGameTest` — `src/gametest/java/firearms/gametest/ComponentCodecGameTest.java`
 All seven of this mod's own DataComponentTypes round-trip through their real registered codec, and a malformed value decodes to a graceful DataResult error rather than throwing — the precondition docs/spec/contracts/data-contract.md DATA-REQ-004 relies on: an item's own component-map deserialization drops exactly the one component whose codec errors, degrading that slot to absent (or ammo to "no ammo loaded") instead of failing the whole item.
@@ -44,6 +55,11 @@ Every one of the six base weapons, 22 attachments and six cartridges crafts at a
 - `void everyBaseWeaponCraftsWithItsOwnGridAndMaxDamage(GameTestHelper helper)`
 - `void everyAttachmentCraftsWithItsOwnIngredients(GameTestHelper helper)`
 - `void everyCartridgeCraftsFourAtATime(GameTestHelper helper)`
+
+### `class CreativeTabGameTest` — `src/gametest/java/firearms/gametest/CreativeTabGameTest.java`
+`FA-25`'s acceptance criteria for the one creative-mode tab firearms:firearms (`docs/spec/domains/ui.md` `UI-REQ-007`, `docs/spec/decisions/DEC-019-controls.md` §Creative tab): registered, iconed with a bare M1911, and its display list — #ownedByFirearms filters out the gametest source set's own data/datapack_test/ weapon and attachment (`DataLoaderGameTest`'s own namespace, loaded into the same catalogues this tab reads and so unavoidably present in the tab's live contents during this test run) — holds, in order, the six bare weapons, one fully loaded example per class with every one of that class's own slots filled and firearms:ammo.loaded above zero, the 22 attachments each with its own slot component set, and the six cartridges.
+- `void theTabIsRegisteredWithTheM1911Icon(GameTestHelper helper)`
+- `void theDisplayListHoldsEveryItemInOrder(GameTestHelper helper)`
 
 ### `class DataLoaderGameTest` — `src/gametest/java/firearms/gametest/DataLoaderGameTest.java`
 The two data loaders (`WeaponDataLoader`, `AttachmentDataLoader`) produce exactly this mod's own 6 + 22 entries, with the model's own values (`docs/spec/domains/weapon.md` `WEAPON-DEC-003`) — this mod's own shipped data/firearms/weapon/*.json and data/firearms/attachment/*.json files ship the same numbers those constants do — and a weapon or attachment shipped by an entirely different namespace (the shape any real datapack addition takes) loads through the identical, unmodified loader with zero new Java (`SURFACE-REQ-003`; the gametest source set's own data/datapack_test/ files stand in for a third party's datapack).
@@ -58,14 +74,22 @@ FA-12's three acceptance-criteria game tests for firearms.debug.DebugCommand, ru
 - `void statsOnAHeldWeaponPrintsTheExpectedLines(GameTestHelper helper)`
 
 ### `class FiringGameTest` — `src/gametest/java/firearms/gametest/FiringGameTest.java`
-The fire-control loop (`FA-6`, `docs/spec/domains/weapon.md` `WEAPON-REQ-004`, `007`-`013`; `docs/spec/operations/testing.md`): a loaded weapon fires and moves ammo, durability and the cooldown together; an empty weapon reloads from matching cartridges or clicks empty; a held auto weapon repeats at its own fire-rate interval; a pump weapon refuses a second shot inside its own delay; a shotgun spawns its full pellet count from one round; a suppressor changes the sound event FireSounds selects.
+The fire-control loop (`FA-6`, `FA-24`, `docs/spec/domains/weapon.md` `WEAPON-REQ-004`, `007`-`013`, `018`, `019`; `docs/spec/operations/testing.md`): a loaded weapon fires and moves ammo, durability and the cooldown together; an empty weapon reloads from matching cartridges or clicks empty; a held auto weapon repeats at its own fire-rate interval; a pump weapon refuses a second shot inside its own delay; a shotgun spawns its full pellet count from one round; a suppressor changes the sound event FireSounds selects.
 - `void aLoadedWeaponFiresOnceAndMovesAmmoDurabilityAndCooldownTogether(GameTestHelper helper)`
 - `void anEmptyWeaponWithMatchingCartridgesReloadsToMagazineSizeAndConsumesThem(GameTestHelper helper)`
 - `void anEmptyWeaponWithNoMatchingCartridgesFiresNothingAndStaysEmpty(GameTestHelper helper)`
-- `void anAutoWeaponFiresNBulletsOverNTimesFireRateTicksOfHeldUse(GameTestHelper helper)` — `UC-008`: a held auto weapon fires at its own fire-rate interval — 3 shots over exactly 3 * fireRateTicks simulated ticks (the Micro Uzi's own fireRateTicks == 2) — driven directly through the same WeaponItem methods the vanilla "using item" state machine calls, with ItemCooldowns.tick() advanced once per simulated tick.
+- `void anEmptyWeaponWithOnlyWrongCalibreCartridgesFiresNothingAndLeavesThemUnconsumed(GameTestHelper helper)` — `AMMO-FAIL-001`, `AMMO-REQ-004`: a wrong-calibre cartridge present is never matched, exactly as if no cartridge existed at all.
+- `void anAutoWeaponFiresNBulletsOverNTimesFireRateTicksOfHeldUse(GameTestHelper helper)` — `UC-008`, `FA-24`: an auto weapon fires 3 shots over exactly 3 * fireRateTicks simulated ticks (the Micro Uzi's own fireRateTicks == 2).
+- `void handleFireOnALoadedOffCooldownWeaponFiresOnceAndRejectsAnImmediateSecondCall(GameTestHelper helper)` — `FA-24`, `docs/spec/decisions/DEC-019-controls.md`: FireNetworking#handleFire — the real ServerboundFirePayload receiver, not FiringLogic#attempt called directly — drives the exact same fire-or-reject path #aLoadedWeaponFiresOnceAndMovesAmmoDurabilityAndCooldownTogether already proves for attempt itself: a loaded, off-cooldown weapon fires exactly once, and an immediate second payload lands on the same fire-rate cooldown and is rejected — neither ammo, durability nor the bullet count move any further on that second call.
+- `void handleFireWhileHoldingANonWeaponItemDoesNothing(GameTestHelper helper)` — `FA-24`: a fire payload while the main hand holds no firearm is a no-op — no bullet, no crash.
+- `void startingTheUseSessionAloneNeverFiresOrConsumesAmmo(GameTestHelper helper)` — `WEAPON-REQ-018`, `019`: proves the aim/fire decoupling structurally — starting the use session (what WeaponItem#use does on a right click) and letting ticks pass with no fire payload ever sent must never, by itself, decrement ammo or spawn a bullet.
+- `void handleReloadOnAnEmptyWeaponWithMatchingCartridgesReloadsToMagazineSizeAndConsumesThem(GameTestHelper helper)` — `FA-24`: `FireNetworking#handleReload` — the real ServerboundReloadPayload receiver — reloads exactly as FiringLogic#reload does directly.
+- `void handleReloadOnAWeaponThatAlreadyHasAmmoReturnsNotNeededAndChangesNothing(GameTestHelper helper)` — `FA-24`, `WEAPON-DEC-008`: a dedicated reload press on a magazine that already has ammo is a pure no-op — FiringLogic.Outcome#NOT_NEEDED, ammo and durability unchanged, and, unlike a real reload, no cooldown started at all: a fire attempt made right afterward must still succeed rather than reporting ON_COOLDOWN, proving nothing was started.
 - `void aPumpWeaponRefusesASecondShotInsideThePumpDelay(GameTestHelper helper)` — `WEAPON-REQ-004`: pump behaves as semi for cooldown purposes — a second attempt inside that same delay is refused.
 - `void aShotgunTriggerPullSpawnsItsFullPelletCount(GameTestHelper helper)` — `COMBAT-REQ-005`: one trigger pull, all 8 pellets, one round consumed.
 - `void aSuppressorChangesTheFireSoundEventChosen(GameTestHelper helper)` — `WEAPON-REQ-013`, `COMBAT-REQ-009`: a suppressor changes which sound event FireSounds selects.
+- `void attemptingToFireANonWeaponItemReportsNotAWeapon(GameTestHelper helper)` — `WEAPON-FAIL-001`: not reachable in practice (nothing exposes firing on a non-weapon item), but `FiringLogic#attempt` still checks defensively.
+- `void aRemovedAttachmentIdIsTreatedAsAnAbsentSlotNotACrash(GameTestHelper helper)` — `WEAPON-FAIL-004`: a slot component naming an attachment id a datapack has since removed is treated as absent by WeaponLoadouts#of, the resolver `FiringLogic#attempt` itself calls — no crash, that slot simply contributes nothing to the resolved Loadout.
 
 ### `class ItemRegistrationGameTest` — `src/gametest/java/firearms/gametest/ItemRegistrationGameTest.java`
 Every item `FA-3` registers resolves at its own id: the one weapon item, the five attachment items, and the six cartridge items (`docs/spec/contracts/public-surface.md`).
@@ -100,4 +124,11 @@ A weapon stack carries the max_damage its own base's recipe gives it (`docs/spec
 - `void anM1911StackHasTheRecipesOwnMaxDamage(GameTestHelper helper)`
 - `void aWeaponStackIsNeverEnchantableAndNeverAValidRepairTarget(GameTestHelper helper)`
 - `void aRealAnvilOffersNoMaterialRepairAndNoEnchantForADamagedWeapon(GameTestHelper helper)`
+
+### `class WeaponTooltipGameTest` — `src/gametest/java/firearms/gametest/WeaponTooltipGameTest.java`
+`FA-11`'s acceptance criteria for firearms.client.ui.WeaponTooltip (`docs/spec/domains/ui.md` `UI-REQ-001`): an AKM with a suppressor and a 4x scope lists its name/class, nine derived stat lines, every one of the assault rifle's five slots (occupied or "unequipped"), and its ammo line, in that fixed order; an attachment stack lists its own slot and "+/-" modifier lines; a cartridge stack lists its own calibre.
+- `void akmWithSuppressorAndScope4xListsTheExpectedKeysInOrder(GameTestHelper helper)`
+- `void aSuppressorAttachmentListsItsSlotAndModifiersAsPlusMinusLines(GameTestHelper helper)`
+- `void aCartridgeListsItsCalibre(GameTestHelper helper)`
+- `void anUnrelatedVanillaItemHasNoLines(GameTestHelper helper)`
 

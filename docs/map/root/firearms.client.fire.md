@@ -5,9 +5,27 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
-The client-only side of firing: RecoilHandler applies firearms.fire.RecoilPacket's cosmetic camera kick to the local player on receipt.
+The client-only side of firing: RecoilHandler applies firearms.fire.RecoilPacket's cosmetic camera kick to the local player on receipt, then eases it back off over a few client ticks via RecoilKick's own pure recovery maths.
+
+### `class ClientLoadouts` — `src/main/java/firearms/client/fire/ClientLoadouts.java`
+Resolves a held weapon stack's real, attachment-adjusted Stats client-side, the same technique firearms.client.scope.ScopedWeapon already uses and for the identical reason that class's own Javadoc explains: firearms.fire.WeaponLoadouts — the server-side resolver firearms.fire.FiringLogic itself calls — matches a stack's components against firearms.data.WeaponRegistry/AttachmentRegistry, both PackType.SERVER_DATA reload listeners a remote client never has loaded; a client-only caller (`firearms.client.fire.FireInputHandler`, deciding an auto weapon's own fire rate every tick) needs a resolution path that works correctly on exactly that remote client, not only in singleplayer where the reload listener happens to share the same JVM.
+- `Optional<Stats> stats(ItemStack stack)` — stack's real, attachment-adjusted stats, or empty if it is not a weapon this mod recognizes (`WeaponBase.ALL` has no match).
+
+### `class FireInputHandler` — `src/main/java/firearms/client/fire/FireInputHandler.java`
+The client's own read of the two controls `docs/spec/decisions/DEC-019-controls.md`'s table defines (`docs/spec/domains/weapon.md` WEAPON-REQ-004, 018): every client tick, translates Options.keyAttack (fire, mode-aware) and the dedicated reload KeyMapping into ServerboundFirePayload/ServerboundReloadPayload sends.
+- `void register()`
 
 ### `class RecoilHandler` — `src/main/java/firearms/client/fire/RecoilHandler.java`
-Applies RecoilPacket's cosmetic vertical/horizontal camera kick to the local player's own rotation on receipt (`COMBAT-DEC-003`, `COMBAT-REQ-011`).
+Applies RecoilPacket's cosmetic vertical/horizontal camera kick to the local player's own rotation on receipt, then eases it back off over RecoilKick#RECOVERY_TICKS client ticks (`COMBAT-DEC-003`, `COMBAT-REQ-011`, `FA-11`: "recovering over a few ticks").
 - `void register()`
+
+### `class RecoilKick` — `src/main/java/firearms/client/fire/RecoilKick.java`
+The client-only recoil camera kick's own recovery state: a vertical and horizontal offset still owed back to the player's rotation, recovering an even fraction of itself every client tick over a fixed recovery window (`docs/spec/domains/combat.md` COMBAT-REQ-011, COMBAT-DEC-003: "recovering over a few ticks").
+- `int RECOVERY_TICKS` — Proposed: the number of client ticks a kick takes to fully recover — see this class's own Javadoc.
+- `RecoilKick NONE` — No kick outstanding: both axes at rest, nothing left to recover.
+- `RecoilKick apply(float verticalDegrees, float horizontalDegrees)` — Adds a fresh kick on top of whatever this instance still owes back, and resets the recovery window to its full length: a second shot arriving mid-recovery (an automatic weapon's own fire rate, typically faster than #RECOVERY_TICKS) climbs the outstanding kick rather than restarting it from zero — recoil climbing while firing, then settling once the trigger is released, the shape a real automatic weapon's recoil pattern has.
+- `RecoilKick tick()` — One client tick's recovery: this instance's own remaining degrees divided evenly over its own remaining ticks, so whatever is outstanding at a given moment recovers in exactly #RECOVERY_TICKS more ticks from that moment.
+- `boolean done()` — Whether every tick of this kick's own recovery window has already elapsed.
+- `float verticalRemaining()` — The upward degrees still owed back to the player's pitch.
+- `float horizontalRemaining()` — The sideways degrees still owed back to the player's yaw (signed).
 

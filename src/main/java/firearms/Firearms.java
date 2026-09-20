@@ -4,10 +4,14 @@ import firearms.attach.AttachRegistration;
 import firearms.component.ComponentRegistration;
 import firearms.data.DataRegistration;
 import firearms.debug.DebugCommand;
+import firearms.fire.FireNetworking;
 import firearms.fire.FireSounds;
 import firearms.fire.RecoilPacket;
+import firearms.fire.ServerboundFirePayload;
+import firearms.fire.ServerboundReloadPayload;
 import firearms.item.ItemRegistration;
 import firearms.combat.CombatRegistration;
+import firearms.item.CreativeTabRegistration;
 import firearms.trade.TradeRegistration;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
@@ -40,8 +44,12 @@ public final class Firearms implements ModInitializer {
         CombatRegistration.register();
         FireSounds.register();
         RecoilPacket.register();
+        ServerboundFirePayload.register();
+        ServerboundReloadPayload.register();
+        FireNetworking.register();
         AttachRegistration.register();
         TradeRegistration.register();
+        CreativeTabRegistration.register();
         if (FabricLoader.getInstance().isDevelopmentEnvironment()) DebugCommand.register();
         LOGGER.info("Firearms ready beside Create Fly");
     }

@@ -88,6 +88,7 @@ A base weapon: its id, class, calibre and bare Stats, with no attachment folded 
 - `WeaponBase RUGER_MINI_14` — Ruger Mini-14 — DMR, `5.56mm` (roster row 4).
 - `WeaponBase AWM` — AWM — Sniper rifle, `.300 Magnum` (roster row 5).
 - `WeaponBase WINCHESTER_MODEL_1897` — Winchester Model 1897 — Shotgun, `12 gauge` (roster row 6).
+- `List<WeaponBase> ALL` — All six 1.0 base weapons, mirroring firearms.model.Attachment#ALL's own reason for existing: this record is pure/common with no Minecraft import, so a hardcoded list here is safe to match against on either logical side, including a remote client that never loads firearms.data.WeaponRegistry (`firearms.client.fire.ClientLoadouts`, `FA-24`, mirroring firearms.client.scope.ScopedWeapon's own precedent for the identical technique).
 
 ### `enum WeaponClass` — `src/main/java/firearms/model/WeaponClass.java`
 The six 1.0 weapon classes, each with a fixed per-class slot set shared by every weapon in that class (`docs/spec/domains/weapon.md` §3, WEAPON-REQ-001).

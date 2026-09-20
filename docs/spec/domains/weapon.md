@@ -98,6 +98,12 @@ the class has, each gated on `minecraft:has_component` against that slot's own c
 for aiming vs. hip-fire, distinguished by whether the player is currently using the item
 (`ItemDisplayContext`, research `smithing-and-item-model-layers-26-2.md` §B.4).
 
+Since `decisions/DEC-018-art-direction.md` (Kevin, 2026-09-20) every layer is a cuboid element
+model, not a sprite: the base layer is the weapon's 3D model with its own texture atlas, each slot
+layer is a 3D part positioned at the slot's anchor in model units, and the same composite renders
+in every display context (inventory included) as Create's potato cannon does. Standalone
+attachment items and cartridges remain flat 16×16 sprites in the vanilla/Create pixel style.
+
 ## 4. Use cases
 
 `UC-001`, `UC-007`–`UC-014`, `UC-018`, `UC-019` in `02-journeys.md`.
@@ -121,6 +127,10 @@ for aiming vs. hip-fire, distinguished by whether the player is currently using 
 | `WEAPON-REQ-013` | The system shall play a distinct fire sound and a distinct empty-click sound per weapon; a suppressor attachment shall reduce the fire sound's effective volume/range (`domains/combat.md` `COMBAT-REQ-009`). | Must | `00-context.md` |
 | `WEAPON-REQ-014` | The system shall not set `DataComponents.REPAIRABLE` (`Item.Properties.repairable(...)`) on any weapon item, so `ItemStack.isValidRepairItem` always returns false and the anvil's material-repair path (combining a weapon with a repair item such as an iron ingot) never produces a result for it. | Must | Kevin, 2026-09-20: "not repairable in an anvil"; `decisions/DEC-017-no-detach-durability.md` |
 | `WEAPON-REQ-015` | The system shall not set `DataComponents.ENCHANTABLE` (`Item.Properties.enchantable(...)`) on any weapon item and shall not add any weapon item to any vanilla enchantment's supported-items tag, so `ItemStack.isEnchantable()` returns false (the enchanting table offers nothing for it) and `Enchantment.canEnchant()` fails for every enchantment (an anvil combination with an enchanted book transfers nothing and produces an empty result). | Must | Kevin, 2026-09-20: "not enchantable"; `decisions/DEC-017-no-detach-durability.md` |
+| `WEAPON-REQ-016` | Every base weapon's item model shall be a cuboid element model with a per-weapon texture atlas, and every mounted attachment a cuboid part model positioned at its slot's anchor, composited as `WEAPON-REQ-012` describes and rendered as a 3D model in every display context; both generated deterministically by `tools/models.py`. | Must | `decisions/DEC-018-art-direction.md` |
+| `WEAPON-REQ-017` | Every texture and sprite of the mod shall follow the vanilla/Create pixel style: 16×16 canvases for sprites, a one-pixel outline in the material's darkest tone, three to four tones per material lit from the top-left, colours from the shared palette in `tools/palette.py`, no gradients or anti-aliasing. | Must | `decisions/DEC-018-art-direction.md` |
+| `WEAPON-REQ-018` | The attack control (left click) shall fire the held firearm and the use control (right click), held, shall aim it; a use press shall never fire. Firing travels as this mod's own client-to-server payload and is validated by the server's `FiringLogic` (cooldown, ammo, durability) exactly as before; `auto` repeats while the attack control is held. While a firearm is held, the attack control shall not swing, break blocks or melee-hit. | Must | `decisions/DEC-019-controls.md` |
+| `WEAPON-REQ-019` | Aiming shall last exactly as long as the use control is held (a bow-length use duration ended only by release, never by a shot or a cooldown); with no magnifying optic (none, red dot, holo) the aiming pose is iron sights: centred model, no zoom, no overlay. | Must | `decisions/DEC-019-controls.md` |
 
 ## 6. Failure modes
 
@@ -189,20 +199,50 @@ for aiming vs. hip-fire, distinguished by whether the player is currently using 
   to live, per this sheet's own original proposal. **Cost if wrong:** a fourth `FireMode` value is
   an additive enum constant plus one new `switch` arm wherever fire mode is dispatched
   (`firearms.item.WeaponItem`), not a redesign of the roster or the derivation function.
-- `WEAPON-DEC-007` — **Fire-rate pacing is vanilla `ItemCooldowns`, called by hand once per shot from
-  a server-side `onUseTick`, not the automatic `useCooldown` property** (`FA-6`, settling §7's own
-  open question): `useCooldown`/`UseCooldown.apply()` only fires from `ItemStack.use()`/
-  `finishUsingItem()`, once per interaction, which cannot pace `auto`'s repeated per-tick shots at
-  all and would double-apply for `semi`/`pump` (once from the component, once from this mod's own
-  call) if used at all; `firearms.item.WeaponItem` instead starts the vanilla "using item" session
-  uniformly from `use()`/`useOn()` and dispatches every fire-or-reload attempt through
-  `firearms.fire.FiringLogic#attempt` from `onUseTick`, calling `player.getCooldowns().addCooldown(...)`
-  itself with the derived `fireRateTicks`/`reloadTicks` value. Every base weapon shares the one
-  `firearms:weapon` item, so `ItemCooldowns`'s own default cooldown-group-by-item-id would collide
-  across different base weapons; `FiringLogic` keys every check and every start to a throwaway stack
-  copy carrying a `minecraft:use_cooldown` component whose `cooldownGroup` is the base weapon's own
-  id (`firearms:m1911`, and so on), never persisted back onto the real stack
-  (`docs/spec/contracts/data-contract.md` `DATA-REQ-005`). **Cost if wrong:** switching to a
-  `useCooldown`-driven `semi`/`pump` path later is a small `WeaponItem`/`FiringLogic` change, not a
-  redesign — `auto` would still need the hand-rolled per-shot call regardless, since no vanilla
-  mechanism paces a repeating interaction.
+- `WEAPON-DEC-007` — **Fire-rate pacing is vanilla `ItemCooldowns`, called by hand once per shot,
+  not the automatic `useCooldown` property** (`FA-6`, settling §7's own open question):
+  `useCooldown`/`UseCooldown.apply()` only fires from `ItemStack.use()`/`finishUsingItem()`, once
+  per interaction, which cannot pace `auto`'s repeated per-tick shots at all and would double-apply
+  for `semi`/`pump` (once from the component, once from this mod's own call) if used at all.
+  **Call site superseded at `FA-24` (`decisions/DEC-019-controls.md`):** originally
+  `firearms.item.WeaponItem` started the vanilla "using item" session uniformly from `use()`/
+  `useOn()` and dispatched every fire-or-reload attempt through `firearms.fire.FiringLogic#attempt`
+  from `onUseTick`. Since `WEAPON-REQ-018`/`019` split firing (the attack control) from aiming (the
+  use control, held), `onUseTick` no longer exists on `WeaponItem` at all — every fire-or-reload
+  attempt instead reaches `FiringLogic#attempt`/`#reload` from `firearms.fire.FireNetworking`'s
+  serverbound-payload receivers (`ServerboundFirePayload`/`ServerboundReloadPayload`), one per
+  client-sent payload rather than one per held-use tick. The mechanism this decision actually
+  records — `player.getCooldowns().addCooldown(...)` called by hand with the derived
+  `fireRateTicks`/`reloadTicks` value, keyed off a throwaway stack copy — is unchanged by that move;
+  only the caller changed. Every base weapon shares the one `firearms:weapon` item, so
+  `ItemCooldowns`'s own default cooldown-group-by-item-id would collide across different base
+  weapons; `FiringLogic` keys every check and every start to a throwaway stack copy carrying a
+  `minecraft:use_cooldown` component whose `cooldownGroup` is the base weapon's own id (`firearms:m1911`,
+  and so on), never persisted back onto the real stack (`docs/spec/contracts/data-contract.md`
+  `DATA-REQ-005`). **Cost if wrong:** switching to a `useCooldown`-driven `semi`/`pump` path later is
+  a small `WeaponItem`/`FiringLogic` change, not a redesign — `auto` would still need the hand-rolled
+  per-shot call regardless, since no vanilla mechanism paces a repeating interaction.
+- `WEAPON-DEC-008` — **Reload is a dedicated key (`key.firearms.reload`, default `R`), not a use
+  press while empty** (Kevin, 2026-09-20: "we need reloading to be a thing" — reachable from a key
+  in the client, not only in code; `FA-24`, settling `decisions/DEC-019-controls.md`'s own "`UC-010`
+  decides the exact key at FA-24" placeholder, in favour of the dedicated-key branch that note
+  already preferred). Once `WEAPON-REQ-018`/`019` cleanly separate aiming from firing, a use press
+  does nothing but hold the aim pose for as long as it is held (`firearms.item.WeaponItem#use`), so
+  it can no longer double as the empty-weapon reload trigger — an empty weapon needs its own control
+  that works whether or not the player is currently aiming.
+  `firearms.client.fire.FireInputHandler` registers one Fabric key binding
+  (`net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper`, its own category
+  `firearms:firearms`) bound to `R` by default; on press it sends
+  `firearms.fire.ServerboundReloadPayload`, handled server-side by
+  `firearms.fire.FireNetworking#handleReload`, which calls a new `FiringLogic#reload(ServerLevel,
+  ServerPlayer, ItemStack)` entry point — the same off-cooldown gate and the same
+  cartridge-scan-and-consume path `WEAPON-REQ-010`/`011` already specify, now reachable from a
+  second trigger rather than only as a side effect of an attack payload arriving to an empty gun
+  (`FiringLogic#attempt` still auto-reloads that way too, unchanged). A reload press never fires —
+  `#reload` never calls `#fire` — and pressing it while the magazine already has ammo is a pure
+  no-op (`FiringLogic.Outcome.NOT_NEEDED`: no cooldown starts, nothing is consumed); genuine
+  per-round "top off a partial magazine" reloading is not implemented, since nothing in
+  `WEAPON-REQ-010` describes it and Kevin's own framing was reachability, not a partial-reload
+  mechanic. **Cost if wrong:** the fallback `DEC-019` itself named — a use press while empty
+  reloading instead — is a small `WeaponItem`/`FiringLogic` change, not a redesign; the key binding,
+  its category and `ServerboundReloadPayload` would simply go unused rather than needing removal.

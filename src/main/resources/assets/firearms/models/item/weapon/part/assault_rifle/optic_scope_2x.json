@@ -1,0 +1,81 @@
+{
+  "parent": "firearms:item/weapon/class/assault_rifle",
+  "texture_size": [
+    32,
+    32
+  ],
+  "textures": {
+    "0": "firearms:item/weapon/part/optic_scope_2x",
+    "particle": "firearms:item/weapon/part/optic_scope_2x"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        10,
+        -3.3
+      ],
+      "to": [
+        9,
+        12,
+        1.2
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12,
+            0,
+            14,
+            2
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            14,
+            0,
+            16,
+            2
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            4,
+            0,
+            8,
+            2
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            8,
+            0,
+            12,
+            2
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            2,
+            4
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            2,
+            0,
+            4,
+            4
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

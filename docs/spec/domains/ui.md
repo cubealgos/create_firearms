@@ -58,6 +58,7 @@ smithing table or deployer screens themselves, which are Create's and vanilla's 
 | `UI-REQ-004` | The system shall add no screen of its own for attaching or otherwise configuring a weapon: the vanilla smithing table screen and Create's deployer are the only interaction surfaces (`00-context.md`). | Must | `00-context.md` |
 | `UI-REQ-005` | The system shall add no JEI or EMI recipe-viewer category at 1.0; the smithing and deploying recipes function regardless of whether either is displayed anywhere (`UI-DEC-001`). | Should, scoped out | `decisions/DEC-015-jei-deferred.md` |
 | `UI-REQ-006` | The system shall provide a development-environment-only debug command printing a given item stack's derived final stats and component state, for verification without relying on hovering. | Should | `operations/testing.md` |
+| `UI-REQ-007` | The system shall register one creative-mode tab `firearms:firearms` holding every item of the mod: the six bare weapons, one fully loaded example per class, every attachment item and every cartridge, iconed with the M1911. | Must | Kevin, 2026-09-20; `decisions/DEC-019-controls.md` |
 
 ## 6. Failure modes
 

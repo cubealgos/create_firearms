@@ -9,6 +9,7 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import firearms.component.Ammo;
 import firearms.component.Base;
+import firearms.component.BaseCodec;
 import firearms.component.ComponentRegistration;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -37,6 +38,14 @@ public final class ComponentCodecGameTest {
         unversioned.add("weapon_id", new JsonPrimitive("firearms:m1911"));
         Base defaulted = decode(codec, unversioned);
         helper.assertValueEqual(defaulted.version(), 1, "an unversioned firearms:base defaults to version 1 (DATA-REQ-001)");
+
+        JsonObject older = new JsonObject();
+        older.add("version", new JsonPrimitive(0));
+        older.add("weapon_id", new JsonPrimitive("firearms:m1911"));
+        Base migrated = decode(codec, older);
+        helper.assertValueEqual(migrated.version(), BaseCodec.VERSION,
+            "a version older than current must migrate forward to the current schema on read (DATA-REQ-002)");
+        helper.assertFalse(migrated.readOnly(), "a migrated-forward base must not report read-only");
 
         JsonObject newer = new JsonObject();
         newer.add("version", new JsonPrimitive(999));

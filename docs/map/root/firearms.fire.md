@@ -7,6 +7,12 @@ signature is the contract; read the source only when the summary is not enough.
 
 The fire-control loop (`FA-6`, `docs/spec/domains/weapon.md` `WEAPON-REQ-004`, `007`-`013`): resolving a stack's live Loadout, the single fire-or-reload attempt firearms.item.WeaponItem dispatches every eligible tick, the sounds it plays, and the cosmetic recoil packet it sends the shooter.
 
+### `class FireNetworking` — `src/main/java/firearms/fire/FireNetworking.java`
+The server-side receivers for ServerboundFirePayload and ServerboundReloadPayload (`docs/spec/decisions/DEC-019-controls.md`, `docs/spec/domains/weapon.md` WEAPON-REQ-018): each payload is a bare "the client's own input control fired" signal with no fields of its own, so all either receiver does is resolve the sender's main-hand weapon and delegate to FiringLogic, the same server-authoritative evaluation `WEAPON-DEC-007` already established.
+- `void register()` — Registers both payloads' server-side receivers; common code, called once from Firearms#onInitialize().
+- `void handleFire(ServerPlayer player)` — One attack-control press or auto-fire tick's worth of fire attempt.
+- `FiringLogic.Outcome handleReload(ServerPlayer player)` — One dedicated-reload-key press.
+
 ### `class FireSounds` — `src/main/java/firearms/fire/FireSounds.java`
 The sound events firing plays (`docs/spec/domains/weapon.md` WEAPON-REQ-013, `docs/spec/domains/combat.md` COMBAT-REQ-009): one fire sound per weapon class (firearms:fire.), a single universal suppressed variant substituted whenever a suppressor is attached (firearms:fire.suppressed, a shorter fixed range and played quieter — see FiringLogic), and one universal reload and empty-click sound each.
 - `SoundEvent RELOAD`
@@ -16,9 +22,10 @@ The sound events firing plays (`docs/spec/domains/weapon.md` WEAPON-REQ-013, `do
 - `void register()` — Forces this class's static registrations to run; call once from Firearms#onInitialize().
 
 ### `class FiringLogic` — `src/main/java/firearms/fire/FiringLogic.java`
-The fire-control loop (`docs/spec/domains/weapon.md` WEAPON-REQ-007-013): one attempt per eligible press or held tick, entirely server-authoritative (`docs/spec/04-architecture.md` ARCH-DEC-005).
-- `boolean isAiming(Player player)` — `WEAPON-REQ-005`: no dedicated aim-down-sights control exists yet — the three scope mixins (COMBAT-REQ-006-008) that would give one land at a later ticket.
+The fire-control loop (`docs/spec/domains/weapon.md` WEAPON-REQ-007-013): one attempt per eligible network payload, entirely server-authoritative (`docs/spec/04-architecture.md` ARCH-DEC-005).
+- `boolean isAiming(Player player, ItemStack stack)` — `WEAPON-REQ-019`, `docs/spec/decisions/DEC-019-controls.md`: the aim control is now the use control itself, held — player.isUsingItem() && player.getUseItem() == stack, an exact identity check, mirroring vanilla Player.isScoping()'s own isUsingItem() && getUseItem().is(Items.SPYGLASS) convention (`firearms.mixin.client.PlayerScopingMixin`'s own doc).
 - `Outcome attempt(ServerLevel level, ServerPlayer player, ItemStack stack, InteractionHand hand)` — One fire-control attempt for stack, held by player in hand: fires if loaded and off cooldown, attempts a reload if the magazine is empty, or reports why neither happened.
+- `Outcome reload(ServerLevel level, ServerPlayer player, ItemStack stack)` — The dedicated reload control's own entry point (`WEAPON-REQ-010`, `011`, `WEAPON-DEC-008`): unlike #attempt, which auto-reloads an empty magazine as a side effect of an attack payload arriving to an empty gun, this method is reachable only from firearms.fire.FireNetworking#handleReload, the reload KeyMapping's own receiver — firing must never be a side effect of pressing reload, and this method never calls #fire.
 
     - **nested** `enum Outcome`
     What one fire-control attempt did, for callers — including game tests — to assert on.
@@ -29,6 +36,20 @@ The cosmetic recoil kick sent to the shooting player only, decoupled from the se
 - `StreamCodec<ByteBuf, RecoilPacket> STREAM_CODEC`
 - `Type<? extends CustomPacketPayload> type()`
 - `void register()` — Registers this payload's type and codec on the clientbound play channel; common code, called once from Firearms#onInitialize() — both logical sides need the type/codec registration to negotiate the channel, even though only the server ever sends one and only firearms.client.fire.RecoilHandler (client-only code) ever receives one.
+
+### `record ServerboundFirePayload` — `src/main/java/firearms/fire/ServerboundFirePayload.java`
+The attack control's own client-to-server payload (`docs/spec/decisions/DEC-019-controls.md`, `docs/spec/domains/weapon.md` WEAPON-REQ-018): sent once per press for semi/ pump, once per fire-rate interval while held for auto (firearms.client.fire.FireInputHandler).
+- `Type<ServerboundFirePayload> TYPE`
+- `StreamCodec<ByteBuf, ServerboundFirePayload> STREAM_CODEC`
+- `Type<? extends CustomPacketPayload> type()`
+- `void register()` — Registers this payload's type and codec on the serverbound play channel; common code, called once from Firearms#onInitialize() — PayloadTypeRegistry is common-safe (its package is net.fabricmc.fabric.api.networking.v1, not a client-only one), even though only the client ever sends this payload and only the server (FireNetworking) ever receives it.
+
+### `record ServerboundReloadPayload` — `src/main/java/firearms/fire/ServerboundReloadPayload.java`
+The dedicated reload key's own client-to-server payload (`docs/spec/decisions/DEC-019-controls.md` `UC-010`, `docs/spec/domains/weapon.md` WEAPON-REQ-010, 011): sent once per press of the reload KeyMapping while a firearm is held (firearms.client.fire .FireInputHandler).
+- `Type<ServerboundReloadPayload> TYPE`
+- `StreamCodec<ByteBuf, ServerboundReloadPayload> STREAM_CODEC`
+- `Type<? extends CustomPacketPayload> type()`
+- `void register()` — Registers this payload's type and codec on the serverbound play channel; common code, called once from Firearms#onInitialize(), mirroring ServerboundFirePayload#register().
 
 ### `class WeaponLoadouts` — `src/main/java/firearms/fire/WeaponLoadouts.java`
 Resolves the Loadout a fire attempt needs from a weapon stack's own live components (`docs/spec/domains/weapon.md` WEAPON-REQ-003): firearms:base names the base weapon, and each present firearms:attachment_ names one attachment.

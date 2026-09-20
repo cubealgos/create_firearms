@@ -19,9 +19,26 @@
                 "model": "firearms:item/weapon/m1911",
                 "transformation": {
                   "translation": [
+                    -0.2,
+                    -3.0,
+                    -0.35
+                  ],
+                  "left_rotation": [
                     0.0,
-                    0.05,
-                    -0.1
+                    0.0,
+                    0.0,
+                    1.0
+                  ],
+                  "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "right_rotation": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
                   ]
                 }
               },
@@ -43,21 +60,21 @@
                     "when": "firearms:suppressor",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_suppressor"
+                      "model": "firearms:item/weapon/part/pistol/muzzle_suppressor"
                     }
                   },
                   {
                     "when": "firearms:flash_hider",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_flash_hider"
+                      "model": "firearms:item/weapon/part/pistol/muzzle_flash_hider"
                     }
                   },
                   {
                     "when": "firearms:compensator",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_compensator"
+                      "model": "firearms:item/weapon/part/pistol/muzzle_compensator"
                     }
                   }
                 ],
@@ -82,56 +99,56 @@
                     "when": "firearms:scope_2x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_2x"
+                      "model": "firearms:item/weapon/part/pistol/optic_scope_2x"
                     }
                   },
                   {
                     "when": "firearms:scope_3x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_3x"
+                      "model": "firearms:item/weapon/part/pistol/optic_scope_3x"
                     }
                   },
                   {
                     "when": "firearms:scope_4x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_4x"
+                      "model": "firearms:item/weapon/part/pistol/optic_scope_4x"
                     }
                   },
                   {
                     "when": "firearms:scope_6x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_6x"
+                      "model": "firearms:item/weapon/part/pistol/optic_scope_6x"
                     }
                   },
                   {
                     "when": "firearms:scope_8x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_8x"
+                      "model": "firearms:item/weapon/part/pistol/optic_scope_8x"
                     }
                   },
                   {
                     "when": "firearms:scope_15x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_15x"
+                      "model": "firearms:item/weapon/part/pistol/optic_scope_15x"
                     }
                   },
                   {
                     "when": "firearms:red_dot",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_red_dot"
+                      "model": "firearms:item/weapon/part/pistol/optic_red_dot"
                     }
                   },
                   {
                     "when": "firearms:holo",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_holo"
+                      "model": "firearms:item/weapon/part/pistol/optic_holo"
                     }
                   }
                 ],
@@ -156,21 +173,21 @@
                     "when": "firearms:quickdraw_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_quickdraw_magazine"
+                      "model": "firearms:item/weapon/part/pistol/magazine_quickdraw_magazine"
                     }
                   },
                   {
                     "when": "firearms:extended_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_extended_magazine"
+                      "model": "firearms:item/weapon/part/pistol/magazine_extended_magazine"
                     }
                   },
                   {
                     "when": "firearms:extended_quickdraw_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_extended_quickdraw_magazine"
+                      "model": "firearms:item/weapon/part/pistol/magazine_extended_quickdraw_magazine"
                     }
                   }
                 ],
@@ -200,9 +217,26 @@
                 "model": "firearms:item/weapon/micro_uzi",
                 "transformation": {
                   "translation": [
+                    -0.2,
+                    -3.0,
+                    -0.35
+                  ],
+                  "left_rotation": [
                     0.0,
-                    0.05,
-                    -0.1
+                    0.0,
+                    0.0,
+                    1.0
+                  ],
+                  "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "right_rotation": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
                   ]
                 }
               },
@@ -224,21 +258,21 @@
                     "when": "firearms:suppressor",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_suppressor"
+                      "model": "firearms:item/weapon/part/smg/muzzle_suppressor"
                     }
                   },
                   {
                     "when": "firearms:flash_hider",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_flash_hider"
+                      "model": "firearms:item/weapon/part/smg/muzzle_flash_hider"
                     }
                   },
                   {
                     "when": "firearms:compensator",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_compensator"
+                      "model": "firearms:item/weapon/part/smg/muzzle_compensator"
                     }
                   }
                 ],
@@ -263,56 +297,56 @@
                     "when": "firearms:scope_2x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_2x"
+                      "model": "firearms:item/weapon/part/smg/optic_scope_2x"
                     }
                   },
                   {
                     "when": "firearms:scope_3x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_3x"
+                      "model": "firearms:item/weapon/part/smg/optic_scope_3x"
                     }
                   },
                   {
                     "when": "firearms:scope_4x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_4x"
+                      "model": "firearms:item/weapon/part/smg/optic_scope_4x"
                     }
                   },
                   {
                     "when": "firearms:scope_6x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_6x"
+                      "model": "firearms:item/weapon/part/smg/optic_scope_6x"
                     }
                   },
                   {
                     "when": "firearms:scope_8x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_8x"
+                      "model": "firearms:item/weapon/part/smg/optic_scope_8x"
                     }
                   },
                   {
                     "when": "firearms:scope_15x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_15x"
+                      "model": "firearms:item/weapon/part/smg/optic_scope_15x"
                     }
                   },
                   {
                     "when": "firearms:red_dot",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_red_dot"
+                      "model": "firearms:item/weapon/part/smg/optic_red_dot"
                     }
                   },
                   {
                     "when": "firearms:holo",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_holo"
+                      "model": "firearms:item/weapon/part/smg/optic_holo"
                     }
                   }
                 ],
@@ -337,21 +371,21 @@
                     "when": "firearms:quickdraw_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_quickdraw_magazine"
+                      "model": "firearms:item/weapon/part/smg/magazine_quickdraw_magazine"
                     }
                   },
                   {
                     "when": "firearms:extended_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_extended_magazine"
+                      "model": "firearms:item/weapon/part/smg/magazine_extended_magazine"
                     }
                   },
                   {
                     "when": "firearms:extended_quickdraw_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_extended_quickdraw_magazine"
+                      "model": "firearms:item/weapon/part/smg/magazine_extended_quickdraw_magazine"
                     }
                   }
                 ],
@@ -376,35 +410,35 @@
                     "when": "firearms:light_grip",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/grip_light_grip"
+                      "model": "firearms:item/weapon/part/smg/grip_light_grip"
                     }
                   },
                   {
                     "when": "firearms:half_grip",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/grip_half_grip"
+                      "model": "firearms:item/weapon/part/smg/grip_half_grip"
                     }
                   },
                   {
                     "when": "firearms:angled_grip",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/grip_angled_grip"
+                      "model": "firearms:item/weapon/part/smg/grip_angled_grip"
                     }
                   },
                   {
                     "when": "firearms:vertical_grip",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/grip_vertical_grip"
+                      "model": "firearms:item/weapon/part/smg/grip_vertical_grip"
                     }
                   },
                   {
                     "when": "firearms:thumb_grip",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/grip_thumb_grip"
+                      "model": "firearms:item/weapon/part/smg/grip_thumb_grip"
                     }
                   }
                 ],
@@ -429,21 +463,21 @@
                     "when": "firearms:tactical_stock",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/stock_tactical_stock"
+                      "model": "firearms:item/weapon/part/smg/stock_tactical_stock"
                     }
                   },
                   {
                     "when": "firearms:cheek_pad",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/stock_cheek_pad"
+                      "model": "firearms:item/weapon/part/smg/stock_cheek_pad"
                     }
                   },
                   {
                     "when": "firearms:bullet_loops",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/stock_bullet_loops"
+                      "model": "firearms:item/weapon/part/smg/stock_bullet_loops"
                     }
                   }
                 ],
@@ -473,9 +507,26 @@
                 "model": "firearms:item/weapon/akm",
                 "transformation": {
                   "translation": [
+                    -0.2,
+                    -3.0,
+                    -0.35
+                  ],
+                  "left_rotation": [
                     0.0,
-                    0.05,
-                    -0.1
+                    0.0,
+                    0.0,
+                    1.0
+                  ],
+                  "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "right_rotation": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
                   ]
                 }
               },
@@ -497,21 +548,21 @@
                     "when": "firearms:suppressor",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_suppressor"
+                      "model": "firearms:item/weapon/part/assault_rifle/muzzle_suppressor"
                     }
                   },
                   {
                     "when": "firearms:flash_hider",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_flash_hider"
+                      "model": "firearms:item/weapon/part/assault_rifle/muzzle_flash_hider"
                     }
                   },
                   {
                     "when": "firearms:compensator",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_compensator"
+                      "model": "firearms:item/weapon/part/assault_rifle/muzzle_compensator"
                     }
                   }
                 ],
@@ -536,56 +587,56 @@
                     "when": "firearms:scope_2x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_2x"
+                      "model": "firearms:item/weapon/part/assault_rifle/optic_scope_2x"
                     }
                   },
                   {
                     "when": "firearms:scope_3x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_3x"
+                      "model": "firearms:item/weapon/part/assault_rifle/optic_scope_3x"
                     }
                   },
                   {
                     "when": "firearms:scope_4x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_4x"
+                      "model": "firearms:item/weapon/part/assault_rifle/optic_scope_4x"
                     }
                   },
                   {
                     "when": "firearms:scope_6x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_6x"
+                      "model": "firearms:item/weapon/part/assault_rifle/optic_scope_6x"
                     }
                   },
                   {
                     "when": "firearms:scope_8x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_8x"
+                      "model": "firearms:item/weapon/part/assault_rifle/optic_scope_8x"
                     }
                   },
                   {
                     "when": "firearms:scope_15x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_15x"
+                      "model": "firearms:item/weapon/part/assault_rifle/optic_scope_15x"
                     }
                   },
                   {
                     "when": "firearms:red_dot",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_red_dot"
+                      "model": "firearms:item/weapon/part/assault_rifle/optic_red_dot"
                     }
                   },
                   {
                     "when": "firearms:holo",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_holo"
+                      "model": "firearms:item/weapon/part/assault_rifle/optic_holo"
                     }
                   }
                 ],
@@ -610,21 +661,21 @@
                     "when": "firearms:quickdraw_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_quickdraw_magazine"
+                      "model": "firearms:item/weapon/part/assault_rifle/magazine_quickdraw_magazine"
                     }
                   },
                   {
                     "when": "firearms:extended_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_extended_magazine"
+                      "model": "firearms:item/weapon/part/assault_rifle/magazine_extended_magazine"
                     }
                   },
                   {
                     "when": "firearms:extended_quickdraw_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_extended_quickdraw_magazine"
+                      "model": "firearms:item/weapon/part/assault_rifle/magazine_extended_quickdraw_magazine"
                     }
                   }
                 ],
@@ -649,35 +700,35 @@
                     "when": "firearms:light_grip",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/grip_light_grip"
+                      "model": "firearms:item/weapon/part/assault_rifle/grip_light_grip"
                     }
                   },
                   {
                     "when": "firearms:half_grip",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/grip_half_grip"
+                      "model": "firearms:item/weapon/part/assault_rifle/grip_half_grip"
                     }
                   },
                   {
                     "when": "firearms:angled_grip",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/grip_angled_grip"
+                      "model": "firearms:item/weapon/part/assault_rifle/grip_angled_grip"
                     }
                   },
                   {
                     "when": "firearms:vertical_grip",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/grip_vertical_grip"
+                      "model": "firearms:item/weapon/part/assault_rifle/grip_vertical_grip"
                     }
                   },
                   {
                     "when": "firearms:thumb_grip",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/grip_thumb_grip"
+                      "model": "firearms:item/weapon/part/assault_rifle/grip_thumb_grip"
                     }
                   }
                 ],
@@ -702,21 +753,21 @@
                     "when": "firearms:tactical_stock",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/stock_tactical_stock"
+                      "model": "firearms:item/weapon/part/assault_rifle/stock_tactical_stock"
                     }
                   },
                   {
                     "when": "firearms:cheek_pad",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/stock_cheek_pad"
+                      "model": "firearms:item/weapon/part/assault_rifle/stock_cheek_pad"
                     }
                   },
                   {
                     "when": "firearms:bullet_loops",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/stock_bullet_loops"
+                      "model": "firearms:item/weapon/part/assault_rifle/stock_bullet_loops"
                     }
                   }
                 ],
@@ -746,9 +797,26 @@
                 "model": "firearms:item/weapon/ruger_mini_14",
                 "transformation": {
                   "translation": [
+                    -0.2,
+                    -3.0,
+                    -0.35
+                  ],
+                  "left_rotation": [
                     0.0,
-                    0.05,
-                    -0.1
+                    0.0,
+                    0.0,
+                    1.0
+                  ],
+                  "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "right_rotation": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
                   ]
                 }
               },
@@ -770,21 +838,21 @@
                     "when": "firearms:suppressor",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_suppressor"
+                      "model": "firearms:item/weapon/part/dmr/muzzle_suppressor"
                     }
                   },
                   {
                     "when": "firearms:flash_hider",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_flash_hider"
+                      "model": "firearms:item/weapon/part/dmr/muzzle_flash_hider"
                     }
                   },
                   {
                     "when": "firearms:compensator",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_compensator"
+                      "model": "firearms:item/weapon/part/dmr/muzzle_compensator"
                     }
                   }
                 ],
@@ -809,56 +877,56 @@
                     "when": "firearms:scope_2x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_2x"
+                      "model": "firearms:item/weapon/part/dmr/optic_scope_2x"
                     }
                   },
                   {
                     "when": "firearms:scope_3x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_3x"
+                      "model": "firearms:item/weapon/part/dmr/optic_scope_3x"
                     }
                   },
                   {
                     "when": "firearms:scope_4x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_4x"
+                      "model": "firearms:item/weapon/part/dmr/optic_scope_4x"
                     }
                   },
                   {
                     "when": "firearms:scope_6x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_6x"
+                      "model": "firearms:item/weapon/part/dmr/optic_scope_6x"
                     }
                   },
                   {
                     "when": "firearms:scope_8x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_8x"
+                      "model": "firearms:item/weapon/part/dmr/optic_scope_8x"
                     }
                   },
                   {
                     "when": "firearms:scope_15x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_15x"
+                      "model": "firearms:item/weapon/part/dmr/optic_scope_15x"
                     }
                   },
                   {
                     "when": "firearms:red_dot",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_red_dot"
+                      "model": "firearms:item/weapon/part/dmr/optic_red_dot"
                     }
                   },
                   {
                     "when": "firearms:holo",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_holo"
+                      "model": "firearms:item/weapon/part/dmr/optic_holo"
                     }
                   }
                 ],
@@ -883,21 +951,21 @@
                     "when": "firearms:quickdraw_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_quickdraw_magazine"
+                      "model": "firearms:item/weapon/part/dmr/magazine_quickdraw_magazine"
                     }
                   },
                   {
                     "when": "firearms:extended_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_extended_magazine"
+                      "model": "firearms:item/weapon/part/dmr/magazine_extended_magazine"
                     }
                   },
                   {
                     "when": "firearms:extended_quickdraw_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_extended_quickdraw_magazine"
+                      "model": "firearms:item/weapon/part/dmr/magazine_extended_quickdraw_magazine"
                     }
                   }
                 ],
@@ -922,21 +990,21 @@
                     "when": "firearms:tactical_stock",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/stock_tactical_stock"
+                      "model": "firearms:item/weapon/part/dmr/stock_tactical_stock"
                     }
                   },
                   {
                     "when": "firearms:cheek_pad",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/stock_cheek_pad"
+                      "model": "firearms:item/weapon/part/dmr/stock_cheek_pad"
                     }
                   },
                   {
                     "when": "firearms:bullet_loops",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/stock_bullet_loops"
+                      "model": "firearms:item/weapon/part/dmr/stock_bullet_loops"
                     }
                   }
                 ],
@@ -966,9 +1034,26 @@
                 "model": "firearms:item/weapon/awm",
                 "transformation": {
                   "translation": [
+                    -0.2,
+                    -3.0,
+                    -0.35
+                  ],
+                  "left_rotation": [
                     0.0,
-                    0.05,
-                    -0.1
+                    0.0,
+                    0.0,
+                    1.0
+                  ],
+                  "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "right_rotation": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
                   ]
                 }
               },
@@ -990,21 +1075,21 @@
                     "when": "firearms:suppressor",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_suppressor"
+                      "model": "firearms:item/weapon/part/sniper_rifle/muzzle_suppressor"
                     }
                   },
                   {
                     "when": "firearms:flash_hider",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_flash_hider"
+                      "model": "firearms:item/weapon/part/sniper_rifle/muzzle_flash_hider"
                     }
                   },
                   {
                     "when": "firearms:compensator",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_compensator"
+                      "model": "firearms:item/weapon/part/sniper_rifle/muzzle_compensator"
                     }
                   }
                 ],
@@ -1029,56 +1114,56 @@
                     "when": "firearms:scope_2x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_2x"
+                      "model": "firearms:item/weapon/part/sniper_rifle/optic_scope_2x"
                     }
                   },
                   {
                     "when": "firearms:scope_3x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_3x"
+                      "model": "firearms:item/weapon/part/sniper_rifle/optic_scope_3x"
                     }
                   },
                   {
                     "when": "firearms:scope_4x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_4x"
+                      "model": "firearms:item/weapon/part/sniper_rifle/optic_scope_4x"
                     }
                   },
                   {
                     "when": "firearms:scope_6x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_6x"
+                      "model": "firearms:item/weapon/part/sniper_rifle/optic_scope_6x"
                     }
                   },
                   {
                     "when": "firearms:scope_8x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_8x"
+                      "model": "firearms:item/weapon/part/sniper_rifle/optic_scope_8x"
                     }
                   },
                   {
                     "when": "firearms:scope_15x",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_scope_15x"
+                      "model": "firearms:item/weapon/part/sniper_rifle/optic_scope_15x"
                     }
                   },
                   {
                     "when": "firearms:red_dot",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_red_dot"
+                      "model": "firearms:item/weapon/part/sniper_rifle/optic_red_dot"
                     }
                   },
                   {
                     "when": "firearms:holo",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/optic_holo"
+                      "model": "firearms:item/weapon/part/sniper_rifle/optic_holo"
                     }
                   }
                 ],
@@ -1103,21 +1188,21 @@
                     "when": "firearms:quickdraw_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_quickdraw_magazine"
+                      "model": "firearms:item/weapon/part/sniper_rifle/magazine_quickdraw_magazine"
                     }
                   },
                   {
                     "when": "firearms:extended_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_extended_magazine"
+                      "model": "firearms:item/weapon/part/sniper_rifle/magazine_extended_magazine"
                     }
                   },
                   {
                     "when": "firearms:extended_quickdraw_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_extended_quickdraw_magazine"
+                      "model": "firearms:item/weapon/part/sniper_rifle/magazine_extended_quickdraw_magazine"
                     }
                   }
                 ],
@@ -1142,21 +1227,21 @@
                     "when": "firearms:tactical_stock",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/stock_tactical_stock"
+                      "model": "firearms:item/weapon/part/sniper_rifle/stock_tactical_stock"
                     }
                   },
                   {
                     "when": "firearms:cheek_pad",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/stock_cheek_pad"
+                      "model": "firearms:item/weapon/part/sniper_rifle/stock_cheek_pad"
                     }
                   },
                   {
                     "when": "firearms:bullet_loops",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/stock_bullet_loops"
+                      "model": "firearms:item/weapon/part/sniper_rifle/stock_bullet_loops"
                     }
                   }
                 ],
@@ -1186,9 +1271,26 @@
                 "model": "firearms:item/weapon/winchester_model_1897",
                 "transformation": {
                   "translation": [
+                    -0.2,
+                    -3.0,
+                    -0.35
+                  ],
+                  "left_rotation": [
                     0.0,
-                    0.05,
-                    -0.1
+                    0.0,
+                    0.0,
+                    1.0
+                  ],
+                  "scale": [
+                    1.0,
+                    1.0,
+                    1.0
+                  ],
+                  "right_rotation": [
+                    0.0,
+                    0.0,
+                    0.0,
+                    1.0
                   ]
                 }
               },
@@ -1210,21 +1312,21 @@
                     "when": "firearms:suppressor",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_suppressor"
+                      "model": "firearms:item/weapon/part/shotgun/muzzle_suppressor"
                     }
                   },
                   {
                     "when": "firearms:flash_hider",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_flash_hider"
+                      "model": "firearms:item/weapon/part/shotgun/muzzle_flash_hider"
                     }
                   },
                   {
                     "when": "firearms:compensator",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/muzzle_compensator"
+                      "model": "firearms:item/weapon/part/shotgun/muzzle_compensator"
                     }
                   }
                 ],
@@ -1249,21 +1351,21 @@
                     "when": "firearms:quickdraw_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_quickdraw_magazine"
+                      "model": "firearms:item/weapon/part/shotgun/magazine_quickdraw_magazine"
                     }
                   },
                   {
                     "when": "firearms:extended_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_extended_magazine"
+                      "model": "firearms:item/weapon/part/shotgun/magazine_extended_magazine"
                     }
                   },
                   {
                     "when": "firearms:extended_quickdraw_magazine",
                     "model": {
                       "type": "minecraft:model",
-                      "model": "firearms:item/weapon/layer/magazine_extended_quickdraw_magazine"
+                      "model": "firearms:item/weapon/part/shotgun/magazine_extended_quickdraw_magazine"
                     }
                   }
                 ],

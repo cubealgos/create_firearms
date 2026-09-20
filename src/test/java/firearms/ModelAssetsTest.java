@@ -46,6 +46,9 @@ final class ModelAssetsTest {
     private static final Pattern SLOT_COMPONENT = Pattern.compile("firearms:attachment_(muzzle|optic|magazine|grip|stock)");
     private static final Pattern WEAPON_CLASS_FIELD = Pattern.compile("\"class\"\\s*:\\s*\"([a-z0-9_]+)\"");
     private static final Pattern ATTACHMENT_SLOT_FIELD = Pattern.compile("\"slot\"\\s*:\\s*\"([a-z0-9_]+)\"");
+    private static final Pattern TEXTURE_SIZE = Pattern.compile("\"texture_size\"\\s*:\\s*\\[\\s*(\\d+)\\s*,\\s*(\\d+)\\s*]");
+    private static final Pattern UV = Pattern.compile(
+        "\"uv\"\\s*:\\s*\\[\\s*(-?[0-9.]+)\\s*,\\s*(-?[0-9.]+)\\s*,\\s*(-?[0-9.]+)\\s*,\\s*(-?[0-9.]+)\\s*]");
 
     @Test
     void everyItemDefinitionModelReferenceResolvesToAnExistingModelFile() throws IOException {
@@ -152,12 +155,7 @@ final class ModelAssetsTest {
     }
 
     @Test
-    void baseWeaponAndLayerTexturesAre32x16AndAttachmentAndCartridgeIconsAre16x16() throws IOException {
-        for (Path png : pngFiles(TEXTURES.resolve("weapon"))) {
-            var image = ImageIO.read(png.toFile());
-            assertEquals(32, image.getWidth(), png + " width");
-            assertEquals(16, image.getHeight(), png + " height");
-        }
+    void attachmentAndCartridgeIconsAre16x16() throws IOException {
         for (Path dir : List.of(TEXTURES.resolve("attachment"), TEXTURES.resolve("cartridge"))) {
             for (Path png : pngFiles(dir)) {
                 var image = ImageIO.read(png.toFile());
@@ -165,6 +163,104 @@ final class ModelAssetsTest {
                 assertEquals(16, image.getHeight(), png + " height");
             }
         }
+    }
+
+    /**
+     * `WEAPON-REQ-016` (`FA-22`): every cuboid weapon or part model that declares a {@code
+     * texture_size} names at least one face, and every one of those faces' {@code uv} rectangles
+     * lies inside that declared size -- `tools/models.py`'s atlas packer's own contract, checked
+     * against the committed output rather than by loading Minecraft.
+     */
+    @Test
+    void everyWeaponModelElementFaceUvLiesInsideItsDeclaredTextureSize() throws IOException {
+        List<String> offenders = new ArrayList<>();
+        for (Path modelFile : jsonFiles(MODELS.resolve("weapon"))) {
+            String text = Files.readString(modelFile);
+            Matcher sizeMatcher = TEXTURE_SIZE.matcher(text);
+            if (!sizeMatcher.find()) {
+                continue; // a bare per-class display parent carries no elements or texture_size.
+            }
+            double width = Double.parseDouble(sizeMatcher.group(1));
+            double height = Double.parseDouble(sizeMatcher.group(2));
+            Matcher uvMatcher = UV.matcher(text);
+            boolean sawAFace = false;
+            while (uvMatcher.find()) {
+                sawAFace = true;
+                double x0 = Double.parseDouble(uvMatcher.group(1));
+                double y0 = Double.parseDouble(uvMatcher.group(2));
+                double x1 = Double.parseDouble(uvMatcher.group(3));
+                double y1 = Double.parseDouble(uvMatcher.group(4));
+                boolean inBounds = x0 >= 0 && x0 <= width && x1 >= 0 && x1 <= width
+                    && y0 >= 0 && y0 <= height && y1 >= 0 && y1 <= height;
+                if (!inBounds) {
+                    offenders.add(modelFile + ": uv [" + x0 + ", " + y0 + ", " + x1 + ", " + y1 + "] outside "
+                        + width + "x" + height);
+                }
+            }
+            if (!sawAFace) {
+                offenders.add(modelFile + ": declares texture_size but has no faces");
+            }
+        }
+        assertTrue(offenders.isEmpty(), "every weapon model element's face uvs lie inside its texture_size: " + offenders);
+    }
+
+    /**
+     * The atlas PNG a weapon or part model's {@code textures} block names is exactly the size that
+     * same model's {@code texture_size} declares -- the other half of the packer's contract, since
+     * an undersized or oversized PNG would make the in-bounds check above meaningless.
+     */
+    @Test
+    void everyWeaponAtlasPngMatchesItsModelsDeclaredTextureSize() throws IOException {
+        List<String> offenders = new ArrayList<>();
+        for (Path modelFile : jsonFiles(MODELS.resolve("weapon"))) {
+            String text = Files.readString(modelFile);
+            Matcher sizeMatcher = TEXTURE_SIZE.matcher(text);
+            if (!sizeMatcher.find()) {
+                continue;
+            }
+            int width = Integer.parseInt(sizeMatcher.group(1));
+            int height = Integer.parseInt(sizeMatcher.group(2));
+            Matcher block = TEXTURES_BLOCK.matcher(text);
+            assertTrue(block.find(), modelFile + " declares texture_size and so must have a textures block");
+            Matcher refs = RESOURCE_LOCATION.matcher(block.group(1));
+            assertTrue(refs.find(), modelFile + " names at least one texture");
+            Path png = textureFileFor(refs.group(1));
+            var image = ImageIO.read(png.toFile());
+            if (image.getWidth() != width || image.getHeight() != height) {
+                offenders.add(modelFile + ": atlas " + png + " is " + image.getWidth() + "x" + image.getHeight()
+                    + " but texture_size declares " + width + "x" + height);
+            }
+        }
+        assertTrue(offenders.isEmpty(), "every weapon atlas PNG matches its model's declared texture_size: " + offenders);
+    }
+
+    /**
+     * `WEAPON-REQ-016`: every attachment named in {@code data/firearms/attachment/*.json} has a
+     * cuboid part model under its own slot and name for every {@link WeaponClass} whose {@link
+     * WeaponClass#hasSlot(Slot)} includes that attachment's slot -- the cross product
+     * `tools/models.py`'s part-model loop is meant to have generated in full.
+     */
+    @Test
+    void everyAttachmentHasAPartModelForEveryClassCarryingItsSlot() throws IOException {
+        List<String> missing = new ArrayList<>();
+        for (Path attachmentFile : jsonFiles(ATTACHMENT_DATA)) {
+            String name = filenameWithoutExtension(attachmentFile);
+            Matcher slotField = ATTACHMENT_SLOT_FIELD.matcher(Files.readString(attachmentFile));
+            assertTrue(slotField.find(), attachmentFile + " names its own slot");
+            Slot slot = Slot.valueOf(slotField.group(1).toUpperCase(Locale.ROOT));
+            for (WeaponClass weaponClass : WeaponClass.values()) {
+                if (!weaponClass.hasSlot(slot)) {
+                    continue;
+                }
+                String classDir = weaponClass.name().toLowerCase(Locale.ROOT);
+                String slotName = slot.name().toLowerCase(Locale.ROOT);
+                Path part = MODELS.resolve("weapon/part/" + classDir + "/" + slotName + "_" + name + ".json");
+                if (!Files.isRegularFile(part)) {
+                    missing.add(part.toString());
+                }
+            }
+        }
+        assertTrue(missing.isEmpty(), "every attachment has a part model for every class carrying its slot: " + missing);
     }
 
     private static WeaponClass weaponClassOf(String weaponId) throws IOException {
@@ -199,6 +295,28 @@ final class ModelAssetsTest {
     private static Path textureFileFor(String reference) {
         String path = reference.substring(reference.indexOf(':') + 1);
         return ASSETS.resolve("textures").resolve(path + ".png");
+    }
+
+    /** FA-23: 26.2's item-model {@code transformation} is {@code Transformation.CODEC}, all four fields required. */
+    @Test
+    void everyItemDefinitionTransformationCarriesAllFourFields() throws IOException {
+        Pattern block = Pattern.compile("\"transformation\"\\s*:\\s*\\{([^}]*)}");
+        List<String> bad = new ArrayList<>();
+        for (Path itemFile : jsonFiles(ITEMS)) {
+            Matcher m = block.matcher(Files.readString(itemFile));
+            while (m.find()) {
+                String body = m.group(1);
+                for (String key : List.of("translation", "left_rotation", "scale", "right_rotation")) {
+                    if (!body.contains("\"" + key + "\"")) {
+                        bad.add(itemFile + ": transformation lacks " + key);
+                    }
+                }
+                if (!Pattern.compile("\"left_rotation\"\\s*:\\s*\\[[^\\]]*,[^\\]]*,[^\\]]*,[^\\]]*]").matcher(body).find()) {
+                    bad.add(itemFile + ": left_rotation is not a four-element quaternion");
+                }
+            }
+        }
+        assertTrue(bad.isEmpty(), "every transformation parses as Transformation.CODEC: " + bad);
     }
 
     private static List<Path> jsonFiles(Path root) throws IOException {
