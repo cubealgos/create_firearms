@@ -46,6 +46,12 @@ The two data loaders (`WeaponDataLoader`, `AttachmentDataLoader`) produce exactl
 - `void theAttachmentLoaderProducesExactlyThe22AttachmentsWithTheModelsValues(GameTestHelper helper)`
 - `void aDatapackAddedWeaponAndAttachmentInAnExistingClassAndSlotLoadWithZeroNewJava(GameTestHelper helper)`
 
+### `class DebugCommandGameTest` — `src/gametest/java/firearms/gametest/DebugCommandGameTest.java`
+FA-12's three acceptance-criteria game tests for firearms.debug.DebugCommand, run in the game test environment, which is itself a development environment (FabricLoader.isDevelopmentEnvironment() is true under runGameTest, exactly as it is under runClient), so the command is registered and reachable here.
+- `void giveAkmSuppressorScope4xYieldsBothSlotsFilledWithMatchingDerivedStats(GameTestHelper helper)`
+- `void giveWinchester1897VerticalGripFailsWithTheErrorKey(GameTestHelper helper)`
+- `void statsOnAHeldWeaponPrintsTheExpectedLines(GameTestHelper helper)`
+
 ### `class ItemRegistrationGameTest` — `src/gametest/java/firearms/gametest/ItemRegistrationGameTest.java`
 Every item `FA-3` registers resolves at its own id: the one weapon item, the five attachment items, and the six cartridge items (`docs/spec/contracts/public-surface.md`).
 - `void everyRegisteredItemResolvesAtItsId(GameTestHelper helper)`
