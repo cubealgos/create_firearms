@@ -58,6 +58,13 @@ close this same-item combine path. `domains/weapon.md` `WEAPON-FAIL-006` and its
 carry this forward rather than overclaiming "not repairable in an anvil" is fully achieved by one
 component omission alone.
 
+**Resolved at `FA-4`**: Kevin ruled the gap must close rather than stand as an accepted residual
+(`domains/weapon.md` `WEAPON-DEC-005`). A narrow server-side `@Inject` at `AnvilMenu.createResult()`'s
+`HEAD` (`firearms.mixin.AnvilMenuMixin`) cancels the result whenever both anvil inputs are
+`firearms:weapon`, before vanilla's own same-item repair math runs, leaving every other item pair —
+vanilla or another mod's own — untouched. "Not repairable in an anvil" is now fully achieved: the
+material path by component omission, the same-item path by this one mixin.
+
 ## Not enchantable — the exact 26.2 mechanism, checked against the jar
 
 `Item.Properties.enchantable(int)` sets `DataComponents.ENCHANTABLE`. `ItemStack.isEnchantable()`

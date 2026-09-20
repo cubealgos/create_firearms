@@ -131,14 +131,13 @@ for aiming vs. hip-fire, distinguished by whether the player is currently using 
 | `WEAPON-FAIL-003` | Reloading with no matching cartridge in inventory | `WEAPON-REQ-011`: ammo unchanged, no error. |
 | `WEAPON-FAIL-004` | A slot component names an attachment id a datapack has since removed | Treated as absent by the stat derivation function: that slot contributes no modifier, no crash. |
 | `WEAPON-FAIL-005` | Durability reaches zero mid-magazine | The weapon breaks exactly as any vanilla durability item does, unrepairable (`WEAPON-REQ-014`); any remaining loaded ammo is lost with it, same as an arrow left in a broken bow-equivalent item is not recovered. |
-| `WEAPON-FAIL-006` | Two damaged copies of the same weapon combined at an anvil | Vanilla's own same-item combine-repair path in `AnvilMenu.createResult()` restores some durability regardless of `REPAIRABLE`, since it checks only item identity and `isDamageableItem()`, never `isValidRepairItem`. `WEAPON-REQ-014` closes the material-repair path only; this residual gap is named, not silently closed — see §7. |
+| `WEAPON-FAIL-006` | Two damaged copies of the same weapon combined at an anvil | Vanilla's own same-item combine-repair path in `AnvilMenu.createResult()` would otherwise restore some durability regardless of `REPAIRABLE`, since it checks only item identity and `isDamageableItem()`, never `isValidRepairItem`. `WEAPON-REQ-014` closes the material-repair path by component omission alone; this residual gap is closed separately, by `firearms.mixin.AnvilMenuMixin` (`WEAPON-DEC-005`, `FA-4`). |
 
 ## 7. Open questions
 
 | Question | Blocks | Decided by |
 |---|---|---|
 | Exact crafting-table grids and material quantities for the six base weapons | `WEAPON-REQ-006` | first ticket |
-| Whether `WEAPON-FAIL-006`'s same-item anvil combine-repair path is an acceptable residual gap or needs a narrow `AnvilMenu` mixin to close fully, against "as few new mixins as possible" | `WEAPON-REQ-014` | first ticket; confirmed present by disassembling `AnvilMenu.createResult()` against the 26.2 jar — gated only on `ItemStack.isDamageableItem()` and same-`Item` identity between the two input stacks, entirely independent of the `REPAIRABLE` component |
 
 ## 8. Decisions
 
@@ -166,6 +165,22 @@ for aiming vs. hip-fire, distinguished by whether the player is currently using 
   source components. **Cost if wrong:** re-adding either component later is one line in the item's
   registration, not a redesign — but the residual anvil combine-repair gap `WEAPON-FAIL-006` names
   needs a mixin either way if it must close too, regardless of which way this decision goes.
+- `WEAPON-DEC-005` — **The `WEAPON-FAIL-006` residual gap closes, by a narrow server mixin, not by
+  leaving it as an accepted gap** (Kevin, 2026-09-20, settling §7's own open question at `FA-4`):
+  `firearms.mixin.AnvilMenuMixin` injects at `AnvilMenu.createResult()`'s `HEAD`, cancellable, and
+  when both the input and additional slot stacks are `firearms:weapon` clears the result slot and
+  sets the anvil's cost to 0 before any of vanilla's own same-item combine-repair math runs. Scoped
+  to `firearms:weapon` alone by `Item` identity, the same identity vanilla's own gate already checks
+  — an unrelated item pair (two iron pickaxes, proven by `FA-4`'s own game test) still combines
+  exactly as vanilla intends. **Why `HEAD` over a narrower redirect**: `AnvilMenu.createResult()`
+  disassembles to one long method with no single call site a `@Redirect` could retarget without also
+  matching the method's other, unrelated `isDamageableItem()`/`is(Item)` calls (the material-repair
+  branch above the same-item branch calls `isDamageableItem()` too); cancelling at `HEAD` once both
+  stacks are already known to be `firearms:weapon` touches nothing about the method's control flow
+  for any other item and mirrors exactly what vanilla itself does on every other "no result" branch
+  of this same method. **Cost if wrong:** removing the mixin later is a one-file deletion plus the
+  matching mixin-config entry, not a redesign — the material-repair and enchanting refusals
+  (`WEAPON-REQ-014`, `015`) do not depend on it and are unaffected either way.
 - `WEAPON-DEC-006` — **The AWM's "semi (bolt-cycle)" reuses plain `semi`; no third fire-mode value**
   (`FA-6`, settling §7's own open question; confirmed rather than re-litigated per that ticket's own
   instruction, since testing did not show the reuse to be observably wrong): `FireMode` stays a

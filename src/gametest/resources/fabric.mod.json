@@ -14,7 +14,8 @@
       "firearms.gametest.StatDerivationGameTest",
       "firearms.gametest.CraftingRecipeGameTest",
       "firearms.gametest.WeaponDurabilityAndAnvilGameTest",
-      "firearms.gametest.BulletGameTest"
+      "firearms.gametest.BulletGameTest",
+      "firearms.gametest.AnvilCombineRefusalGameTest"
     ]
   },
   "depends": {
