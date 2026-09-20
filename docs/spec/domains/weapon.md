@@ -199,20 +199,50 @@ attachment items and cartridges remain flat 16×16 sprites in the vanilla/Create
   to live, per this sheet's own original proposal. **Cost if wrong:** a fourth `FireMode` value is
   an additive enum constant plus one new `switch` arm wherever fire mode is dispatched
   (`firearms.item.WeaponItem`), not a redesign of the roster or the derivation function.
-- `WEAPON-DEC-007` — **Fire-rate pacing is vanilla `ItemCooldowns`, called by hand once per shot from
-  a server-side `onUseTick`, not the automatic `useCooldown` property** (`FA-6`, settling §7's own
-  open question): `useCooldown`/`UseCooldown.apply()` only fires from `ItemStack.use()`/
-  `finishUsingItem()`, once per interaction, which cannot pace `auto`'s repeated per-tick shots at
-  all and would double-apply for `semi`/`pump` (once from the component, once from this mod's own
-  call) if used at all; `firearms.item.WeaponItem` instead starts the vanilla "using item" session
-  uniformly from `use()`/`useOn()` and dispatches every fire-or-reload attempt through
-  `firearms.fire.FiringLogic#attempt` from `onUseTick`, calling `player.getCooldowns().addCooldown(...)`
-  itself with the derived `fireRateTicks`/`reloadTicks` value. Every base weapon shares the one
-  `firearms:weapon` item, so `ItemCooldowns`'s own default cooldown-group-by-item-id would collide
-  across different base weapons; `FiringLogic` keys every check and every start to a throwaway stack
-  copy carrying a `minecraft:use_cooldown` component whose `cooldownGroup` is the base weapon's own
-  id (`firearms:m1911`, and so on), never persisted back onto the real stack
-  (`docs/spec/contracts/data-contract.md` `DATA-REQ-005`). **Cost if wrong:** switching to a
-  `useCooldown`-driven `semi`/`pump` path later is a small `WeaponItem`/`FiringLogic` change, not a
-  redesign — `auto` would still need the hand-rolled per-shot call regardless, since no vanilla
-  mechanism paces a repeating interaction.
+- `WEAPON-DEC-007` — **Fire-rate pacing is vanilla `ItemCooldowns`, called by hand once per shot,
+  not the automatic `useCooldown` property** (`FA-6`, settling §7's own open question):
+  `useCooldown`/`UseCooldown.apply()` only fires from `ItemStack.use()`/`finishUsingItem()`, once
+  per interaction, which cannot pace `auto`'s repeated per-tick shots at all and would double-apply
+  for `semi`/`pump` (once from the component, once from this mod's own call) if used at all.
+  **Call site superseded at `FA-24` (`decisions/DEC-019-controls.md`):** originally
+  `firearms.item.WeaponItem` started the vanilla "using item" session uniformly from `use()`/
+  `useOn()` and dispatched every fire-or-reload attempt through `firearms.fire.FiringLogic#attempt`
+  from `onUseTick`. Since `WEAPON-REQ-018`/`019` split firing (the attack control) from aiming (the
+  use control, held), `onUseTick` no longer exists on `WeaponItem` at all — every fire-or-reload
+  attempt instead reaches `FiringLogic#attempt`/`#reload` from `firearms.fire.FireNetworking`'s
+  serverbound-payload receivers (`ServerboundFirePayload`/`ServerboundReloadPayload`), one per
+  client-sent payload rather than one per held-use tick. The mechanism this decision actually
+  records — `player.getCooldowns().addCooldown(...)` called by hand with the derived
+  `fireRateTicks`/`reloadTicks` value, keyed off a throwaway stack copy — is unchanged by that move;
+  only the caller changed. Every base weapon shares the one `firearms:weapon` item, so
+  `ItemCooldowns`'s own default cooldown-group-by-item-id would collide across different base
+  weapons; `FiringLogic` keys every check and every start to a throwaway stack copy carrying a
+  `minecraft:use_cooldown` component whose `cooldownGroup` is the base weapon's own id (`firearms:m1911`,
+  and so on), never persisted back onto the real stack (`docs/spec/contracts/data-contract.md`
+  `DATA-REQ-005`). **Cost if wrong:** switching to a `useCooldown`-driven `semi`/`pump` path later is
+  a small `WeaponItem`/`FiringLogic` change, not a redesign — `auto` would still need the hand-rolled
+  per-shot call regardless, since no vanilla mechanism paces a repeating interaction.
+- `WEAPON-DEC-008` — **Reload is a dedicated key (`key.firearms.reload`, default `R`), not a use
+  press while empty** (Kevin, 2026-09-20: "we need reloading to be a thing" — reachable from a key
+  in the client, not only in code; `FA-24`, settling `decisions/DEC-019-controls.md`'s own "`UC-010`
+  decides the exact key at FA-24" placeholder, in favour of the dedicated-key branch that note
+  already preferred). Once `WEAPON-REQ-018`/`019` cleanly separate aiming from firing, a use press
+  does nothing but hold the aim pose for as long as it is held (`firearms.item.WeaponItem#use`), so
+  it can no longer double as the empty-weapon reload trigger — an empty weapon needs its own control
+  that works whether or not the player is currently aiming.
+  `firearms.client.fire.FireInputHandler` registers one Fabric key binding
+  (`net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper`, its own category
+  `firearms:firearms`) bound to `R` by default; on press it sends
+  `firearms.fire.ServerboundReloadPayload`, handled server-side by
+  `firearms.fire.FireNetworking#handleReload`, which calls a new `FiringLogic#reload(ServerLevel,
+  ServerPlayer, ItemStack)` entry point — the same off-cooldown gate and the same
+  cartridge-scan-and-consume path `WEAPON-REQ-010`/`011` already specify, now reachable from a
+  second trigger rather than only as a side effect of an attack payload arriving to an empty gun
+  (`FiringLogic#attempt` still auto-reloads that way too, unchanged). A reload press never fires —
+  `#reload` never calls `#fire` — and pressing it while the magazine already has ammo is a pure
+  no-op (`FiringLogic.Outcome.NOT_NEEDED`: no cooldown starts, nothing is consumed); genuine
+  per-round "top off a partial magazine" reloading is not implemented, since nothing in
+  `WEAPON-REQ-010` describes it and Kevin's own framing was reachability, not a partial-reload
+  mechanic. **Cost if wrong:** the fallback `DEC-019` itself named — a use press while empty
+  reloading instead — is a small `WeaponItem`/`FiringLogic` change, not a redesign; the key binding,
+  its category and `ServerboundReloadPayload` would simply go unused rather than needing removal.
