@@ -5,6 +5,13 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
+### `class AttachSmithingGameTest` — `src/gametest/java/firearms/gametest/AttachSmithingGameTest.java`
+A real SmithingMenu runs firearms.attach.AttachSmithingRecipe exactly as the vanilla smithing table would, proving the recipe is actually found by RecipeManager.getRecipeFor(RecipeType.SMITHING, ...) through a real data-loaded data/firearms/recipe/attach.json — zero mixin (`docs/spec/domains/attach.md` `ATTACH-REQ-001`, `002`, `003`; `docs/spec/04-architecture.md` `ARCH-DEC-002`).
+- `void aSuppressorAttachesToAMicroUziIntoTheMuzzleSlot(GameTestHelper helper)`
+- `void aSecondSuppressorOnAnAlreadySuppressedUziMatchesNothing(GameTestHelper helper)`
+- `void aGripOnAWinchester1897MatchesNothingSinceTheShotgunClassHasNoGripSlot(GameTestHelper helper)`
+- `void aStockOnAnM1911MatchesNothingSinceThePistolClassHasNoStockSlot(GameTestHelper helper)`
+
 ### `class BulletGameTest` — `src/gametest/java/firearms/gametest/BulletGameTest.java`
 The bullet entity's flight, hit resolution, block discard, despawn and pellet spawn (`docs/spec/domains/combat.md`; `docs/spec/operations/testing.md` `TEST-REQ-004`).
 - `void aBulletHitsATargetTwentyBlocksAwayAndDealsTheGivenDamage(GameTestHelper helper)` — firearms_gametest:open_range is a 4x30x60 all-air structure this mod ships (src/gametest/resources/data/firearms_gametest/gametest/structure/open_range.snbt): the default fabric-gametest-api-v1:empty structure is only 8x8x8, and its invisible barrier walls sit exactly at that boundary — padding widens the region GameTestHelper#getBoundsWithPadding() reports, but not where the barriers themselves are placed (`TestInstanceBlockEntity.processStructureBoundary` builds from the raw, unpadded structure bounds), so a bullet travelling any real distance needs a genuinely larger structure, not a larger padding value.

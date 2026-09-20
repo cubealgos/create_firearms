@@ -5,7 +5,11 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
-The pure part: the stat derivation function and the shared attach function, with no Minecraft imports (docs/spec/operations/testing.md).
+The pure part: the stat derivation function (`FA-2`) and the attach rule's own empty-slot-and- class-has-it decision (`AttachRule`, `FA-7`), with no Minecraft imports (docs/spec/operations/testing.md).
+
+### `class AttachRule` — `src/main/java/firearms/model/AttachRule.java`
+The pure half of the shared attach function (`docs/spec/domains/attach.md` `ATTACH-DEC-001`, `ATTACH-REQ-001`, `002`): given a weapon's class, one of its slots, and whether that slot is currently occupied, decides only whether an attachment may go there.
+- `boolean canAttach(WeaponClass weaponClass, Slot slot, boolean slotOccupied)` — Whether an attachment for slot may attach to a weapon of weaponClass whose current occupancy of that slot is slotOccupied.
 
 ### `record Attachment(String id, Slot slot, List<Modifier> modifiers, double zoom)` — `src/main/java/firearms/model/Attachment.java`
 An attachment item: its id, slot, stat modifiers, and (optic-only) zoom.
