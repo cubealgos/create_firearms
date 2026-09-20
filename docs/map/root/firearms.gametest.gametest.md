@@ -5,6 +5,13 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
+### `class AnvilCombineRefusalGameTest` — `src/gametest/java/firearms/gametest/AnvilCombineRefusalGameTest.java`
+`FA-4`: settles `WEAPON-FAIL-006` (`docs/spec/domains/weapon.md` §7's own open question, closed by Kevin's ruling recorded at `WEAPON-DEC-005`) — the anvil's same-item combine-repair path, independent of `DataComponents.REPAIRABLE`, closed for `firearms:weapon` specifically by `firearms.mixin.AnvilMenuMixin`, not by component omission.
+- `void twoDamagedWeaponStacksNeverCombineAtAnAnvil(GameTestHelper helper)`
+- `void twoDamagedIronPickaxesStillCombineAtAnAnvil(GameTestHelper helper)`
+- `void aWeaponAndAnIronIngotYieldNoAnvilResult(GameTestHelper helper)`
+- `void aRealEnchantingTableOffersNoEnchantmentForAWeapon(GameTestHelper helper)`
+
 ### `class BulletGameTest` — `src/gametest/java/firearms/gametest/BulletGameTest.java`
 The bullet entity's flight, hit resolution, block discard, despawn and pellet spawn (`docs/spec/domains/combat.md`; `docs/spec/operations/testing.md` `TEST-REQ-004`).
 - `void aBulletHitsATargetTwentyBlocksAwayAndDealsTheGivenDamage(GameTestHelper helper)` — firearms_gametest:open_range is a 4x30x60 all-air structure this mod ships (src/gametest/resources/data/firearms_gametest/gametest/structure/open_range.snbt): the default fabric-gametest-api-v1:empty structure is only 8x8x8, and its invisible barrier walls sit exactly at that boundary — padding widens the region GameTestHelper#getBoundsWithPadding() reports, but not where the barriers themselves are placed (`TestInstanceBlockEntity.processStructureBoundary` builds from the raw, unpadded structure bounds), so a bullet travelling any real distance needs a genuinely larger structure, not a larger padding value.

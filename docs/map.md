@@ -20,11 +20,12 @@ signature page before calling into a package you did not write.
 | `firearms.component` | root | Ammo, AmmoCodec, Base, BaseCodec, ComponentRegistration | The seven DataComponentType registrations and their codecs (`FA-3`, `docs/spec/04-architecture.md` `ARCH-DEC-005`, `docs/spec/contracts/data-contract.md`). |
 | `firearms.data` | root | AttachmentDataLoader, AttachmentFile, AttachmentRegistry, DataRegistration, EnumCodec, ModifierCodec, StatsCodec, WeaponBaseFile, WeaponDataLoader, WeaponRegistry | The data loaders turning data/firearms/weapon/*.json and data/firearms/attachment/*.json into firearms.model values (`FA-3`, `docs/spec/domains/weapon.md` `WEAPON-DEC-003`), plus the codecs and the two lookup registries that back them. |
 | `firearms.item` | root | AttachmentItem, ItemRegistration, WeaponItem | The items this mod registers directly: the weapon item, the five attachment items and the six cartridge items (`FA-3`). |
+| `firearms.mixin` | root | AnvilMenuMixin |  |
 | `firearms.model` | root | Attachment, Caliber, Clamp, FireMode, Loadout, Modifier, Op, Slot, Stat, StatDerivation, Stats, WeaponBase, WeaponClass | The pure part: the stat derivation function and the shared attach function, with no Minecraft imports (docs/spec/operations/testing.md). |
 | `firearms.support` | root | Ids | Small helpers shared by more than one of this mod's own Minecraft-facing packages (firearms.component, firearms.item, firearms.data); not part of the pure firearms.model package FA-2 landed (docs/spec/operations/testing.md). |
 | `firearms` | root (test) | SourceSurfaceTest |  |
 | `firearms.combat` | root (test) | SpreadMathTest |  |
-| `firearms.gametest` | root (gametest) | BulletGameTest, ComponentCodecGameTest, CraftingRecipeGameTest, DataLoaderGameTest, ItemRegistrationGameTest, SmokeGameTest, StatDerivationGameTest, WeaponDurabilityAndAnvilGameTest |  |
+| `firearms.gametest` | root (gametest) | AnvilCombineRefusalGameTest, BulletGameTest, ComponentCodecGameTest, CraftingRecipeGameTest, DataLoaderGameTest, ItemRegistrationGameTest, SmokeGameTest, StatDerivationGameTest, WeaponDurabilityAndAnvilGameTest |  |
 | `firearms.model` | root (test) | AttachmentModifierTest, LoadoutSlotValidationTest, StatDerivationClampTest, StatDerivationOrderTest, WeaponBaseStatsTest |  |
 
 | build script | what |
