@@ -126,11 +126,11 @@ public final class DebugCommand {
         Identifier caliberId = Firearms.id(Ids.slug(weaponBase.caliber()));
         stack.set(ComponentRegistration.AMMO, new Ammo(caliberId, stats.magazineSize()));
 
+        ItemStack given = stack.copy(); // Inventory.add drains the stack it is handed; keep the name (FA-23)
         if (!player.getInventory().add(stack)) {
             player.drop(stack, false);
         }
 
-        ItemStack given = stack;
         source.sendSuccess(() -> Component.translatable(
             "command.firearms.debug.give.done", given.getHoverName(), attachmentWords.size()), false);
         return 1;

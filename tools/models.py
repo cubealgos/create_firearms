@@ -80,8 +80,19 @@ FACE_TONE = {"up": "light", "west": "light", "north": "base", "south": "shade", 
 # painted tones -- the same multiplier the game engine applies to every block/item face.
 DIRECTIONAL_SHADE = {"up": 1.0, "down": 0.5, "north": 0.8, "south": 0.8, "east": 0.6, "west": 0.6}
 
+# The aiming pose of the base layer (FA-9): 26.2's `minecraft:model` item-model `transformation` is
+# `com.mojang.math.Transformation.CODEC`, a record of all four fields -- a translation alone fails to
+# parse and takes the whole `firearms:weapon` definition down to the missing model (FA-23).
+AIM_TRANSFORMATION = {
+    "translation": [0.0, 0.05, -0.1],
+    "left_rotation": [0.0, 0.0, 0.0, 1.0],
+    "scale": [1.0, 1.0, 1.0],
+    "right_rotation": [0.0, 0.0, 0.0, 1.0],
+}
+
 
 @dataclass(frozen=True)
+
 class Box:
     frm: tuple[float, float, float]
     to: tuple[float, float, float]
@@ -641,7 +652,7 @@ def generate_weapon_item_json() -> None:
         base_layer = {
             "type": "minecraft:condition",
             "property": "minecraft:using_item",
-            "on_true": {**base_model, "transformation": {"translation": [0.0, 0.05, -0.1]}},
+            "on_true": {**base_model, "transformation": AIM_TRANSFORMATION},
             "on_false": base_model,
         }
         slot_layers = []

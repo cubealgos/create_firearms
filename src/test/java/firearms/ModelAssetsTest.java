@@ -297,6 +297,28 @@ final class ModelAssetsTest {
         return ASSETS.resolve("textures").resolve(path + ".png");
     }
 
+    /** FA-23: 26.2's item-model {@code transformation} is {@code Transformation.CODEC}, all four fields required. */
+    @Test
+    void everyItemDefinitionTransformationCarriesAllFourFields() throws IOException {
+        Pattern block = Pattern.compile("\"transformation\"\\s*:\\s*\\{([^}]*)}");
+        List<String> bad = new ArrayList<>();
+        for (Path itemFile : jsonFiles(ITEMS)) {
+            Matcher m = block.matcher(Files.readString(itemFile));
+            while (m.find()) {
+                String body = m.group(1);
+                for (String key : List.of("translation", "left_rotation", "scale", "right_rotation")) {
+                    if (!body.contains("\"" + key + "\"")) {
+                        bad.add(itemFile + ": transformation lacks " + key);
+                    }
+                }
+                if (!Pattern.compile("\"left_rotation\"\\s*:\\s*\\[[^\\]]*,[^\\]]*,[^\\]]*,[^\\]]*]").matcher(body).find()) {
+                    bad.add(itemFile + ": left_rotation is not a four-element quaternion");
+                }
+            }
+        }
+        assertTrue(bad.isEmpty(), "every transformation parses as Transformation.CODEC: " + bad);
+    }
+
     private static List<Path> jsonFiles(Path root) throws IOException {
         try (Stream<Path> walk = Files.walk(root)) {
             return walk.filter(p -> p.toString().endsWith(".json")).sorted().toList();
