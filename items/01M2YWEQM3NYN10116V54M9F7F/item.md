@@ -278,51 +278,51 @@ names as "genuinely hard" to prove headless. Check each; fold any finding back i
 domain file (or a follow-up ticket) rather than silently living only in this checkbox.
 
 **Debug give and models**
-- [x] `/firearms debug give` produces a correct, bare item for each of the six bases (M1911, Micro
+- [ ] `/firearms debug give` produces a correct, bare item for each of the six bases (M1911, Micro
       Uzi, AKM, Ruger Mini-14, AWM, Winchester Model 1897).
-- [x] `/firearms debug give` produces one fully loaded weapon (every slot its class has filled with
+- [ ] `/firearms debug give` produces one fully loaded weapon (every slot its class has filled with
       an attachment, plus ammo) for at least one base.
-- [x] The inventory icon and the held (first-/third-person) model both show the correct composite
+- [ ] The inventory icon and the held (first-/third-person) model both show the correct composite
       layers for a bare weapon and for the fully loaded one — no missing layer, no wrong texture.
-- [x] A filled slot's layer never reverts or disappears once set (attach a second, still-empty slot
+- [ ] A filled slot's layer never reverts or disappears once set (attach a second, still-empty slot
       later and confirm the first attachment's layer is still there).
 
 **Firing feel**
-- [x] Firing the semi class (M1911) feels like one shot per press, blocked until the cooldown clears.
-- [x] Firing the auto class (Micro Uzi, AKM) feels like a sustained stream while held.
-- [x] Firing the pump class (Winchester Model 1897) feels like one shot per press with a visible pump delay.
-- [x] Reloading from cartridges in inventory (all six calibres, each on its own matching weapon) works and feels right.
-- [x] The empty click (no ammo, no matching cartridge) sounds and feels distinct from a normal shot.
-- [x] Durability visibly wears down shot by shot and the weapon breaks, unrepairable, at zero.
+- [ ] Firing the semi class (M1911) feels like one shot per press, blocked until the cooldown clears.
+- [ ] Firing the auto class (Micro Uzi, AKM) feels like a sustained stream while held.
+- [ ] Firing the pump class (Winchester Model 1897) feels like one shot per press with a visible pump delay.
+- [ ] Reloading from cartridges in inventory (all six calibres, each on its own matching weapon) works and feels right.
+- [ ] The empty click (no ammo, no matching cartridge) sounds and feels distinct from a normal shot.
+- [ ] Durability visibly wears down shot by shot and the weapon breaks, unrepairable, at zero.
 
 **Scoping (AWM, or any weapon with a magnifying optic attached)**
-- [x] Each magnifying optic (2x, 3x, 4x, 6x, 8x, 15x) zooms the view (spyglass-style) and swaps the
+- [ ] Each magnifying optic (2x, 3x, 4x, 6x, 8x, 15x) zooms the view (spyglass-style) and swaps the
       overlay texture to that optic's own art while aiming.
-- [x] Red dot and holo never zoom and never draw an overlay, while still visibly narrowing aim spread.
-- [x] The held-item render is suppressed while scoped, exactly as the spyglass suppresses it.
+- [ ] Red dot and holo never zoom and never draw an overlay, while still visibly narrowing aim spread.
+- [ ] The held-item render is suppressed while scoped, exactly as the spyglass suppresses it.
 
 **Recoil, attach front ends, and refusals**
-- [x] The cosmetic recoil kick (camera nudge on each shot, recovering over time) is visible and feels distinct per weapon's own recoil stat.
-- [x] The smithing table attaches an attachment into a weapon's empty, class-appropriate slot.
-- [x] The smithing table refuses to attach into an already-filled slot (no result).
-- [x] The smithing table refuses an attachment whose class lacks that slot (e.g. an optic on a shotgun; no result).
-- [x] A deployer on a depot attaches an attachment to a weapon placed on it.
-- [x] A deployer on a moving contraption belt attaches an attachment to a weapon passing on the belt.
-- [x] The anvil refuses to combine two weapons (no repair, no result).
-- [x] The anvil refuses a weapon plus an iron ingot (no material-repair result).
-- [x] The enchanting table offers nothing at all for a weapon (every slot's cost stays zero).
+- [ ] The cosmetic recoil kick (camera nudge on each shot, recovering over time) is visible and feels distinct per weapon's own recoil stat.
+- [ ] The smithing table attaches an attachment into a weapon's empty, class-appropriate slot.
+- [ ] The smithing table refuses to attach into an already-filled slot (no result).
+- [ ] The smithing table refuses an attachment whose class lacks that slot (e.g. an optic on a shotgun; no result).
+- [ ] A deployer on a depot attaches an attachment to a weapon placed on it.
+- [ ] A deployer on a moving contraption belt attaches an attachment to a weapon passing on the belt.
+- [ ] The anvil refuses to combine two weapons (no repair, no result).
+- [ ] The anvil refuses a weapon plus an iron ingot (no material-repair result).
+- [ ] The enchanting table offers nothing at all for a weapon (every slot's cost stays zero).
 
 **Trades**
-- [x] The weaponsmith's trades appear correctly at each level (1 through 5) matching the catalogue in `domains/trade.md` §3.
-- [x] The fletcher's cartridge trades appear correctly at each level (1 through 4).
-- [x] Each master buy-back trade (one per class, weaponsmith level 5) wants exactly its own named configuration and rejects a mismatched one, in the real trade screen.
+- [ ] The weaponsmith's trades appear correctly at each level (1 through 5) matching the catalogue in `domains/trade.md` §3.
+- [ ] The fletcher's cartridge trades appear correctly at each level (1 through 4).
+- [ ] Each master buy-back trade (one per class, weaponsmith level 5) wants exactly its own named configuration and rejects a mismatched one, in the real trade screen.
 
 **Tooltips, hit feel, and sound**
-- [x] Weapon, attachment and cartridge tooltips read correctly and match what `WeaponTooltipGameTest` asserts, formatted and laid out well.
-- [x] A bullet hits a zombie at real range (well beyond point-blank) and applies damage/knockback as expected.
-- [x] A bullet hits another player under PvP rules exactly as an arrow would (respects the `pvp` gamerule, team allegiance, invulnerability ticks).
-- [x] Each weapon's fire sound and empty-click sound are distinct and sound right; a suppressor audibly reduces the fire sound's volume/range.
-- [x] No JEI or EMI entry of any kind appears anywhere for this mod's items or recipes (`UI-REQ-005`).
+- [ ] Weapon, attachment and cartridge tooltips read correctly and match what `WeaponTooltipGameTest` asserts, formatted and laid out well.
+- [ ] A bullet hits a zombie at real range (well beyond point-blank) and applies damage/knockback as expected.
+- [ ] A bullet hits another player under PvP rules exactly as an arrow would (respects the `pvp` gamerule, team allegiance, invulnerability ticks).
+- [ ] Each weapon's fire sound and empty-click sound are distinct and sound right; a suppressor audibly reduces the fire sound's volume/range.
+- [ ] No JEI or EMI entry of any kind appears anywhere for this mod's items or recipes (`UI-REQ-005`).
 
 ## Balance notes
 
