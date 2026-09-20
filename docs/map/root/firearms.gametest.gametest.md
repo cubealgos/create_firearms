@@ -5,6 +5,16 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
+### `class AimSpreadSelectionGameTest` — `src/gametest/java/firearms/gametest/AimSpreadSelectionGameTest.java`
+`docs/spec/domains/weapon.md` `WEAPON-REQ-005`: while the player holds the aim control, the derived spread cone narrows by the attached optic's own aim-spread modifier; with no optic attached, aiming narrows spread by no amount beyond the hip-fire value.
+- `void isAimingReadsTheSneakKeyAsTheInterimAimSignal(GameTestHelper helper)`
+- `void hipFireUsesTheWiderConeAndAimingUsesTheNarrowerOne(GameTestHelper helper)`
+
+### `class AmmoCartridgeGameTest` — `src/gametest/java/firearms/gametest/AmmoCartridgeGameTest.java`
+`docs/spec/domains/ammo.md` `AMMO-REQ-002`, `AMMO-REQ-003`: every one of the six cartridge items stacks to 64 (matching vanilla arrows), and a cartridge stack carries none of this mod's own seven data components — it is identified purely by its own item id, one per calibre, never by a component the way a weapon or attachment item is (`docs/spec/contracts/data-contract.md`).
+- `void everyCartridgeStacksToSixtyFour(GameTestHelper helper)`
+- `void aCartridgeCarriesNoneOfThisModsOwnComponents(GameTestHelper helper)`
+
 ### `class AnvilCombineRefusalGameTest` — `src/gametest/java/firearms/gametest/AnvilCombineRefusalGameTest.java`
 `FA-4`: settles `WEAPON-FAIL-006` (`docs/spec/domains/weapon.md` §7's own open question, closed by Kevin's ruling recorded at `WEAPON-DEC-005`) — the anvil's same-item combine-repair path, independent of `DataComponents.REPAIRABLE`, closed for `firearms:weapon` specifically by `firearms.mixin.AnvilMenuMixin`, not by component omission.
 - `void twoDamagedWeaponStacksNeverCombineAtAnAnvil(GameTestHelper helper)`
@@ -32,6 +42,7 @@ The bullet entity's flight, hit resolution, block discard, despawn and pellet sp
 - `void aBulletFiredAtAWallDiscardsWithNoPenetration(GameTestHelper helper)` — `COMBAT-FAIL-002`: removed on the block hit, no penetration.
 - `void aBulletWithNothingToHitDespawnsAfterItsLifeWithNoDamageOrDrop(GameTestHelper helper)` — `COMBAT-REQ-003`, `UC-013`: no damage, no drop, just a clean removal after the fixed life.
 - `void aShotgunTriggerPullSpawnsEightIndependentlySpreadPellets(GameTestHelper helper)` — `COMBAT-REQ-005`: one trigger pull, eight independently-spread pellet entities.
+- `void anInvulnerableTargetTakesNoDamage(GameTestHelper helper)` — `COMBAT-FAIL-004`: an invulnerable target takes no damage — vanilla's own LivingEntity.hurtServer invulnerability check runs before this mod's damage is ever applied (BulletEntity#onHitEntity calls it unconditionally, with no special case of its own), and the bullet is still consumed cleanly, no crash.
 
 ### `class ComponentCodecGameTest` — `src/gametest/java/firearms/gametest/ComponentCodecGameTest.java`
 All seven of this mod's own DataComponentTypes round-trip through their real registered codec, and a malformed value decodes to a graceful DataResult error rather than throwing — the precondition docs/spec/contracts/data-contract.md DATA-REQ-004 relies on: an item's own component-map deserialization drops exactly the one component whose codec errors, degrading that slot to absent (or ammo to "no ammo loaded") instead of failing the whole item.
@@ -62,10 +73,13 @@ The fire-control loop (`FA-6`, `docs/spec/domains/weapon.md` `WEAPON-REQ-004`, `
 - `void aLoadedWeaponFiresOnceAndMovesAmmoDurabilityAndCooldownTogether(GameTestHelper helper)`
 - `void anEmptyWeaponWithMatchingCartridgesReloadsToMagazineSizeAndConsumesThem(GameTestHelper helper)`
 - `void anEmptyWeaponWithNoMatchingCartridgesFiresNothingAndStaysEmpty(GameTestHelper helper)`
+- `void anEmptyWeaponWithOnlyWrongCalibreCartridgesFiresNothingAndLeavesThemUnconsumed(GameTestHelper helper)` — `AMMO-FAIL-001`, `AMMO-REQ-004`: a wrong-calibre cartridge present is never matched, exactly as if no cartridge existed at all.
 - `void anAutoWeaponFiresNBulletsOverNTimesFireRateTicksOfHeldUse(GameTestHelper helper)` — `UC-008`: a held auto weapon fires at its own fire-rate interval — 3 shots over exactly 3 * fireRateTicks simulated ticks (the Micro Uzi's own fireRateTicks == 2) — driven directly through the same WeaponItem methods the vanilla "using item" state machine calls, with ItemCooldowns.tick() advanced once per simulated tick.
 - `void aPumpWeaponRefusesASecondShotInsideThePumpDelay(GameTestHelper helper)` — `WEAPON-REQ-004`: pump behaves as semi for cooldown purposes — a second attempt inside that same delay is refused.
 - `void aShotgunTriggerPullSpawnsItsFullPelletCount(GameTestHelper helper)` — `COMBAT-REQ-005`: one trigger pull, all 8 pellets, one round consumed.
 - `void aSuppressorChangesTheFireSoundEventChosen(GameTestHelper helper)` — `WEAPON-REQ-013`, `COMBAT-REQ-009`: a suppressor changes which sound event FireSounds selects.
+- `void attemptingToFireANonWeaponItemReportsNotAWeapon(GameTestHelper helper)` — `WEAPON-FAIL-001`: not reachable in practice (nothing exposes firing on a non-weapon item), but `FiringLogic#attempt` still checks defensively.
+- `void aRemovedAttachmentIdIsTreatedAsAnAbsentSlotNotACrash(GameTestHelper helper)` — `WEAPON-FAIL-004`: a slot component naming an attachment id a datapack has since removed is treated as absent by WeaponLoadouts#of, the resolver `FiringLogic#attempt` itself calls — no crash, that slot simply contributes nothing to the resolved Loadout.
 
 ### `class ItemRegistrationGameTest` — `src/gametest/java/firearms/gametest/ItemRegistrationGameTest.java`
 Every item `FA-3` registers resolves at its own id: the one weapon item, the five attachment items, and the six cartridge items (`docs/spec/contracts/public-surface.md`).

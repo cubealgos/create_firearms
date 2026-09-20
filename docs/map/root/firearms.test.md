@@ -14,8 +14,12 @@ signature is the contract; read the source only when the summary is not enough.
 - `void baseWeaponAndLayerTexturesAre32x16AndAttachmentAndCartridgeIconsAre16x16()`
 
 ### `class SourceSurfaceTest` — `src/test/java/firearms/SourceSurfaceTest.java`
-Three claims about the source tree, checked against the files themselves: the mod opens no socket of its own (COMP-REQ-001: no networking type is referenced outside Minecraft's own packet API), every translation key the code names — including a damage type's death message keys, e.g.
+Claims about the source tree, checked against the files themselves: the mod opens no socket of its own (COMP-REQ-001: no networking type is referenced outside Minecraft's own packet API), every translation key the code names — including a damage type's death message keys, e.g.
 - `void noNetworkingTypeIsReferencedByTheMod()`
 - `void everyTranslationKeyNamedInCodeHasAnEnglishEntry()`
+- `void noSourceFileImportsCreateVillagerCustomers()`
+- `void noSourceFileImportsAVanillaMenuRegistrationType()`
+- `void noSourceFileRegistersANewVillagerProfessionOrPointOfInterest()`
+- `void noCartridgeRecipeUsesACreateProcessingType()`
 - `void noSourceOrResourceFileNamesPubgOrItsBranding()`
 

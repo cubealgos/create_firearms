@@ -136,4 +136,29 @@ public final class BulletGameTest {
         helper.assertEntitiesPresent(CombatRegistration.BULLET, 8);
         helper.succeed();
     }
+
+    /**
+     * `COMBAT-FAIL-004`: an invulnerable target takes no damage — vanilla's own
+     * {@code LivingEntity.hurtServer} invulnerability check runs before this mod's damage is ever
+     * applied ({@code BulletEntity#onHitEntity} calls it unconditionally, with no special case of
+     * its own), and the bullet is still consumed cleanly, no crash.
+     */
+    @GameTest(structure = "firearms_gametest:open_range")
+    public void anInvulnerableTargetTakesNoDamage(GameTestHelper helper) {
+        Player shooter = helper.makeMockServerPlayer(GameType.SURVIVAL);
+        Zombie zombie = helper.spawn(EntityTypes.ZOMBIE, new Vec3(0.5, 2.0, 12.5));
+        zombie.setNoAi(true);
+        zombie.setInvulnerable(true);
+        float healthBefore = zombie.getHealth();
+
+        BulletEntity bullet = BulletSpawner.spawnBullet(
+            helper.getLevel(), shooter, helper.absoluteVec(new Vec3(0.5, 2.5, 0.5)),
+            new Vec3(0, 0, 1), 4.0, 0.0, TEST_DAMAGE);
+
+        helper.runAfterDelay(10, () -> {
+            helper.assertValueEqual(zombie.getHealth(), healthBefore, "an invulnerable target must take no damage (COMBAT-FAIL-004)");
+            helper.assertTrue(bullet.isRemoved(), "the bullet is still consumed cleanly on the hit, no crash");
+            helper.succeed();
+        });
+    }
 }
