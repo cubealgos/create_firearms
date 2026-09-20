@@ -1,0 +1,15 @@
+{
+  "wants": { "id": "minecraft:emerald", "count": 20 },
+  "gives": {
+    "id": "firearms:weapon",
+    "components": {
+      "firearms:base": { "weapon_id": "firearms:akm" },
+      "minecraft:max_damage": 400,
+      "minecraft:damage": 0
+    }
+  },
+  "merchant_predicate": { "condition": "firearms:no_firearm_offered" },
+  "max_uses": 2,
+  "reputation_discount": 0.2,
+  "xp": 8
+}

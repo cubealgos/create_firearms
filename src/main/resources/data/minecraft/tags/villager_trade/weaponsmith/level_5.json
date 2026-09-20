@@ -1,0 +1,19 @@
+{
+  "replace": false,
+  "values": [
+    "firearms:weaponsmith/5/emerald_red_dot",
+    "firearms:weaponsmith/5/emerald_holo",
+    "firearms:weaponsmith/5/emerald_scope_2x",
+    "firearms:weaponsmith/5/emerald_scope_3x",
+    "firearms:weaponsmith/5/emerald_scope_4x",
+    "firearms:weaponsmith/5/emerald_scope_6x",
+    "firearms:weaponsmith/5/emerald_scope_8x",
+    "firearms:weaponsmith/5/emerald_scope_15x",
+    "firearms:weaponsmith/5/master_m1911",
+    "firearms:weaponsmith/5/master_micro_uzi",
+    "firearms:weaponsmith/5/master_akm",
+    "firearms:weaponsmith/5/master_ruger_mini_14",
+    "firearms:weaponsmith/5/master_awm",
+    "firearms:weaponsmith/5/master_winchester_model_1897"
+  ]
+}

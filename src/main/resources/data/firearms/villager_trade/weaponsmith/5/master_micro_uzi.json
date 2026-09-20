@@ -1,0 +1,14 @@
+{
+  "wants": {
+    "id": "firearms:weapon",
+    "count": 1,
+    "components": {
+      "firearms:base": { "weapon_id": "firearms:micro_uzi" },
+      "firearms:attachment_muzzle": "firearms:suppressor",
+      "firearms:attachment_magazine": "firearms:extended_magazine"
+    }
+  },
+  "gives": { "id": "minecraft:emerald", "count": 32 },
+  "max_uses": 1,
+  "xp": 30
+}

@@ -1,0 +1,15 @@
+{
+  "wants": { "id": "minecraft:emerald", "count": 24 },
+  "gives": {
+    "id": "firearms:weapon",
+    "components": {
+      "firearms:base": { "weapon_id": "firearms:ruger_mini_14" },
+      "minecraft:max_damage": 350,
+      "minecraft:damage": 0
+    }
+  },
+  "merchant_predicate": { "condition": "firearms:no_firearm_offered" },
+  "max_uses": 2,
+  "reputation_discount": 0.2,
+  "xp": 12
+}

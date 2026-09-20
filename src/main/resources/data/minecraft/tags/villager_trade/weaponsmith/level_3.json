@@ -1,0 +1,15 @@
+{
+  "replace": false,
+  "values": [
+    "firearms:weaponsmith/3/emerald_micro_uzi",
+    "firearms:weaponsmith/3/emerald_akm",
+    "firearms:weaponsmith/3/emerald_extended_magazine",
+    "firearms:weaponsmith/3/emerald_quickdraw_magazine",
+    "firearms:weaponsmith/3/emerald_extended_quickdraw_magazine",
+    "firearms:weaponsmith/3/emerald_vertical_grip",
+    "firearms:weaponsmith/3/emerald_angled_grip",
+    "firearms:weaponsmith/3/emerald_half_grip",
+    "firearms:weaponsmith/3/emerald_light_grip",
+    "firearms:weaponsmith/3/emerald_thumb_grip"
+  ]
+}
