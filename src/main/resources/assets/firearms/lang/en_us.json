@@ -49,5 +49,9 @@
   "command.firearms.debug.give.unknown_base": "Unknown weapon base: %s",
   "command.firearms.debug.give.unknown_attachment": "Unknown attachment: %s",
   "command.firearms.debug.give.cannot_attach": "%s cannot attach: its slot is missing from this weapon's class, or already filled",
-  "command.firearms.debug.stats.no_item": "Not holding a firearms weapon"
+  "command.firearms.debug.stats.no_item": "Not holding a firearms weapon",
+  "subtitle.firearms.fire": "Gunshot",
+  "subtitle.firearms.fire_suppressed": "Suppressed gunshot",
+  "subtitle.firearms.reload": "Weapon reloading",
+  "subtitle.firearms.empty": "Weapon clicks empty"
 }

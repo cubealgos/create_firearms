@@ -138,8 +138,6 @@ for aiming vs. hip-fire, distinguished by whether the player is currently using 
 | Question | Blocks | Decided by |
 |---|---|---|
 | Exact crafting-table grids and material quantities for the six base weapons | `WEAPON-REQ-006` | first ticket |
-| Whether the AWM's `semi (bolt-cycle)` fire mode needs a distinct third fire-mode value from `semi`, or reuses `semi` with only a longer fire-rate stat | `WEAPON-REQ-004` | first ticket; this sheet proposes reuse, since the observable difference is fully captured by the fire-rate number already in the roster table |
-| The exact vanilla `Item.Properties` durability/cooldown-group wiring (`useCooldown` vs. a hand-rolled `ItemCooldowns` call per shot for `auto` mode) | `WEAPON-REQ-009` | first ticket; research `create-fly-potato-cannon-and-deploying-26-2.md` §C.1 confirms `useCooldown` is applied automatically from `use()`/`finishUsingItem()` but not `releaseUsing()` |
 
 ## 8. Decisions
 
@@ -183,3 +181,28 @@ for aiming vs. hip-fire, distinguished by whether the player is currently using 
   of this same method. **Cost if wrong:** removing the mixin later is a one-file deletion plus the
   matching mixin-config entry, not a redesign — the material-repair and enchanting refusals
   (`WEAPON-REQ-014`, `015`) do not depend on it and are unaffected either way.
+- `WEAPON-DEC-006` — **The AWM's "semi (bolt-cycle)" reuses plain `semi`; no third fire-mode value**
+  (`FA-6`, settling §7's own open question; confirmed rather than re-litigated per that ticket's own
+  instruction, since testing did not show the reuse to be observably wrong): `FireMode` stays a
+  two-real-value enum (`semi`, `auto`) plus `pump`, and the AWM's `WeaponBase` constant carries
+  `FireMode.SEMI` with its own 30-tick `fireRateTicks` — the only place its bolt-cycle feel needed
+  to live, per this sheet's own original proposal. **Cost if wrong:** a fourth `FireMode` value is
+  an additive enum constant plus one new `switch` arm wherever fire mode is dispatched
+  (`firearms.item.WeaponItem`), not a redesign of the roster or the derivation function.
+- `WEAPON-DEC-007` — **Fire-rate pacing is vanilla `ItemCooldowns`, called by hand once per shot from
+  a server-side `onUseTick`, not the automatic `useCooldown` property** (`FA-6`, settling §7's own
+  open question): `useCooldown`/`UseCooldown.apply()` only fires from `ItemStack.use()`/
+  `finishUsingItem()`, once per interaction, which cannot pace `auto`'s repeated per-tick shots at
+  all and would double-apply for `semi`/`pump` (once from the component, once from this mod's own
+  call) if used at all; `firearms.item.WeaponItem` instead starts the vanilla "using item" session
+  uniformly from `use()`/`useOn()` and dispatches every fire-or-reload attempt through
+  `firearms.fire.FiringLogic#attempt` from `onUseTick`, calling `player.getCooldowns().addCooldown(...)`
+  itself with the derived `fireRateTicks`/`reloadTicks` value. Every base weapon shares the one
+  `firearms:weapon` item, so `ItemCooldowns`'s own default cooldown-group-by-item-id would collide
+  across different base weapons; `FiringLogic` keys every check and every start to a throwaway stack
+  copy carrying a `minecraft:use_cooldown` component whose `cooldownGroup` is the base weapon's own
+  id (`firearms:m1911`, and so on), never persisted back onto the real stack
+  (`docs/spec/contracts/data-contract.md` `DATA-REQ-005`). **Cost if wrong:** switching to a
+  `useCooldown`-driven `semi`/`pump` path later is a small `WeaponItem`/`FiringLogic` change, not a
+  redesign — `auto` would still need the hand-rolled per-shot call regardless, since no vanilla
+  mechanism paces a repeating interaction.
