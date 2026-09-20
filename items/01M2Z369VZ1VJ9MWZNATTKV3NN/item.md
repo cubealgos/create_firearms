@@ -18,9 +18,9 @@ Extend `tools/sprites.py` (deterministic, committed PNGs) rather than hand-paint
 
 ## Acceptance criteria
 
-- [ ] A sheet round approved by Kevin.
-- [ ] `ModelAssetsTest` and `just check` green; every anchor still lines up (the layered composite renders each attachment on its weapon: prove with a composited preview per weapon in the sheet).
-- [ ] Merged through a Forgejo pull request into `development`.
+- [ ] A sheet round approved by Kevin (round five merged for the in-game look on 2026-09-20; not yet approved).
+- [x] `ModelAssetsTest` and `just check` green; every anchor still lines up (the layered composite renders each attachment on its weapon: prove with a composited preview per weapon in the sheet).
+- [x] Merged through a Forgejo pull request into `development`.
 
 ## Constraints and prior findings
 
