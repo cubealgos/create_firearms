@@ -13,6 +13,10 @@ One of the five attachment items, firearms:attachment_: every attachment in that
 - `Slot slot()` — The one slot every stack of this item fits, fixed at registration.
 - `Component getName(ItemStack stack)` — "Suppressor", "Compensator", and so on, read off this stack's own slot component; falls back to the item's own default name (e.g.
 
+### `class CreativeTabRegistration` — `src/main/java/firearms/item/CreativeTabRegistration.java`
+The one creative-mode tab firearms:firearms (`docs/spec/domains/ui.md` `UI-REQ-007`, `docs/spec/decisions/DEC-019-controls.md` §Creative tab), iconed with a bare M1911 and listing, in order: every currently-loaded base weapon bare, one fully loaded example per class, every currently-loaded attachment, and the six cartridges.
+- `void register()`
+
 ### `class ItemRegistration` — `src/main/java/firearms/item/ItemRegistration.java`
 Every item this ticket registers: the one weapon item, the five attachment items (one per slot), and the six cartridge items (one per calibre, `docs/spec/domains/ammo.md` AMMO-REQ-002, 003).
 - `Item WEAPON` — firearms:weapon — one item; which base it is lives entirely in its own firearms:base component.
@@ -30,4 +34,10 @@ The one weapon item, firearms:weapon: every 1.0 base weapon is a stack of this s
 - `ItemUseAnimation getUseAnimation(ItemStack stack)` — ItemUseAnimation.SPYGLASS while stack carries a magnifying optic, so the arm pose matches the vanilla spyglass's own while scoped; NONE otherwise.
 - `int getUseDuration(ItemStack stack, LivingEntity livingEntity)`
 - `boolean releaseUsing(ItemStack stack, Level level, LivingEntity livingEntity, int timeCharged)` — Firing/reload pacing all happens per-tick in #onUseTick, itself gated on ItemCooldowns; releasing the control early just ends the session (LivingEntity's own state machine already does that), so there is nothing further for this mod to do here.
+
+### `class WeaponStacks` — `src/main/java/firearms/item/WeaponStacks.java`
+Builds a firearms:weapon stack the exact way /firearms debug give does — a bare stack, attached through the real Attach function slot by slot, loaded to capacity — so every caller that needs one (the debug command itself, `firearms.item.CreativeTabRegistration`'s creative tab, and any future one) shares this one construction path rather than each reimplementing it (`docs/spec/domains/ui.md` `UI-REQ-007`).
+- `ItemStack bare(Identifier weaponId, WeaponBase weaponBase)` — A bare stack of weaponBase, named by weaponId (its full id, since a datapack-supplied base does not necessarily live under this mod's own namespace): the firearms:base component, and max_damage/damage set from the base's own durability, matching ItemRegistration's own reasoning for why neither is a fixed Item.Properties value.
+- `Optional<ItemStack> attach(ItemStack base, Identifier attachmentId, Attachment attachment)` — A copy of base with attachment (named by attachmentId, its full id) attached through the real Attach#matches/Attach#assemble pair, or empty if Attach#matches refuses it (the slot is missing from base's class, or already filled) — the same refusal /firearms debug give surfaces as command.firearms.debug.give.cannot_attach.
+- `ItemStack loaded(ItemStack stack, WeaponBase weaponBase, Loadout loadout)` — A copy of stack with firearms:ammo set to loadout's own derived magazine size at weaponBase's own calibre — "loaded to capacity."
 

@@ -14,27 +14,25 @@ import firearms.component.Base;
 import firearms.component.ComponentRegistration;
 import firearms.data.AttachmentRegistry;
 import firearms.data.WeaponRegistry;
-import firearms.item.ItemRegistration;
+import firearms.item.WeaponStacks;
 import firearms.model.Attachment;
 import firearms.model.Loadout;
 import firearms.model.Slot;
 import firearms.model.Stats;
 import firearms.model.StatDerivation;
 import firearms.model.WeaponBase;
-import firearms.support.Ids;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 /**
@@ -101,30 +99,22 @@ public final class DebugCommand {
         Identifier baseId = Firearms.id(baseWord);
         WeaponBase weaponBase = WeaponRegistry.get(baseId).orElseThrow(() -> UNKNOWN_BASE.create(baseWord));
 
-        ItemStack stack = new ItemStack(ItemRegistration.WEAPON);
-        stack.set(ComponentRegistration.BASE, Base.of(baseId));
-        stack.set(DataComponents.MAX_DAMAGE, weaponBase.baseStats().durability());
-        stack.set(DataComponents.DAMAGE, 0);
+        ItemStack stack = WeaponStacks.bare(baseId, weaponBase);
 
         Loadout loadout = Loadout.bare(weaponBase);
         for (String word : attachmentWords) {
             Identifier attachmentId = Firearms.id(word);
             Attachment attachment = AttachmentRegistry.get(attachmentId).orElseThrow(() -> UNKNOWN_ATTACHMENT.create(word));
 
-            Item attachmentItem = ItemRegistration.attachment(attachment.slot());
-            ItemStack addition = new ItemStack(attachmentItem);
-            addition.set(ComponentRegistration.attachmentComponent(attachment.slot()), attachmentId);
-
-            if (!Attach.matches(stack, addition)) {
+            Optional<ItemStack> attached = WeaponStacks.attach(stack, attachmentId, attachment);
+            if (attached.isEmpty()) {
                 throw CANNOT_ATTACH.create(word);
             }
-            stack = Attach.assemble(stack, addition);
+            stack = attached.get();
             loadout = loadout.with(attachment);
         }
 
-        Stats stats = StatDerivation.stats(loadout, ignored -> { });
-        Identifier caliberId = Firearms.id(Ids.slug(weaponBase.caliber()));
-        stack.set(ComponentRegistration.AMMO, new Ammo(caliberId, stats.magazineSize()));
+        stack = WeaponStacks.loaded(stack, weaponBase, loadout);
 
         ItemStack given = stack.copy(); // Inventory.add drains the stack it is handed; keep the name (FA-23)
         if (!player.getInventory().add(stack)) {
