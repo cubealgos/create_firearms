@@ -1,21 +1,26 @@
 """`tools/models.py`, exercised the way the generator is actually used: run it, diff the tree
 against a second run (idempotency: no random or wall-clock input anywhere in the generator), check
-every box face's uv rectangle the atlas packer hands out actually lies inside that atlas, and check
-that no element floats -- every base's own boxes form one connected assembly, and every attachment
-part touches the base geometry at its class's anchor (`FA-22`, round 2, Kevin's review: "every
-element of a base must share a face or overlap by at least 0.5 units with another element of the
-same base, and every part's elements must touch or overlap the base's geometry at that class's
-anchor")."""
+every box face's uv rectangle the atlas packer hands out actually lies inside that atlas, check that
+the written model JSON's own `uv` bakes inside its real atlas PNG the way vanilla's `FaceBakery`
+actually reads it (`FA-26`), and check that no element floats -- every base's own boxes form one
+connected assembly, and every attachment part touches the base geometry at its class's anchor
+(`FA-22`, round 2, Kevin's review: "every element of a base must share a face or overlap by at least
+0.5 units with another element of the same base, and every part's elements must touch or overlap the
+base's geometry at that class's anchor")."""
+import json
 import subprocess
 import sys
 import unittest
 from pathlib import Path
 
+from PIL import Image
+
 TOOLS = Path(__file__).resolve().parent
 ROOT = TOOLS.parent
 TOOL = TOOLS / "models.py"
+WEAPON_MODELS = ROOT / "src/main/resources/assets/firearms/models/item/weapon"
 ASSET_ROOTS = [
-    ROOT / "src/main/resources/assets/firearms/models/item/weapon",
+    WEAPON_MODELS,
     ROOT / "src/main/resources/assets/firearms/textures/item/weapon",
     ROOT / "src/main/resources/assets/firearms/items/weapon.json",
 ]
@@ -77,6 +82,50 @@ class AtlasBoundsTest(unittest.TestCase):
         for class_name, slots in models.WEAPON_CLASSES.items():
             for slot in slots:
                 self.assertIn(slot, models.PART_ANCHOR[class_name], f"{class_name} has no anchor for its own {slot} slot")
+
+
+class RealBakeUvBoundsTest(unittest.TestCase):
+    """`FA-26` (Kevin, "the 3D models still show the missing-texture default" --
+    `Cannot compute translucency out of bounds: [52, 0, 60, 4] in 32x32 image`): 26.2's cuboid
+    item-model bake (`FaceBakery.bakeQuad` -> `computeMaterialTransparency` ->
+    `SpriteContents.computeTransparency` -> `NativeImage.computeTransparency`) never reads a model's
+    declared `texture_size` -- decompiling the shipped client showed `CuboidModel$Deserializer`
+    does not parse that key at all, and both `CuboidFace.getU`/`getV` and
+    `computeMaterialTransparency` divide every raw `uv` number by a hardcoded `16.0F` before
+    multiplying by the atlas PNG's *real* pixel dimensions (`x0 = floor(u0 * this.width)` with
+    `u0 = rawU / 16`). `uv` must always be authored in that fixed nominal 16-unit face space,
+    exactly like `from`/`to`, regardless of how large the backing atlas actually is; a declared
+    `texture_size` is dead JSON vanilla never consults. This test mimics vanilla's own bake math
+    directly against the committed model JSON and its real atlas PNG, the same contract
+    `ModelAssetsTest.everyWeaponModelElementFaceUvLiesInsideItsRealAtlasPng` checks on the Java
+    side -- it would have failed before the `_px_to_uv16` fix in `models.py`, since round 1/2 wrote
+    `uv` directly in atlas-pixel units (only correct for faces packed inside the first 16x16
+    pixels of their atlas)."""
+
+    def test_every_committed_model_uv_bakes_inside_its_real_atlas_png(self):
+        offenders = []
+        for model_file in sorted(WEAPON_MODELS.rglob("*.json")):
+            data = json.loads(model_file.read_text())
+            elements = data.get("elements")
+            if not elements:
+                continue  # a bare per-class display parent carries no elements.
+            texture_ref = data["textures"]["0"]
+            png_path = ROOT / "src/main/resources/assets" / texture_ref.replace(":", "/textures/", 1)
+            png_path = png_path.with_suffix(".png")
+            with Image.open(png_path) as image:
+                real_w, real_h = image.size
+            for element in elements:
+                for face_name, face in element["faces"].items():
+                    u0, v0, u1, v1 = face["uv"]
+                    # Vanilla's own math: pixel = (uv / 16) * the atlas PNG's real pixel dimension.
+                    x0, y0, x1, y1 = u0 / 16 * real_w, v0 / 16 * real_h, u1 / 16 * real_w, v1 / 16 * real_h
+                    for x in (x0, x1):
+                        if not (-1e-6 <= x <= real_w + 1e-6):
+                            offenders.append(f"{model_file}: {face_name} uv {face['uv']} -> x={x} outside 0..{real_w}")
+                    for y in (y0, y1):
+                        if not (-1e-6 <= y <= real_h + 1e-6):
+                            offenders.append(f"{model_file}: {face_name} uv {face['uv']} -> y={y} outside 0..{real_h}")
+        self.assertEqual([], offenders, "every committed model's face uv bakes inside its real atlas PNG (vanilla's own /16 math)")
 
 
 class NoFloatingElementsTest(unittest.TestCase):

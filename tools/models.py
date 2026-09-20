@@ -619,15 +619,50 @@ def build_atlas(boxes: list[Box]) -> tuple[int, Image.Image, dict[tuple[int, str
 
 
 # ---------------------------------------------------------------- model JSON
+#
+# FA-26 (Kevin, "the 3D models still show the missing-texture default"): 26.2's cuboid item-model
+# format (`net.minecraft.client.resources.model.cuboid.*`, the package `FaceBakery.bakeQuad` in the
+# crash lives in) has NO notion of a per-model `texture_size` at all -- confirmed by decompiling the
+# shipped client: `CuboidModel$Deserializer` never reads a `texture_size` key, and both
+# `CuboidFace.getU`/`getV` and `FaceBakery.computeMaterialTransparency` divide every raw `uv` number
+# by a hardcoded 16.0F before multiplying by the *real* PNG's own pixel dimensions
+# (`SpriteContents.computeTransparency`: `x0 = floor(u0 * this.width)` with `u0 = rawU / 16`). `uv`
+# is always authored against a fixed nominal 16-unit face space, exactly like `from`/`to`, regardless
+# of how large the backing atlas PNG actually is; a `"texture_size"` key some vanilla model files
+# still carry (e.g. `block/heavy_core.json`, `[16, 16]`) is dead JSON kept only for
+# human/Blockbench documentation, never consulted by any baking code.
+#
+# Round 1/2 of this atlas packer wrote `uv` directly in atlas-pixel units (one texel per model unit,
+# packed into atlases as large as 64x64) under the old-BlockModel assumption that a declared
+# `texture_size` would rescale them -- it doesn't, so any face packed past pixel 16 on either axis
+# produced a `uv` value vanilla's fixed `/16` divide, then re-multiplied by the atlas's real pixel
+# width, pushed outside the image (`Cannot compute translucency out of bounds: [52, 0, 60, 4] in
+# 32x32 image`: a face whose packer rectangle started at raw pixel 26 read back as
+# `floor((26/16)*32) = 52`), and every other face -- even ones that happened not to crash -- sampled
+# the wrong region of its own atlas. The fix: convert every packer pixel rectangle into that fixed
+# 16-unit space at generation time (`_PX_TO_UV16`), so vanilla's own `(uv/16)*realPixelWidth` recovers
+# the exact original pixel rectangle. `texture_size` is still written (matches `docs/spec/decisions/
+# DEC-018-art-direction.md`, and lets `ModelAssetsTest`/`test_models.py` cross-check the atlas PNG's
+# real size against what the generator packed) but no longer plays any role in how `uv` is read.
 
-def _element(box: Box, uv_map, box_index: int, offset: tuple[float, float, float] = (0, 0, 0)) -> dict:
+def _px_to_uv16(px: float, atlas_size: int) -> float:
+    """A packer pixel coordinate (0..`atlas_size`) as vanilla's fixed nominal 16-unit `uv` value,
+    chosen so that vanilla's own `(uv / 16) * realPixelWidth` (with `realPixelWidth == atlas_size`,
+    always true here since the PNG is saved at exactly the packed size) recovers `px` exactly."""
+    return round(px * 16.0 / atlas_size, 6)
+
+
+def _element(box: Box, uv_map, box_index: int, size: int, offset: tuple[float, float, float] = (0, 0, 0)) -> dict:
     ox, oy, oz = offset
     frm = [box.frm[0] + ox, box.frm[1] + oy, box.frm[2] + oz]
     to = [box.to[0] + ox, box.to[1] + oy, box.to[2] + oz]
     faces = {}
     for face_name in FACES:
         x0, y0, x1, y1 = uv_map[(box_index, face_name)]
-        faces[face_name] = {"uv": [x0, y0, x1, y1], "texture": "#0"}
+        faces[face_name] = {
+            "uv": [_px_to_uv16(x0, size), _px_to_uv16(y0, size), _px_to_uv16(x1, size), _px_to_uv16(y1, size)],
+            "texture": "#0",
+        }
     element: dict = {"from": frm, "to": to, "faces": faces}
     if box.rotation:
         rx, ry, rz = box.rotation["origin"]
@@ -645,7 +680,7 @@ def weapon_model_json(weapon_id: str, boxes: list[Box], size: int, uv_map, class
         "parent": f"{NS}:item/weapon/class/{class_name}",
         "texture_size": [size, size],
         "textures": {"0": texture_ref, "particle": texture_ref},
-        "elements": [_element(box, uv_map, i) for i, box in enumerate(boxes)],
+        "elements": [_element(box, uv_map, i, size) for i, box in enumerate(boxes)],
     }
 
 
@@ -655,7 +690,7 @@ def part_model_json(slot: str, name: str, class_name: str, boxes: list[Box], anc
         "parent": f"{NS}:item/weapon/class/{class_name}",
         "texture_size": [size, size],
         "textures": {"0": texture_ref, "particle": texture_ref},
-        "elements": [_element(box, uv_map, i, offset=anchor) for i, box in enumerate(boxes)],
+        "elements": [_element(box, uv_map, i, size, offset=anchor) for i, box in enumerate(boxes)],
     }
 
 

@@ -166,13 +166,33 @@ final class ModelAssetsTest {
     }
 
     /**
-     * `WEAPON-REQ-016` (`FA-22`): every cuboid weapon or part model that declares a {@code
+     * `WEAPON-REQ-016` (`FA-22`/`FA-26`): every cuboid weapon or part model that declares a {@code
      * texture_size} names at least one face, and every one of those faces' {@code uv} rectangles
-     * lies inside that declared size -- `tools/models.py`'s atlas packer's own contract, checked
-     * against the committed output rather than by loading Minecraft.
+     * lies inside the model's own <em>real</em> atlas PNG -- the actual contract 26.2's cuboid
+     * item-model bake enforces (`FaceBakery.bakeQuad` -> `computeMaterialTransparency` ->
+     * {@code NativeImage.computeTransparency}), checked against the committed output rather than by
+     * loading Minecraft.
+     *
+     * <p>FA-26 (Kevin, "the 3D models still show the missing-texture default" --
+     * {@code Cannot compute translucency out of bounds: [52, 0, 60, 4] in 32x32 image}): decompiling
+     * the shipped 26.2 client showed {@code CuboidModel$Deserializer} never reads a {@code
+     * texture_size} key at all, and both {@code CuboidFace.getU}/{@code getV} and {@code
+     * FaceBakery.computeMaterialTransparency} divide every raw {@code uv} number by a hardcoded
+     * {@code 16.0F} before multiplying by the atlas PNG's <em>real</em> pixel dimensions
+     * ({@code SpriteContents.computeTransparency}: {@code x0 = floor(u0 * this.width)} with
+     * {@code u0 = rawU / 16}) -- {@code uv} is always authored against a fixed nominal 16-unit face
+     * space, exactly like {@code from}/{@code to}, regardless of the atlas's real resolution; a
+     * declared {@code texture_size} (still present in some vanilla files, e.g.
+     * {@code block/heavy_core.json}, always {@code [16, 16]}) is dead JSON kept only for
+     * human/Blockbench documentation and never consulted by any baking code. `tools/models.py`
+     * round 1/2 wrote {@code uv} directly in atlas-pixel units under the old-BlockModel assumption
+     * that a declared {@code texture_size} would rescale them; the fix converts every packer pixel
+     * rectangle into that fixed 16-unit space at generation time, so this test -- and vanilla's own
+     * bake -- must instead scale {@code uv} by {@code realPixelWidth / 16}, not by the (still
+     * declared, but inert) {@code texture_size}.
      */
     @Test
-    void everyWeaponModelElementFaceUvLiesInsideItsDeclaredTextureSize() throws IOException {
+    void everyWeaponModelElementFaceUvLiesInsideItsRealAtlasPng() throws IOException {
         List<String> offenders = new ArrayList<>();
         for (Path modelFile : jsonFiles(MODELS.resolve("weapon"))) {
             String text = Files.readString(modelFile);
@@ -180,28 +200,41 @@ final class ModelAssetsTest {
             if (!sizeMatcher.find()) {
                 continue; // a bare per-class display parent carries no elements or texture_size.
             }
-            double width = Double.parseDouble(sizeMatcher.group(1));
-            double height = Double.parseDouble(sizeMatcher.group(2));
+            Matcher block = TEXTURES_BLOCK.matcher(text);
+            assertTrue(block.find(), modelFile + " declares texture_size and so must have a textures block");
+            Matcher refs = RESOURCE_LOCATION.matcher(block.group(1));
+            assertTrue(refs.find(), modelFile + " names at least one texture");
+            Path png = textureFileFor(refs.group(1));
+            var image = ImageIO.read(png.toFile());
+            double realWidth = image.getWidth();
+            double realHeight = image.getHeight();
+
             Matcher uvMatcher = UV.matcher(text);
             boolean sawAFace = false;
             while (uvMatcher.find()) {
                 sawAFace = true;
-                double x0 = Double.parseDouble(uvMatcher.group(1));
-                double y0 = Double.parseDouble(uvMatcher.group(2));
-                double x1 = Double.parseDouble(uvMatcher.group(3));
-                double y1 = Double.parseDouble(uvMatcher.group(4));
-                boolean inBounds = x0 >= 0 && x0 <= width && x1 >= 0 && x1 <= width
-                    && y0 >= 0 && y0 <= height && y1 >= 0 && y1 <= height;
+                double u0 = Double.parseDouble(uvMatcher.group(1));
+                double v0 = Double.parseDouble(uvMatcher.group(2));
+                double u1 = Double.parseDouble(uvMatcher.group(3));
+                double v1 = Double.parseDouble(uvMatcher.group(4));
+                // Vanilla's own math: pixel = (uv / 16) * the atlas PNG's real pixel dimension.
+                double x0 = u0 / 16.0 * realWidth;
+                double y0 = v0 / 16.0 * realHeight;
+                double x1 = u1 / 16.0 * realWidth;
+                double y1 = v1 / 16.0 * realHeight;
+                boolean inBounds = x0 >= 0 && x0 <= realWidth && x1 >= 0 && x1 <= realWidth
+                    && y0 >= 0 && y0 <= realHeight && y1 >= 0 && y1 <= realHeight;
                 if (!inBounds) {
-                    offenders.add(modelFile + ": uv [" + x0 + ", " + y0 + ", " + x1 + ", " + y1 + "] outside "
-                        + width + "x" + height);
+                    offenders.add(modelFile + ": uv [" + u0 + ", " + v0 + ", " + u1 + ", " + v1 + "] -> pixels ["
+                        + x0 + ", " + y0 + ", " + x1 + ", " + y1 + "] outside its " + (int) realWidth + "x"
+                        + (int) realHeight + " atlas " + png);
                 }
             }
             if (!sawAFace) {
                 offenders.add(modelFile + ": declares texture_size but has no faces");
             }
         }
-        assertTrue(offenders.isEmpty(), "every weapon model element's face uvs lie inside its texture_size: " + offenders);
+        assertTrue(offenders.isEmpty(), "every weapon model element's face uv bakes inside its real atlas PNG: " + offenders);
     }
 
     /**
