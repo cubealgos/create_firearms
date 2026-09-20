@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Callable
 
 from PIL import Image
 
@@ -349,240 +350,268 @@ def attachment_glyph(slot: str, name: str) -> Image.Image:
 
 
 # ---------------------------------------------------------------- standalone attachment icons and
-# cartridges (16x16), round two (`DEC-018-art-direction.md`, `WEAPON-REQ-017`): drawn independently
-# of `attachment_glyph` above (which stays as FA-22's composite-layer path, untouched), in the
-# vanilla/Create habit -- a chunky object filling roughly 10-14px of the canvas, a one-pixel outline
-# in the material's own `outline` tone, `light` on the top/left faces, `base` fill, `shade` on the
-# bottom/right faces, no gradients, no isolated pixels, coloured only from `tools/palette.py`'s
-# ramps (never a hand-picked RGB literal).
+# cartridges (16x16), round three (`DEC-018-art-direction.md`, `WEAPON-REQ-017`): mask-then-material.
+# Round two applied the outline rule but not the light, the diagonal or the volume (Kevin, round-two
+# review: "the icons still read as flat grey rectangles ... ours is a horizontal box with one flat
+# tone"). Every icon is now drawn as a boolean alpha MASK first -- a capsule stepping diagonally
+# (`_capsule`) the way the vanilla spyglass/arrow/bow run bottom-left to top-right, or a rectangle
+# (`_rect_mask`) for a compact axis-aligned part -- and `materialise()` derives the shading from the
+# mask's own geometry in one pass: `outline` wherever the mask meets its own edge, `light`/`shade`
+# one ring in from an outline neighbour (top/left vs bottom/right), `base` elsewhere, one `glint`
+# pixel at the top-left-most interior point for metals and glass. A multi-material icon layers
+# several masks in painter's order, each materialised with its own ramp, independent of
+# `attachment_glyph` above (FA-22's composite-layer path, left untouched).
+
+def _new_mask() -> list[list[bool]]:
+    return [[False] * ICON[1] for _ in range(ICON[0])]
+
+
+def _mset(mask: list[list[bool]], x: int, y: int) -> None:
+    if 0 <= x < len(mask) and 0 <= y < len(mask[0]):
+        mask[x][y] = True
+
+
+def _capsule(x0: int, y0: int, steps: int, thickness: int | Callable[[int], int],
+             dx: int = 1, dy: int = -1, step_range: range | None = None) -> list[list[bool]]:
+    """A capsule mask stepping `(dx, dy)` per step, a square brush of `thickness` (or a per-step
+    thickness function, for a taper or a scope's bell) stamped at each step and centred on that
+    step's own point -- consecutive brushes overlap and fuse into one solid band with a staircase
+    edge, the vanilla arrow/spyglass/bow's own diagonal precedent when `dx=1, dy=-1`, or a plain
+    axis-aligned bar when one of `dx`/`dy` is 0. `step_range` draws only a sub-range of steps at the
+    exact same geometry (a ring, a cap, a rim, a lens) so a detail always lands on the full
+    capsule's own surface rather than floating off it."""
+    mask = _new_mask()
+    for i in (step_range if step_range is not None else range(steps)):
+        t = thickness(i) if callable(thickness) else thickness
+        half = t // 2
+        cx, cy = x0 + i * dx, y0 + i * dy
+        for tx in range(-half, t - half):
+            for ty in range(-half, t - half):
+                _mset(mask, cx + tx, cy + ty)
+    return mask
+
+
+def _rect_mask(x0: int, y0: int, x1: int, y1: int) -> list[list[bool]]:
+    mask = _new_mask()
+    for x in range(x0, x1):
+        for y in range(y0, y1):
+            _mset(mask, x, y)
+    return mask
+
+
+def _subtract(a: list[list[bool]], b: list[list[bool]]) -> list[list[bool]]:
+    return [[a[x][y] and not b[x][y] for y in range(len(a[0]))] for x in range(len(a))]
+
+
+def _union(*masks: list[list[bool]]) -> list[list[bool]]:
+    out = _new_mask()
+    for x in range(len(out)):
+        for y in range(len(out[0])):
+            out[x][y] = any(m[x][y] for m in masks)
+    return out
+
+
+def materialise(img: Image.Image, mask: list[list[bool]], ramp: Ramp) -> None:
+    """The one shading pass every icon in this file goes through: `outline` on every mask pixel with
+    a 4-neighbour outside the mask, `light` on an interior pixel whose up or left neighbour is
+    outline, `shade` on one whose down or right neighbour is outline, `base` elsewhere, and -- for a
+    ramp that carries one (metals, glass) -- a single `glint` pixel at the top-left-most interior
+    point. The vanilla spyglass/brass-ingot volume, derived from the mask's own shape rather than
+    hand-placed per icon."""
+    size_x, size_y = len(mask), len(mask[0])
+
+    def present(x: int, y: int) -> bool:
+        return 0 <= x < size_x and 0 <= y < size_y and mask[x][y]
+
+    outline = {(x, y) for x in range(size_x) for y in range(size_y)
+               if present(x, y) and not (present(x - 1, y) and present(x + 1, y)
+                                          and present(x, y - 1) and present(x, y + 1))}
+    px = img.load()
+    interior: list[tuple[int, int]] = []
+    for x in range(size_x):
+        for y in range(size_y):
+            if not present(x, y):
+                continue
+            if (x, y) in outline:
+                colour = ramp.outline
+            else:
+                if (x, y - 1) in outline or (x - 1, y) in outline:
+                    colour = ramp.light
+                elif (x, y + 1) in outline or (x + 1, y) in outline:
+                    colour = ramp.shade
+                else:
+                    colour = ramp.base
+                interior.append((x, y))
+            px[x, y] = colour
+    if ramp.glint is not None and interior:
+        gx, gy = min(interior, key=lambda p: (p[1], p[0]))
+        px[gx, gy] = ramp.glint
+
+
+DIAG_X0, DIAG_Y0 = 1, 13  # every diagonal capsule's own bottom-left anchor, stepping (1, -1).
+
 
 def _set(img: Image.Image, x: int, y: int, colour: tuple[int, int, int, int]) -> None:
     if 0 <= x < img.width and 0 <= y < img.height:
         img.load()[x, y] = colour
 
 
-def _block(img: Image.Image, x0: int, y0: int, x1: int, y1: int, ramp: Ramp) -> None:
-    """An outlined, top-left-lit rectangular block in a material ramp: a one-pixel `outline` ring,
-    `light` on the top/left interior pixels, `shade` on the bottom/right interior pixels, `base`
-    fill between -- the one shading routine every boxy icon part (mag bodies, sight housings, grip
-    blocks, pads) is built from, so every part reads by the same rule DEC-018 names."""
-    px = img.load()
-    for x in range(x0, x1):
-        for y in range(y0, y1):
-            if not (0 <= x < img.width and 0 <= y < img.height):
-                continue
-            if x in (x0, x1 - 1) or y in (y0, y1 - 1):
-                colour = ramp.outline
-            elif x == x0 + 1 or y == y0 + 1:
-                colour = ramp.light
-            elif x == x1 - 2 or y == y1 - 2:
-                colour = ramp.shade
-            else:
-                colour = ramp.base
-            px[x, y] = colour
-
-
-def _h_tube(img: Image.Image, x0: int, y0: int, length: int, thickness: int, ramp: Ramp,
-            bulge_front: bool = False, bulge_rear: bool = False,
-            rings: dict[int, Ramp] | None = None) -> None:
-    """A horizontal cylinder, column by column, its own outline/light/base/shade rows, with an
-    optional wider `bulge` (a scope's objective/ocular bell) at either end -- the muzzle-device and
-    scope precedent, alongside vanilla's spyglass tube. `rings` swaps one column's ramp (a brass
-    band wrapping the tube at that column's own local thickness, bulge included) rather than
-    stamping a fixed row, so a ring always reads as wrapping the barrel, never floating off it."""
-    px = img.load()
-    rings = rings or {}
-    mid = y0 + thickness // 2
-    for i in range(length):
-        x = x0 + i
-        t = thickness
-        if bulge_front and i >= length - 3:
-            t = thickness + 2
-        if bulge_rear and i < 3:
-            t = thickness + 2
-        ry0, ry1 = mid - t // 2, mid - t // 2 + t
-        col_ramp = rings.get(i, ramp)
-        for y in range(ry0, ry1):
-            if not (0 <= x < img.width and 0 <= y < img.height):
-                continue
-            if y in (ry0, ry1 - 1) or i in (0, length - 1):
-                colour = col_ramp.outline
-            elif y == ry0 + 1:
-                colour = col_ramp.light
-            elif y == ry1 - 2:
-                colour = col_ramp.shade
-            else:
-                colour = col_ramp.base
-            px[x, y] = colour
-
-
-def _stairs(img: Image.Image, x: int, y: int, rows: int, width: int, ramp: Ramp,
-            dx: int = 1, shrink: int = 0) -> None:
-    """A staircase of `_block`-shaded rows stepping sideways one column per row -- a wedge leaning
-    forward (the angled grip), a comb sloping into a butt."""
-    for i in range(rows):
-        w = max(1, width - shrink * i)
-        rx = x + dx * i
-        _block(img, rx, y + i, rx + w, y + i + 1, ramp)
-
-
 def attachment_icon(slot: str, name: str) -> Image.Image:
-    """The attachment's own standalone item-stack icon, drawn fresh at 16x16 in the vanilla/Create
-    style rather than cropped from the weapon-layer glyph: a small, chunky, recognisable object
-    (a tube, a box, a post) filling most of the canvas, shaded per `Ramp` and coloured only from
-    `tools/palette.py` (`WEAPON-REQ-017`, `DEC-018`)."""
+    """The attachment's own standalone item-stack icon: a mask (or a few, layered) materialised per
+    `materialise()`, elongated parts run diagonally bottom-left to top-right and fill 12-14px of the
+    canvas the way vanilla's spyglass/arrow/bow do, compact parts stay axis-aligned and fill 9-12px
+    (`WEAPON-REQ-017`, `DEC-018`)."""
     img = Image.new("RGBA", ICON, TRANSPARENT)
+    x0, y0 = DIAG_X0, DIAG_Y0
 
     if slot == "muzzle":
         if name == "suppressor":
-            # a fat matte-gunmetal tube with a lighter steel end cap ring at each end -- the
-            # vanilla spyglass's own banded-tube precedent, not a single flat bar.
-            _h_tube(img, 2, 5, 12, 5, STEEL)
-            _h_tube(img, 4, 5, 8, 5, GUNMETAL)  # matte body between the two caps
+            # a fat diagonal tube, matte gunmetal, with a lighter steel cap band at each end --
+            # the spyglass's own banded-tube precedent, not a flat horizontal bar.
+            steps, thickness = 12, 4
+            materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(2, steps - 2)),
+                        GUNMETAL)
+            materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(0, 2)), STEEL)
+            materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(steps - 2, steps)),
+                        STEEL)
         elif name == "flash_hider":
-            # a cone opening toward the muzzle (right), three tines beyond it -- gapped rows, not
-            # a solid block, so each prong reads separately.
-            x0, cone_len = 3, 5
-            for i in range(cone_len):
-                t = 3 + i // 2  # 3,3,4,4,5: widening toward the muzzle
-                ry0 = 7 - t // 2
-                for y in range(ry0, ry0 + t):
-                    edge = y in (ry0, ry0 + t - 1) or i in (0, cone_len - 1)
-                    colour = STEEL.outline if edge else (STEEL.light if y == ry0 + 1 else STEEL.base)
-                    _set(img, x0 + i, y, colour)
-            tip_ry0, tip_t = 7 - 5 // 2, 5
-            for y in (tip_ry0, tip_ry0 + tip_t // 2, tip_ry0 + tip_t - 1):
-                _set(img, x0 + cone_len, y, STEEL.outline)
-                _set(img, x0 + cone_len + 1, y, STEEL.outline)
+            # a cone opening toward the muzzle, three parallel tines beyond it -- offset across the
+            # cone's own width (the perpendicular of a (1,-1) diagonal is (1,1)), thin enough to
+            # leave a gap between each, so they read as separate prongs rather than a solid wedge.
+            cone_steps = 6
+            cone_t: Callable[[int], int] = lambda i: 2 + i // 2  # noqa: E731
+            cone = _capsule(x0, y0, cone_steps, cone_t, step_range=range(cone_steps))
+            tip_x, tip_y = x0 + (cone_steps - 1), y0 - (cone_steps - 1)
+            tines = _union(
+                cone,
+                *(_capsule(tip_x + k, tip_y + k, 4, 1, dx=1, dy=-1) for k in (-2, 0, 2)),
+            )
+            materialise(img, tines, STEEL)
         else:  # compensator
-            # a short steel block with two separate copper vent ports on top, not one merged bar.
-            _h_tube(img, 3, 6, 8, 4, STEEL)
-            for cx in (5, 8):
-                _set(img, cx, 7, COPPER.base)
-                _set(img, cx, 8, COPPER.shade)
+            # a short diagonal steel block with two separate, small copper vent ports on top, not
+            # one merged bar (a smaller brush than the body's own, centred on the same steps).
+            steps, thickness = 7, 4
+            materialise(img, _capsule(x0, y0, steps, thickness), STEEL)
+            materialise(img, _capsule(x0, y0, steps, 2, step_range=range(2, 3)), COPPER)
+            materialise(img, _capsule(x0, y0, steps, 2, step_range=range(4, 5)), COPPER)
 
     elif slot == "optic":
         if name.startswith("scope_"):
             magnification = int(name.split("_")[1].rstrip("x"))
             if magnification <= 4:
-                length = {2: 7, 3: 8, 4: 9}[magnification]
-                bulge_front = bulge_rear = False
-                ring_cols = (length - 3,)
+                steps = {2: 9, 3: 10, 4: 11}[magnification]
+                thickness: int | Callable[[int], int] = 3
+                ring_steps = (steps // 2,)
             elif magnification <= 8:
-                length = {6: 10, 8: 11}[magnification]
-                bulge_front, bulge_rear = True, False
-                ring_cols = (2, length - 4)
+                steps = {6: 12, 8: 13}[magnification]
+                thickness = lambda i, s=steps: 5 if i >= s - 3 else 3  # noqa: E731
+                ring_steps = (2, steps - 5)
             else:
-                length, bulge_front, bulge_rear = 13, True, True
-                ring_cols = (2, length // 2, length - 4)
-            x0 = 8 - length // 2
-            rings = {r: BRASS for r in ring_cols}
-            _h_tube(img, x0, 5, length, 4, STEEL, bulge_front=bulge_front, bulge_rear=bulge_rear,
-                    rings=rings)
-            _set(img, x0 + length - 2, 6, GLASS.light)
-            _set(img, x0 + length - 2, 7, GLASS.base)  # objective lens, two panes wide
+                steps = 14
+                thickness = lambda i, s=steps: 5 if (i < 3 or i >= s - 3) else 3  # noqa: E731
+                ring_steps = (2, steps // 2, steps - 5)
+            materialise(img, _capsule(x0, y0, steps, thickness), STEEL)
+            for r in ring_steps:
+                materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(r, r + 1)),
+                            BRASS)
+            materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(steps - 1, steps)),
+                        GLASS)  # the objective lens, one step -- a cap, not a second tube segment
         elif name == "red_dot":
-            _block(img, 6, 5, 11, 10, BLACK)
-            _block(img, 7, 6, 10, 9, GLASS)
+            materialise(img, _rect_mask(6, 5, 11, 10), BLACK)
+            materialise(img, _rect_mask(7, 6, 10, 9), GLASS)
             _set(img, 8, 7, RED_DOT)
-            _set(img, 7, 10, STEEL.outline)
-            _set(img, 9, 10, STEEL.outline)  # mount legs
-        else:  # holo
-            _block(img, 4, 5, 12, 10, BLACK)
-            _block(img, 5, 6, 11, 9, GLASS)
-            _set(img, 7, 7, GLASS.light)
-            _set(img, 8, 7, GLASS.light)
-            _set(img, 5, 10, STEEL.outline)
-            _set(img, 10, 10, STEEL.outline)  # mount legs
+            materialise(img, _union(_rect_mask(7, 10, 8, 12), _rect_mask(9, 10, 10, 12)), STEEL)
+        else:  # holo: a boxier housing, a wider window
+            materialise(img, _rect_mask(4, 5, 12, 10), BLACK)
+            materialise(img, _rect_mask(5, 6, 11, 9), GLASS)
+            materialise(img, _union(_rect_mask(5, 10, 6, 12), _rect_mask(10, 10, 11, 12)), STEEL)
 
     elif slot == "magazine":
+        # a diagonal box magazine, the vanilla iron-nugget/spyglass tube precedent, its own brass
+        # toe where the quickdraw variants carry one, a follower line riding on top.
         if name == "quickdraw_magazine":
-            _block(img, 6, 4, 10, 10, STEEL)
-            _block(img, 6, 10, 10, 12, BRASS)
+            steps, thickness = 9, 4
+            materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(2, steps)), STEEL)
+            materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(0, 2)), BRASS)
         elif name == "extended_magazine":
-            _block(img, 6, 3, 10, 13, STEEL)
+            steps, thickness = 12, 4
+            materialise(img, _capsule(x0, y0, steps, thickness), STEEL)
         else:  # extended_quickdraw_magazine
-            _block(img, 6, 3, 10, 12, STEEL)
-            _block(img, 6, 12, 10, 14, BRASS)
+            steps, thickness = 12, 4
+            materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(2, steps)), STEEL)
+            materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(0, 2)), BRASS)
+        fx, fy = x0 + steps // 2, y0 - steps // 2
+        _set(img, fx, fy, STEEL.shade)  # the follower line, a witness mark on the body
 
     elif slot == "grip":
         if name == "light_grip":
-            _block(img, 7, 6, 9, 12, BLACK)
+            materialise(img, _rect_mask(7, 4, 9, 13), BLACK)
         elif name == "half_grip":
-            _block(img, 5, 7, 11, 12, BLACK)
+            materialise(img, _rect_mask(4, 7, 12, 12), BLACK)
         elif name == "angled_grip":
-            _stairs(img, 5, 6, 6, 5, POLYMER, dx=1, shrink=0)
+            steps = 6
+            materialise(img, _capsule(2, y0, steps, lambda i: 3 + i // 2), POLYMER)  # noqa: E731
         elif name == "vertical_grip":
-            _block(img, 7, 4, 10, 12, BLACK)
-            for y in (6, 8, 10):
-                _set(img, 8, y, BLACK.outline)  # grooves
-        else:  # thumb_grip
-            _block(img, 5, 8, 10, 12, DARK_OAK)
-            _set(img, 6, 8, TRANSPARENT)
-            _set(img, 6, 9, TRANSPARENT)  # thumb notch
+            steps, thickness = 9, 4
+            mask = _capsule(x0, y0, steps, thickness)
+            materialise(img, mask, BLACK)
+            for i in range(1, steps, 2):
+                gx, gy = x0 + i, y0 - i
+                if 0 <= gx < img.width and 0 <= gy < img.height and mask[gx][gy]:
+                    _set(img, gx, gy, BLACK.shade)  # grooves, every other step
+        else:  # thumb_grip: a stub with a notch cut for the thumb
+            materialise(img, _subtract(_rect_mask(4, 7, 11, 12), _rect_mask(4, 7, 7, 9)), DARK_OAK)
 
     else:  # stock
         if name == "tactical_stock":
-            _block(img, 2, 5, 5, 11, BLACK)  # buttplate
-            for x in range(5, 13):
-                _set(img, x, 5, BLACK.outline)
-                _set(img, x, 10, BLACK.outline)  # skeleton rails, open middle
-            _set(img, 12, 5, BLACK.outline)
-            _set(img, 12, 6, BLACK.outline)
-            _set(img, 12, 9, BLACK.outline)
-            _set(img, 12, 10, BLACK.outline)  # interface strut
+            outer = _rect_mask(2, 5, 14, 11)
+            hollow = _subtract(outer, _rect_mask(6, 6, 12, 10))  # buttplate + rails + front strut
+            materialise(img, hollow, BLACK)
         elif name == "cheek_pad":
-            _block(img, 3, 6, 13, 10, SPRUCE)
+            materialise(img, _rect_mask(3, 6, 13, 10), SPRUCE)
             for x in range(4, 12):
-                _set(img, x, 7, SPRUCE.outline)
-                _set(img, x, 9, SPRUCE.outline)  # two straps
-        else:  # bullet_loops
-            _block(img, 2, 8, 14, 11, OAK)  # leather strip, tanned rather than the dark-oak grip's
-            for x in (3, 5, 7, 9, 11):
-                _set(img, x, 6, BRASS.outline)
-                _set(img, x, 7, BRASS.base)
-                _set(img, x, 8, BRASS.base)  # five cartridges standing in their loops
+                _set(img, x, 7, SPRUCE.shade)
+                _set(img, x, 9, SPRUCE.shade)  # two straps
+        else:  # bullet_loops: five brass cartridges standing on a leather strip
+            materialise(img, _rect_mask(1, 8, 15, 11), OAK)
+            loops = _union(*(_rect_mask(x, 5, x + 2, 9) for x in (1, 4, 7, 10, 13)))
+            materialise(img, loops, BRASS)
 
     return img
 
 
-# ---------------------------------------------------------------- cartridges (16x16), a vanilla-
-# style cartridge standing upright per calibre, plus a distinct 12-gauge shotshell.
+# ---------------------------------------------------------------- cartridges (16x16): a diagonal
+# capsule per calibre, brass case with a rim, the tip its own material, scaled so the case runs
+# about 3-4px wide the way the vanilla arrow's shaft does against its head.
 
-def cartridge_sprite(case_rows: int, width: int, tip_ramp: Ramp, boat_tail: bool = False) -> Image.Image:
+def cartridge_sprite(case_steps: int, width: int, tip_ramp: Ramp, boat_tail: bool = False) -> Image.Image:
     img = Image.new("RGBA", ICON, TRANSPARENT)
-    cx = 8
-    x0, x1 = cx - width // 2, cx - width // 2 + width
-    top = 14 - case_rows - 4
+    x0, y0 = DIAG_X0, DIAG_Y0
+    tip_steps = 3
+    total = case_steps + tip_steps
 
-    _set(img, cx - 1 if width > 3 else x0, top, tip_ramp.outline)
-    _set(img, cx, top, tip_ramp.outline)  # pointed nose, narrower than the body
-    _block(img, x0, top + 1, x1, top + 4, tip_ramp)  # bullet tip/ogive
-    for x in range(x0, x1):
-        _set(img, x, top + 4, BRASS.outline)  # cannelure
-    case_y0 = top + 5
-    if boat_tail:
-        _block(img, x0, case_y0, x1, case_y0 + case_rows - 1, BRASS)
-        _block(img, x0 + 1, case_y0 + case_rows - 1, x1 - 1, case_y0 + case_rows, BRASS)
-    else:
-        _block(img, x0, case_y0, x1, case_y0 + case_rows, BRASS)
-    rim_y = case_y0 + case_rows
-    _block(img, x0, rim_y, x1, rim_y + 1, BRASS)
-    _set(img, cx - 1, rim_y, BRASS.outline)
-    _set(img, cx, rim_y, BRASS.outline)  # primer
+    def case_thickness(i: int) -> int:
+        if boat_tail and i == case_steps - 1:
+            return max(2, width - 1)  # the boat-tail: the case necks in just below the bullet
+        return width
+
+    case_mask = _capsule(x0, y0, total, case_thickness, step_range=range(0, case_steps))
+    rim_mask = _capsule(x0, y0, total, width + 1, step_range=range(0, 1))
+    materialise(img, _union(case_mask, rim_mask), BRASS)
+
+    tip_mask = _capsule(x0, y0, total, width, step_range=range(case_steps, total))
+    materialise(img, tip_mask, tip_ramp)
     return img
 
 
 def shotshell_sprite() -> Image.Image:
-    """12 gauge: a squat red hull with a brass head, not a bottlenecked bullet -- `Caliber.GAUGE_12`'s
-    own shape."""
+    """12 gauge: a squat diagonal red hull with a brass head, not a bottlenecked bullet --
+    `Caliber.GAUGE_12`'s own shape."""
     img = Image.new("RGBA", ICON, TRANSPARENT)
-    _block(img, 4, 2, 12, 11, RED)
-    for x in range(4, 12):
-        _set(img, x, 2, RED.outline)  # crimped top
-    _block(img, 4, 11, 12, 14, BRASS)
-    _set(img, 7, 12, BRASS.outline)
-    _set(img, 8, 12, BRASS.outline)  # primer
+    x0, y0 = DIAG_X0, DIAG_Y0
+    total, width = 10, 5
+    materialise(img, _capsule(x0, y0, total, width, step_range=range(2, total)), RED)
+    materialise(img, _capsule(x0, y0, total, width, step_range=range(0, 3)), BRASS)
     return img
 
 
