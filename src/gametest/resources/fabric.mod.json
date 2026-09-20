@@ -17,7 +17,12 @@
       "firearms.gametest.BulletGameTest",
       "firearms.gametest.AttachSmithingGameTest",
       "firearms.gametest.AttachDeployingGameTest",
-      "firearms.gametest.AnvilCombineRefusalGameTest"
+      "firearms.gametest.AnvilCombineRefusalGameTest",
+      "firearms.gametest.DebugCommandGameTest",
+      "firearms.gametest.FiringGameTest",
+      "firearms.gametest.MasterBuyBackGameTest",
+      "firearms.gametest.NoDuplicateOfferGameTest",
+      "firearms.gametest.TradeFileGameTest"
     ]
   },
   "depends": {
