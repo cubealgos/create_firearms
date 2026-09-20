@@ -32,13 +32,13 @@ is already set in `firearms.mixins.json` from `FA-1`'s bootstrap.
 
 ## Acceptance criteria
 
-- [ ] A firearm with a magnified optic (2x–15x) attached zooms the FOV by that optic's own factor
+- [x] A firearm with a magnified optic (2x–15x) attached zooms the FOV by that optic's own factor
       while the aim control is held, and shows that optic's own overlay texture.
-- [ ] A firearm with red dot or holo attached shows no FOV change, no overlay, and does not suppress
+- [x] A firearm with red dot or holo attached shows no FOV change, no overlay, and does not suppress
       the held-item render while aiming (`COMBAT-DEC-004`).
-- [ ] Releasing the aim control returns the view, overlay and held-item render to normal exactly as
+- [x] Releasing the aim control returns the view, overlay and held-item render to normal exactly as
       releasing a vanilla spyglass does.
-- [ ] `just check` green, including a `just client` manual confirmation on the checklist.
+- [x] `just check` green, including a `just client` manual confirmation on the checklist.
 
 ## Constraints and prior findings
 

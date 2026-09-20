@@ -30,13 +30,13 @@ third-party asset is copied (`operations/compliance.md`).
 
 ## Acceptance criteria
 
-- [ ] Attaching visibly changes the composite item model's layers in a real client render, and a
+- [x] Attaching visibly changes the composite item model's layers in a real client render, and a
       filled slot's layer never reverts (client checklist item).
-- [ ] A shotgun (no optic/grip/stock slots) never renders a layer for a slot its class lacks.
-- [ ] The aiming vs. hip-fire display transform is visibly distinct on at least one weapon.
-- [ ] No texture, model file, or string anywhere in this ticket's assets references PUBG or its
+- [x] A shotgun (no optic/grip/stock slots) never renders a layer for a slot its class lacks.
+- [x] The aiming vs. hip-fire display transform is visibly distinct on at least one weapon.
+- [x] No texture, model file, or string anywhere in this ticket's assets references PUBG or its
       branding (`COMP-REQ-002`, enforced by `SourceSurfaceTest`'s existing scan).
-- [ ] `just check` green.
+- [x] `just check` green.
 
 ## Constraints and prior findings
 
