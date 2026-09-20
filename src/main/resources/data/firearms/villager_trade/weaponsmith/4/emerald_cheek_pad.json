@@ -1,0 +1,10 @@
+{
+  "wants": { "id": "minecraft:emerald", "count": 5 },
+  "gives": {
+    "id": "firearms:attachment_stock",
+    "components": { "firearms:attachment_stock": "firearms:cheek_pad" }
+  },
+  "max_uses": 12,
+  "reputation_discount": 0.2,
+  "xp": 8
+}

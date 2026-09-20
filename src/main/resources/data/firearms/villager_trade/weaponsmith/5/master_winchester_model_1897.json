@@ -1,0 +1,13 @@
+{
+  "wants": {
+    "id": "firearms:weapon",
+    "count": 1,
+    "components": {
+      "firearms:base": { "weapon_id": "firearms:winchester_model_1897" },
+      "firearms:attachment_muzzle": "firearms:compensator"
+    }
+  },
+  "gives": { "id": "minecraft:emerald", "count": 40 },
+  "max_uses": 1,
+  "xp": 30
+}

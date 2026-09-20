@@ -1,0 +1,10 @@
+{
+  "wants": { "id": "minecraft:emerald", "count": 6 },
+  "gives": {
+    "id": "firearms:attachment_magazine",
+    "components": { "firearms:attachment_magazine": "firearms:extended_magazine" }
+  },
+  "max_uses": 12,
+  "reputation_discount": 0.2,
+  "xp": 6
+}

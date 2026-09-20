@@ -24,9 +24,10 @@ signature page before calling into a package you did not write.
 | `firearms.mixin` | root | AnvilMenuMixin |  |
 | `firearms.model` | root | AttachRule, Attachment, Caliber, Clamp, FireMode, Loadout, Modifier, Op, Slot, Stat, StatDerivation, Stats, WeaponBase, WeaponClass | The pure part: the stat derivation function (`FA-2`) and the attach rule's own empty-slot-and- class-has-it decision (`AttachRule`, `FA-7`), with no Minecraft imports (docs/spec/operations/testing.md). |
 | `firearms.support` | root | Ids | Small helpers shared by more than one of this mod's own Minecraft-facing packages (firearms.component, firearms.item, firearms.data); not part of the pure firearms.model package FA-2 landed (docs/spec/operations/testing.md). |
+| `firearms.trade` | root | NoFirearmOffered, TradeRegistration | The villager trade path (`FA-13`, `docs/spec/domains/trade.md`): firearms.trade.NoFirearmOffered is the firearms:no_firearm_offered merchant predicate guarding the weaponsmith's bare-weapon sale trades so a weaponsmith never holds two weapon offers at once (`TRADE-REQ-004`'s sibling concern, `docs/spec/domains/trade.md` §7), mirroring create_metered_motor's own no_motor_offered condition exactly. |
 | `firearms` | root (test) | SourceSurfaceTest |  |
 | `firearms.combat` | root (test) | SpreadMathTest |  |
-| `firearms.gametest` | root (gametest) | AnvilCombineRefusalGameTest, AttachSmithingGameTest, BulletGameTest, ComponentCodecGameTest, CraftingRecipeGameTest, DataLoaderGameTest, ItemRegistrationGameTest, SmokeGameTest, StatDerivationGameTest, WeaponDurabilityAndAnvilGameTest |  |
+| `firearms.gametest` | root (gametest) | AnvilCombineRefusalGameTest, AttachSmithingGameTest, BulletGameTest, ComponentCodecGameTest, CraftingRecipeGameTest, DataLoaderGameTest, ItemRegistrationGameTest, MasterBuyBackGameTest, NoDuplicateOfferGameTest, SmokeGameTest, StatDerivationGameTest, TradeFileGameTest, WeaponDurabilityAndAnvilGameTest |  |
 | `firearms.model` | root (test) | AttachRuleTest, AttachmentModifierTest, LoadoutSlotValidationTest, StatDerivationClampTest, StatDerivationOrderTest, WeaponBaseStatsTest |  |
 
 | build script | what |

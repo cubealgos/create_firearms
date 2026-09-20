@@ -50,6 +50,18 @@ The two data loaders (`WeaponDataLoader`, `AttachmentDataLoader`) produce exactl
 Every item `FA-3` registers resolves at its own id: the one weapon item, the five attachment items, and the six cartridge items (`docs/spec/contracts/public-surface.md`).
 - `void everyRegisteredItemResolvesAtItsId(GameTestHelper helper)`
 
+### `class MasterBuyBackGameTest` — `src/gametest/java/firearms/gametest/MasterBuyBackGameTest.java`
+FA-13, `docs/spec/domains/trade.md` §3 "The master buy-back trades", `TRADE-REQ-004`, `TRADE-REQ-005`: the weaponsmith/5/master_akm trade's ItemCost accepts an AKM carrying its named muzzle and optic attachments and rejects one missing either, while an unconstrained slot (magazine) is never inspected at all — the structural guarantee research `smithing-and-item-model-layers-26-2.md` §D.3 confirms.
+- `void masterAkmAcceptsTheNamedConfigurationWithAnyUnconstrainedSlot(GameTestHelper helper)`
+- `void masterAkmRejectsAMissingOrWrongNamedAttachment(GameTestHelper helper)`
+- `void masterAkmGivesFortyEightEmeralds(GameTestHelper helper)`
+
+### `class NoDuplicateOfferGameTest` — `src/gametest/java/firearms/gametest/NoDuplicateOfferGameTest.java`
+FA-13, `docs/spec/domains/trade.md` §7: a weaponsmith that already offers a firearms:weapon stack refuses a second weapon-selling offer, through firearms:no_firearm_offered reading the villager's live offers off LootContextParams.THIS_ENTITY — modelled directly on create_metered_motor's own NoDuplicateOfferGameTest.
+- `void aVillagerAlreadyOfferingAWeaponRefusesASecond(GameTestHelper helper)`
+- `void aVillagerWithNoWeaponOfferYetAllowsOne(GameTestHelper helper)`
+- `void aWeaponsmithLevelledThroughAllLevelsDrawsAtMostOneWeaponOffer(GameTestHelper helper)` — The real production trade files, drawn in the same trade-by-trade order AbstractVillager.addOffersFromTradeSet appends into a villager's live getOffers() list (`firearms.trade.NoFirearmOffered`'s own javadoc): every weapon-selling trade across all three levels that carry one is offered in turn, and at most one ever succeeds, since each carries the firearms:no_firearm_offered guard.
+
 ### `class SmokeGameTest` — `src/gametest/java/firearms/gametest/SmokeGameTest.java`
 M0: the mod loads beside Create Fly; everything else follows.
 - `void theModLoadsBesideCreateFly(GameTestHelper helper)`
@@ -57,6 +69,10 @@ M0: the mod loads beside Create Fly; everything else follows.
 ### `class StatDerivationGameTest` — `src/gametest/java/firearms/gametest/StatDerivationGameTest.java`
 A weapon stack carrying a firearms:base component reads its own base weapon back out of WeaponRegistry and derives its final stats through StatDerivation, matching the bare roster row exactly (`docs/spec/domains/weapon.md` `WEAPON-REQ-003`).
 - `void aWeaponStackReadsItsBaseAndDerivesStats(GameTestHelper helper)`
+
+### `class TradeFileGameTest` — `src/gametest/java/firearms/gametest/TradeFileGameTest.java`
+FA-13: every weaponsmith and fletcher trade file this ticket ships resolves through Registries.VILLAGER_TRADE and is tagged into its own trade level (`TRADE-REQ-001`, `TRADE-REQ-002`; `docs/spec/domains/trade.md` §3's catalogue table).
+- `void everyTradeFileResolvesAndIsTaggedIntoItsLevel(GameTestHelper helper)`
 
 ### `class WeaponDurabilityAndAnvilGameTest` — `src/gametest/java/firearms/gametest/WeaponDurabilityAndAnvilGameTest.java`
 A weapon stack carries the max_damage its own base's recipe gives it (`docs/spec/domains/weapon.md` §3), is never enchantable and never accepts a material repair — closed by omitting repairable(...)/enchantable(...) at registration, not by a mixin (`WEAPON-REQ-014`, `015`; `decisions/DEC-017-no-detach-durability.md`) — proven against a real AnvilMenu#createResult(), the same menu class the smithing table's own repair path runs through.
