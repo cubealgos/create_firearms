@@ -83,8 +83,25 @@ DIRECTIONAL_SHADE = {"up": 1.0, "down": 0.5, "north": 0.8, "south": 0.8, "east":
 # The aiming pose of the base layer (FA-9): 26.2's `minecraft:model` item-model `transformation` is
 # `com.mojang.math.Transformation.CODEC`, a record of all four fields -- a translation alone fails to
 # parse and takes the whole `firearms:weapon` definition down to the missing model (FA-23).
+#
+# FA-24 (docs/spec/decisions/DEC-019-controls.md): this transformation composes additively with
+# whatever per-ItemDisplayContext BASE_DISPLAY translation the referenced weapon model already
+# carries (only ever rendered while minecraft:using_item is true, i.e. first/thirdperson only --
+# nothing "uses" an item in a GUI/inventory/ground/fixed slot). The round-1 value above was a
+# near-zero nudge, not a deliberate pose; now that use() is aim-only (WEAPON-REQ-019) the aiming
+# pose needs to read as a clear, deliberate change from the hip-fire pose toward screen centre. The
+# deltas below are chosen relative to BASE_DISPLAY["firstperson_righthand"]'s own
+# [0.25, 5, 0.75] translation (the pose these compose on top of, unchanged by this ticket): y drops
+# by 3.0 (5 -> ~2.0), bringing the gun's hip-pose height down toward vertical centre the way
+# raising a weapon to eye level would; x drops by 0.2 (0.25 -> ~0.05), pulling the off-to-the-side
+# hip stance toward the screen's horizontal centre without fully zeroing it (a small persistent
+# offset keeps the model from looking perfectly axis-locked); z drops by 0.35 (0.75 -> ~0.4),
+# pulling the weapon slightly closer along its own barrel axis (+Z is the muzzle end per the box
+# DSL's own convention, so a negative z delta pulls the whole model back toward the camera/hand).
+# Proposed, retune at the sweep -- this is a numeric aesthetic tuning that needs in-game visual
+# confirmation, the same convention this project's own spec uses for every unconfirmed number.
 AIM_TRANSFORMATION = {
-    "translation": [0.0, 0.05, -0.1],
+    "translation": [-0.2, -3.0, -0.35],
     "left_rotation": [0.0, 0.0, 0.0, 1.0],
     "scale": [1.0, 1.0, 1.0],
     "right_rotation": [0.0, 0.0, 0.0, 1.0],

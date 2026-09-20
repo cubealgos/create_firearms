@@ -7,6 +7,14 @@ signature is the contract; read the source only when the summary is not enough.
 
 The client-only side of firing: RecoilHandler applies firearms.fire.RecoilPacket's cosmetic camera kick to the local player on receipt, then eases it back off over a few client ticks via RecoilKick's own pure recovery maths.
 
+### `class ClientLoadouts` — `src/main/java/firearms/client/fire/ClientLoadouts.java`
+Resolves a held weapon stack's real, attachment-adjusted Stats client-side, the same technique firearms.client.scope.ScopedWeapon already uses and for the identical reason that class's own Javadoc explains: firearms.fire.WeaponLoadouts — the server-side resolver firearms.fire.FiringLogic itself calls — matches a stack's components against firearms.data.WeaponRegistry/AttachmentRegistry, both PackType.SERVER_DATA reload listeners a remote client never has loaded; a client-only caller (`firearms.client.fire.FireInputHandler`, deciding an auto weapon's own fire rate every tick) needs a resolution path that works correctly on exactly that remote client, not only in singleplayer where the reload listener happens to share the same JVM.
+- `Optional<Stats> stats(ItemStack stack)` — stack's real, attachment-adjusted stats, or empty if it is not a weapon this mod recognizes (`WeaponBase.ALL` has no match).
+
+### `class FireInputHandler` — `src/main/java/firearms/client/fire/FireInputHandler.java`
+The client's own read of the two controls `docs/spec/decisions/DEC-019-controls.md`'s table defines (`docs/spec/domains/weapon.md` WEAPON-REQ-004, 018): every client tick, translates Options.keyAttack (fire, mode-aware) and the dedicated reload KeyMapping into ServerboundFirePayload/ServerboundReloadPayload sends.
+- `void register()`
+
 ### `class RecoilHandler` — `src/main/java/firearms/client/fire/RecoilHandler.java`
 Applies RecoilPacket's cosmetic vertical/horizontal camera kick to the local player's own rotation on receipt, then eases it back off over RecoilKick#RECOVERY_TICKS client ticks (`COMBAT-DEC-003`, `COMBAT-REQ-011`, `FA-11`: "recovering over a few ticks").
 - `void register()`

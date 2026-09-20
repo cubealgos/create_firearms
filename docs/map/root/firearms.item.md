@@ -24,10 +24,9 @@ Every item this ticket registers: the one weapon item, the five attachment items
 The one weapon item, firearms:weapon: every 1.0 base weapon is a stack of this same item, distinguished only by its own firearms:base.weapon_id component (`docs/spec/04-architecture.md` `ARCH-DEC-005`, `docs/spec/contracts/public-surface.md`) — the mechanism `docs/spec/domains/weapon.md` WEAPON-DEC-003 relies on: a new base weapon in an existing class is one data file plus one crafting recipe, never a new Item registration.
 - `WeaponItem(Properties properties)`
 - `Component getName(ItemStack stack)` — "M1911", "AKM", and so on, read off this stack's own firearms:base component; falls back to the item's own default name (`item.firearms.weapon` in en_us.json) for a bare stack carrying no component, e.g.
-- `InteractionResult use(Level level, Player player, InteractionHand hand)`
-- `InteractionResult useOn(UseOnContext context)` — Funnels a block-targeted right click through #use, so firing point-blank at a block behaves identically to firing at open air or an entity.
-- `void onUseTick(Level level, LivingEntity livingEntity, ItemStack stack, int remainingUseDuration)` — The one server-authoritative fire-or-reload evaluation for this held tick (`FiringLogic#attempt`); client-side (and any non-ServerPlayer shooter) is a no-op, since every real decision needs the server-only weapon/attachment registries.
+- `InteractionResult use(Level level, Player player, InteractionHand hand)` — `WEAPON-REQ-019`: starts the aiming session, unconditionally, on both logical sides.
+- `InteractionResult useOn(UseOnContext context)` — Funnels a block-targeted right click through #use, so aiming point-blank at a block behaves identically to aiming at open air or an entity.
 - `ItemUseAnimation getUseAnimation(ItemStack stack)` — ItemUseAnimation.SPYGLASS while stack carries a magnifying optic, so the arm pose matches the vanilla spyglass's own while scoped; NONE otherwise.
 - `int getUseDuration(ItemStack stack, LivingEntity livingEntity)`
-- `boolean releaseUsing(ItemStack stack, Level level, LivingEntity livingEntity, int timeCharged)` — Firing/reload pacing all happens per-tick in #onUseTick, itself gated on ItemCooldowns; releasing the control early just ends the session (LivingEntity's own state machine already does that), so there is nothing further for this mod to do here.
+- `boolean releaseUsing(ItemStack stack, Level level, LivingEntity livingEntity, int timeCharged)` — Releasing the use control early just ends the aiming session (`WEAPON-REQ-019`) — LivingEntity's own state machine already does that once this returns — so there is nothing further for this mod to do here; firing has no relationship to this call at all any more.
 

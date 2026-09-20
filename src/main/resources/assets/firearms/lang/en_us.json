@@ -7,6 +7,9 @@
   "item.firearms.weapon.awm": "AWM",
   "item.firearms.weapon.winchester_model_1897": "Winchester Model 1897",
 
+  "key.category.firearms.firearms": "Firearms",
+  "key.firearms.reload": "Reload",
+
   "item.firearms.attachment_muzzle": "Muzzle Attachment",
   "item.firearms.attachment_optic": "Optic",
   "item.firearms.attachment_magazine": "Magazine",

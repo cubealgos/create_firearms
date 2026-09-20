@@ -5,6 +5,7 @@ import firearms.combat.CombatRegistration;
 import firearms.component.Ammo;
 import firearms.component.Base;
 import firearms.component.ComponentRegistration;
+import firearms.fire.FireNetworking;
 import firearms.fire.FireSounds;
 import firearms.fire.FiringLogic;
 import firearms.fire.WeaponLoadouts;
@@ -26,12 +27,18 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 
 /**
- * The fire-control loop (`FA-6`, `docs/spec/domains/weapon.md` `WEAPON-REQ-004`, `007`-`013`;
- * `docs/spec/operations/testing.md`): a loaded weapon fires and moves ammo, durability and the
- * cooldown together; an empty weapon reloads from matching cartridges or clicks empty; a held
- * {@code auto} weapon repeats at its own fire-rate interval; a {@code pump} weapon refuses a second
- * shot inside its own delay; a shotgun spawns its full pellet count from one round; a suppressor
- * changes the sound event {@code FireSounds} selects.
+ * The fire-control loop (`FA-6`, `FA-24`, `docs/spec/domains/weapon.md` `WEAPON-REQ-004`,
+ * `007`-`013`, `018`, `019`; `docs/spec/operations/testing.md`): a loaded weapon fires and moves
+ * ammo, durability and the cooldown together; an empty weapon reloads from matching cartridges or
+ * clicks empty; a held {@code auto} weapon repeats at its own fire-rate interval; a {@code pump}
+ * weapon refuses a second shot inside its own delay; a shotgun spawns its full pellet count from
+ * one round; a suppressor changes the sound event {@code FireSounds} selects. Since
+ * `docs/spec/decisions/DEC-019-controls.md`, firing is reached through {@code
+ * firearms.fire.FireNetworking#handleFire}/{@code #handleReload} — the real serverbound-payload
+ * receivers a game test drives directly with a mock player, real networking being out of scope for
+ * this harness — rather than {@code FiringLogic#attempt} alone; several tests below exercise that
+ * path explicitly, and a dedicated test proves the aim/fire split structurally: starting the use
+ * session alone never fires.
  */
 public final class FiringGameTest {
 
@@ -118,10 +125,17 @@ public final class FiringGameTest {
     }
 
     /**
-     * `UC-008`: a held {@code auto} weapon fires at its own fire-rate interval — 3 shots over
-     * exactly {@code 3 * fireRateTicks} simulated ticks (the Micro Uzi's own {@code fireRateTicks
-     * == 2}) — driven directly through the same {@code WeaponItem} methods the vanilla "using item"
-     * state machine calls, with {@code ItemCooldowns.tick()} advanced once per simulated tick.
+     * `UC-008`, `FA-24`: an {@code auto} weapon fires 3 shots over exactly {@code 3 * fireRateTicks}
+     * simulated ticks (the Micro Uzi's own {@code fireRateTicks == 2}). Since
+     * `docs/spec/decisions/DEC-019-controls.md`, the pacing itself is client-side
+     * ({@code firearms.client.fire.FireInputHandler}'s own per-tick countdown, driven by real
+     * client input polling), which this server-only harness cannot exercise directly — this test
+     * instead proves the *server-side* shape of what that client loop produces: one {@code
+     * FiringLogic#attempt} call per fire-rate interval, with {@code ItemCooldowns.tick()} advanced
+     * {@code fireRateTicks} times between attempts (mirroring {@code
+     * AimSpreadSelectionGameTest#fireOnceAndMeasureAngle}'s own cooldown-clearing convention), is
+     * exactly what the server-authoritative cooldown check needs to accept 3 shots and reject
+     * nothing in between.
      */
     @GameTest(structure = "firearms_gametest:open_range")
     public void anAutoWeaponFiresNBulletsOverNTimesFireRateTicksOfHeldUse(GameTestHelper helper) {
@@ -132,16 +146,137 @@ public final class FiringGameTest {
         int fireRateTicks = WeaponBase.MICRO_UZI.baseStats().fireRateTicks();
         int expectedShots = 3;
 
-        ItemRegistration.WEAPON.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
-        for (int tick = 0; tick < expectedShots * fireRateTicks; tick++) {
-            player.getCooldowns().tick();
-            ItemRegistration.WEAPON.onUseTick(helper.getLevel(), player, stack, 1);
+        for (int shot = 0; shot < expectedShots; shot++) {
+            FiringLogic.Outcome outcome = FiringLogic.attempt(helper.getLevel(), player, stack, InteractionHand.MAIN_HAND);
+            helper.assertTrue(outcome == FiringLogic.Outcome.FIRED, "every attempt spaced a full fireRateTicks apart must fire, got " + outcome);
+            for (int tick = 0; tick < fireRateTicks; tick++) {
+                player.getCooldowns().tick();
+            }
         }
 
         helper.assertEntitiesPresent(CombatRegistration.BULLET, expectedShots);
         Ammo ammo = stack.get(ComponentRegistration.AMMO);
         helper.assertTrue(ammo != null && ammo.loaded() == WeaponBase.MICRO_UZI.baseStats().magazineSize() - expectedShots,
             "ammo must drop by exactly one round per shot fired");
+
+        helper.succeed();
+    }
+
+    /**
+     * `FA-24`, `docs/spec/decisions/DEC-019-controls.md`: {@code FireNetworking#handleFire} — the
+     * real {@code ServerboundFirePayload} receiver, not {@code FiringLogic#attempt} called directly
+     * — drives the exact same fire-or-reject path {@link #aLoadedWeaponFiresOnceAndMovesAmmoDurabilityAndCooldownTogether}
+     * already proves for {@code attempt} itself: a loaded, off-cooldown weapon fires exactly once,
+     * and an immediate second payload lands on the same fire-rate cooldown and is rejected —
+     * neither ammo, durability nor the bullet count move any further on that second call.
+     */
+    @GameTest(structure = "firearms_gametest:open_range")
+    public void handleFireOnALoadedOffCooldownWeaponFiresOnceAndRejectsAnImmediateSecondCall(GameTestHelper helper) {
+        ServerPlayer player = mockShooter(helper);
+        ItemStack stack = weaponStack(WeaponBase.M1911, 7);
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+
+        FireNetworking.handleFire(player);
+
+        Ammo ammoAfterFirst = stack.get(ComponentRegistration.AMMO);
+        helper.assertTrue(ammoAfterFirst != null && ammoAfterFirst.loaded() == 6, "WEAPON-REQ-008: ammo must drop by exactly one round");
+        helper.assertValueEqual(stack.getDamageValue(), 1, "WEAPON-REQ-008: durability must drop by exactly one point");
+        helper.assertEntitiesPresent(CombatRegistration.BULLET, 1);
+
+        FireNetworking.handleFire(player);
+
+        Ammo ammoAfterSecond = stack.get(ComponentRegistration.AMMO);
+        helper.assertTrue(ammoAfterSecond != null && ammoAfterSecond.loaded() == 6,
+            "WEAPON-REQ-009: an immediate second handleFire call must be blocked by the fire-rate cooldown, ammo must not move again");
+        helper.assertValueEqual(stack.getDamageValue(), 1, "durability must not move on a rejected second call");
+        helper.assertEntitiesPresent(CombatRegistration.BULLET, 1);
+
+        helper.succeed();
+    }
+
+    /** `FA-24`: a fire payload while the main hand holds no firearm is a no-op — no bullet, no crash. */
+    @GameTest(structure = "firearms_gametest:open_range")
+    public void handleFireWhileHoldingANonWeaponItemDoesNothing(GameTestHelper helper) {
+        ServerPlayer player = mockShooter(helper);
+        ItemStack stick = new ItemStack(Items.STICK);
+        player.setItemInHand(InteractionHand.MAIN_HAND, stick);
+
+        FireNetworking.handleFire(player);
+
+        helper.assertEntitiesPresent(CombatRegistration.BULLET, 0);
+        helper.succeed();
+    }
+
+    /**
+     * `WEAPON-REQ-018`, `019`: proves the aim/fire decoupling structurally — starting the use
+     * session (what {@code WeaponItem#use} does on a right click) and letting ticks pass with no
+     * fire payload ever sent must never, by itself, decrement ammo or spawn a bullet. There is no
+     * {@code onUseTick} any more for a held use session to dispatch through; this test is the
+     * negative proof that removing it really did decouple the two.
+     */
+    @GameTest(structure = "firearms_gametest:open_range")
+    public void startingTheUseSessionAloneNeverFiresOrConsumesAmmo(GameTestHelper helper) {
+        ServerPlayer player = mockShooter(helper);
+        ItemStack stack = weaponStack(WeaponBase.M1911, 7);
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+
+        ItemRegistration.WEAPON.use(helper.getLevel(), player, InteractionHand.MAIN_HAND);
+        for (int tick = 0; tick < 20; tick++) {
+            player.getCooldowns().tick();
+        }
+
+        Ammo ammo = stack.get(ComponentRegistration.AMMO);
+        helper.assertTrue(ammo != null && ammo.loaded() == 7, "WEAPON-REQ-018: starting the use session alone must never fire — ammo must be unchanged");
+        helper.assertEntitiesPresent(CombatRegistration.BULLET, 0);
+
+        helper.succeed();
+    }
+
+    /** `FA-24`: `FireNetworking#handleReload` — the real {@code ServerboundReloadPayload} receiver — reloads exactly as {@code FiringLogic#reload} does directly. */
+    @GameTest(structure = "firearms_gametest:open_range")
+    public void handleReloadOnAnEmptyWeaponWithMatchingCartridgesReloadsToMagazineSizeAndConsumesThem(GameTestHelper helper) {
+        ServerPlayer player = mockShooter(helper);
+        ItemStack stack = weaponStack(WeaponBase.M1911, 0);
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+        player.getInventory().add(new ItemStack(ItemRegistration.cartridge(WeaponBase.M1911.caliber()), 10));
+
+        FiringLogic.Outcome outcome = FireNetworking.handleReload(player);
+        helper.assertTrue(outcome == FiringLogic.Outcome.RELOADED, "WEAPON-REQ-010: an empty weapon with matching cartridges must reload, got " + outcome);
+
+        Ammo ammo = stack.get(ComponentRegistration.AMMO);
+        int magazineSize = WeaponBase.M1911.baseStats().magazineSize();
+        helper.assertTrue(ammo != null && ammo.loaded() == magazineSize,
+            "WEAPON-REQ-010: loaded must reach the derived magazine size (" + magazineSize + "), got " + ammo);
+
+        int remaining = countCartridges(player, WeaponBase.M1911);
+        helper.assertValueEqual(remaining, 10 - magazineSize, "exactly magazineSize cartridges must be consumed from inventory");
+
+        helper.succeed();
+    }
+
+    /**
+     * `FA-24`, `WEAPON-DEC-008`: a dedicated reload press on a magazine that already has ammo is a
+     * pure no-op — {@link FiringLogic.Outcome#NOT_NEEDED}, ammo and durability unchanged, and,
+     * unlike a real reload, no cooldown started at all: a fire attempt made right afterward must
+     * still succeed rather than reporting {@code ON_COOLDOWN}, proving nothing was started.
+     */
+    @GameTest(structure = "firearms_gametest:open_range")
+    public void handleReloadOnAWeaponThatAlreadyHasAmmoReturnsNotNeededAndChangesNothing(GameTestHelper helper) {
+        ServerPlayer player = mockShooter(helper);
+        ItemStack stack = weaponStack(WeaponBase.M1911, 7);
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+
+        FiringLogic.Outcome outcome = FireNetworking.handleReload(player);
+        helper.assertTrue(outcome == FiringLogic.Outcome.NOT_NEEDED,
+            "WEAPON-DEC-008: a reload press on a magazine that already has ammo must be a no-op, got " + outcome);
+
+        Ammo ammo = stack.get(ComponentRegistration.AMMO);
+        helper.assertTrue(ammo != null && ammo.loaded() == 7, "ammo must be unchanged");
+        helper.assertValueEqual(stack.getDamageValue(), 0, "durability must be unchanged");
+
+        FiringLogic.Outcome fireOutcome = FiringLogic.attempt(helper.getLevel(), player, stack, InteractionHand.MAIN_HAND);
+        helper.assertTrue(fireOutcome == FiringLogic.Outcome.FIRED,
+            "WEAPON-DEC-008: NOT_NEEDED must never start a cooldown — a fire attempt right after must still succeed, got " + fireOutcome);
 
         helper.succeed();
     }
