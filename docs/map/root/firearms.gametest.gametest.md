@@ -46,6 +46,12 @@ The two data loaders (`WeaponDataLoader`, `AttachmentDataLoader`) produce exactl
 - `void theAttachmentLoaderProducesExactlyThe22AttachmentsWithTheModelsValues(GameTestHelper helper)`
 - `void aDatapackAddedWeaponAndAttachmentInAnExistingClassAndSlotLoadWithZeroNewJava(GameTestHelper helper)`
 
+### `class DebugCommandGameTest` — `src/gametest/java/firearms/gametest/DebugCommandGameTest.java`
+FA-12's three acceptance-criteria game tests for firearms.debug.DebugCommand, run in the game test environment, which is itself a development environment (FabricLoader.isDevelopmentEnvironment() is true under runGameTest, exactly as it is under runClient), so the command is registered and reachable here.
+- `void giveAkmSuppressorScope4xYieldsBothSlotsFilledWithMatchingDerivedStats(GameTestHelper helper)`
+- `void giveWinchester1897VerticalGripFailsWithTheErrorKey(GameTestHelper helper)`
+- `void statsOnAHeldWeaponPrintsTheExpectedLines(GameTestHelper helper)`
+
 ### `class FiringGameTest` — `src/gametest/java/firearms/gametest/FiringGameTest.java`
 The fire-control loop (`FA-6`, `docs/spec/domains/weapon.md` `WEAPON-REQ-004`, `007`-`013`; `docs/spec/operations/testing.md`): a loaded weapon fires and moves ammo, durability and the cooldown together; an empty weapon reloads from matching cartridges or clicks empty; a held auto weapon repeats at its own fire-rate interval; a pump weapon refuses a second shot inside its own delay; a shotgun spawns its full pellet count from one round; a suppressor changes the sound event FireSounds selects.
 - `void aLoadedWeaponFiresOnceAndMovesAmmoDurabilityAndCooldownTogether(GameTestHelper helper)`

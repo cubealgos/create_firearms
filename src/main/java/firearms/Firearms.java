@@ -3,17 +3,21 @@ package firearms;
 import firearms.attach.AttachRegistration;
 import firearms.component.ComponentRegistration;
 import firearms.data.DataRegistration;
+import firearms.debug.DebugCommand;
 import firearms.fire.FireSounds;
 import firearms.fire.RecoilPacket;
 import firearms.item.ItemRegistration;
 import firearms.combat.CombatRegistration;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * The mod's server-and-common entrypoint: registers the components, the items, the data loaders
+ * (FA-3), the bullet entity (FA-5), the attach smithing recipe serializer (FA-7) and, only in a
+ * development environment, the {@code /firearms debug} command (FA-12).
  * (FA-3), the bullet entity (FA-5), and firing's own sounds and recoil packet type (FA-6).
  * (FA-3), the bullet entity (FA-5) and the attach smithing recipe serializer (FA-7).
  */
@@ -34,6 +38,7 @@ public final class Firearms implements ModInitializer {
         FireSounds.register();
         RecoilPacket.register();
         AttachRegistration.register();
+        if (FabricLoader.getInstance().isDevelopmentEnvironment()) DebugCommand.register();
         LOGGER.info("Firearms ready beside Create Fly");
     }
 }
