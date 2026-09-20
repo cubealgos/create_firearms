@@ -119,11 +119,11 @@ SLOT_ANCHOR = {
 # (`tools/palette.py` BRASS); the tip ramp is the only material that varies per calibre, per DEC-018
 # ("short and fat", "short and slim", "slim with an olive tip", "longest with a boat-tail tip").
 CARTRIDGES = {
-    "acp_45": (5, 6, COPPER, False),  # .45 ACP: short and fat
-    "mm_9": (5, 4, COPPER, False),  # 9mm: short and slim
-    "mm_7_62": (7, 5, COPPER, False),  # 7.62: medium
-    "mm_5_56": (6, 4, POLYMER, False),  # 5.56: slim, olive tip
-    "magnum_300": (9, 5, COPPER, True),  # .300 Magnum: longest, boat-tail
+    "acp_45": (5, 4, COPPER, False),  # .45 ACP: short and fat
+    "mm_9": (5, 3, COPPER, False),  # 9mm: short and slim
+    "mm_7_62": (6, 3, COPPER, False),  # 7.62: medium
+    "mm_5_56": (6, 3, POLYMER, False),  # 5.56: slim, olive tip
+    "magnum_300": (6, 4, COPPER, True),  # .300 Magnum: longest, boat-tail
 }
 
 
@@ -448,7 +448,14 @@ def materialise(img: Image.Image, mask: list[list[bool]], ramp: Ramp) -> None:
         px[gx, gy] = ramp.glint
 
 
-DIAG_X0, DIAG_Y0 = 1, 13  # every diagonal capsule's own bottom-left anchor, stepping (1, -1).
+def _diag_anchor(steps: int, thickness: int) -> tuple[int, int]:
+    """The `(x0, y0)` start point for a `steps`-step, `dx=1, dy=-1` diagonal capsule so that its
+    brush -- `thickness` at its widest, caps/rings/rims included -- never reaches the canvas's
+    outer ring: every icon keeps a 1px transparent border (round-four review: several icons'
+    brushes reached column/row 0 with a fixed anchor). Requires `steps <= 15 - thickness`."""
+    half = thickness // 2
+    tail = thickness - half - 1
+    return 1 + half, 14 - tail
 
 
 def _set(img: Image.Image, x: int, y: int, colour: tuple[int, int, int, int]) -> None:
@@ -458,39 +465,40 @@ def _set(img: Image.Image, x: int, y: int, colour: tuple[int, int, int, int]) ->
 
 def attachment_icon(slot: str, name: str) -> Image.Image:
     """The attachment's own standalone item-stack icon: a mask (or a few, layered) materialised per
-    `materialise()`, elongated parts run diagonally bottom-left to top-right and fill 12-14px of the
-    canvas the way vanilla's spyglass/arrow/bow do, compact parts stay axis-aligned and fill 9-12px
-    (`WEAPON-REQ-017`, `DEC-018`)."""
+    `materialise()`, elongated parts run diagonally bottom-left to top-right and fill 11-14px of the
+    canvas the way vanilla's spyglass/arrow/bow do (`_diag_anchor` keeps every brush off the outer
+    1px ring), compact parts stay axis-aligned and fill 9-12px (`WEAPON-REQ-017`, `DEC-018`)."""
     img = Image.new("RGBA", ICON, TRANSPARENT)
-    x0, y0 = DIAG_X0, DIAG_Y0
 
     if slot == "muzzle":
         if name == "suppressor":
             # a fat diagonal tube, matte gunmetal, with a lighter steel cap band at each end --
             # the spyglass's own banded-tube precedent, not a flat horizontal bar.
-            steps, thickness = 12, 4
+            steps, thickness = 10, 4
+            x0, y0 = _diag_anchor(steps, thickness)
             materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(2, steps - 2)),
                         GUNMETAL)
             materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(0, 2)), STEEL)
             materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(steps - 2, steps)),
                         STEEL)
         elif name == "flash_hider":
-            # a cone opening toward the muzzle, three parallel tines beyond it -- offset across the
-            # cone's own width (the perpendicular of a (1,-1) diagonal is (1,1)), thin enough to
-            # leave a gap between each, so they read as separate prongs rather than a solid wedge.
-            cone_steps = 6
-            cone_t: Callable[[int], int] = lambda i: 2 + i // 2  # noqa: E731
-            cone = _capsule(x0, y0, cone_steps, cone_t, step_range=range(cone_steps))
-            tip_x, tip_y = x0 + (cone_steps - 1), y0 - (cone_steps - 1)
-            tines = _union(
-                cone,
-                *(_capsule(tip_x + k, tip_y + k, 4, 1, dx=1, dy=-1) for k in (-2, 0, 2)),
-            )
-            materialise(img, tines, STEEL)
+            # a short fat cone, three notch-cuts subtracted from its outer (shade-side) edge near
+            # the muzzle end rather than separate tines -- vent slots, the way a real flash hider is
+            # machined. Small 2x2 notches, not full-width diagonal cuts: a diagonal line through a
+            # diagonally-stepped capsule interleaves into a checkerboard rather than a clean slit.
+            cone_steps = 7
+            cone_t: Callable[[int], int] = lambda i: 3 if i < 2 else (4 if i < 4 else 5)  # noqa: E731
+            x0, y0 = _diag_anchor(cone_steps, 5)
+            cone = _capsule(x0, y0, cone_steps, cone_t)
+            notches = _union(*(
+                _rect_mask(x0 + i, y0 - i + 1, x0 + i + 2, y0 - i + 3) for i in (2, 4, 6)
+            ))
+            materialise(img, _subtract(cone, notches), STEEL)
         else:  # compensator
             # a short diagonal steel block with two separate, small copper vent ports on top, not
             # one merged bar (a smaller brush than the body's own, centred on the same steps).
             steps, thickness = 7, 4
+            x0, y0 = _diag_anchor(steps, thickness)
             materialise(img, _capsule(x0, y0, steps, thickness), STEEL)
             materialise(img, _capsule(x0, y0, steps, 2, step_range=range(2, 3)), COPPER)
             materialise(img, _capsule(x0, y0, steps, 2, step_range=range(4, 5)), COPPER)
@@ -501,15 +509,19 @@ def attachment_icon(slot: str, name: str) -> Image.Image:
             if magnification <= 4:
                 steps = {2: 9, 3: 10, 4: 11}[magnification]
                 thickness: int | Callable[[int], int] = 3
+                max_thickness = 3
                 ring_steps = (steps // 2,)
             elif magnification <= 8:
-                steps = {6: 12, 8: 13}[magnification]
+                steps = {6: 9, 8: 10}[magnification]
                 thickness = lambda i, s=steps: 5 if i >= s - 3 else 3  # noqa: E731
-                ring_steps = (2, steps - 5)
+                max_thickness = 5
+                ring_steps = (1, steps - 5)
             else:
-                steps = 14
+                steps = 10
                 thickness = lambda i, s=steps: 5 if (i < 3 or i >= s - 3) else 3  # noqa: E731
-                ring_steps = (2, steps // 2, steps - 5)
+                max_thickness = 5
+                ring_steps = (1, steps // 2, steps - 4)
+            x0, y0 = _diag_anchor(steps, max_thickness)
             materialise(img, _capsule(x0, y0, steps, thickness), STEEL)
             for r in ring_steps:
                 materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(r, r + 1)),
@@ -521,27 +533,33 @@ def attachment_icon(slot: str, name: str) -> Image.Image:
             materialise(img, _rect_mask(7, 6, 10, 9), GLASS)
             _set(img, 8, 7, RED_DOT)
             materialise(img, _union(_rect_mask(7, 10, 8, 12), _rect_mask(9, 10, 10, 12)), STEEL)
-        else:  # holo: a boxier housing, a wider window
+        else:  # holo: a boxier housing, a wider window, a small reticle so it isn't just a bigger
+            # red dot -- a light cross at the window's own centre.
             materialise(img, _rect_mask(4, 5, 12, 10), BLACK)
             materialise(img, _rect_mask(5, 6, 11, 9), GLASS)
+            for rx, ry in ((7, 7), (8, 7), (9, 7), (8, 6), (8, 8)):
+                _set(img, rx, ry, GLASS.light)
             materialise(img, _union(_rect_mask(5, 10, 6, 12), _rect_mask(10, 10, 11, 12)), STEEL)
 
     elif slot == "magazine":
-        # a diagonal box magazine, the vanilla iron-nugget/spyglass tube precedent, its own brass
-        # toe where the quickdraw variants carry one, a follower line riding on top.
+        # a diagonal box magazine, the vanilla iron-nugget/spyglass tube precedent, a base plate at
+        # the low end -- brass on the quickdraw variants, steel (still its own materialise pass, so
+        # it keeps a seam) on plain extended -- and two witness-line shade pixels along the spine.
+        # quickdraw is short, extended and extended-quickdraw are longer, extended-quickdraw longest.
+        thickness = 4
         if name == "quickdraw_magazine":
-            steps, thickness = 9, 4
-            materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(2, steps)), STEEL)
-            materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(0, 2)), BRASS)
+            steps, plate = 8, BRASS
         elif name == "extended_magazine":
-            steps, thickness = 12, 4
-            materialise(img, _capsule(x0, y0, steps, thickness), STEEL)
+            steps, plate = 10, STEEL
         else:  # extended_quickdraw_magazine
-            steps, thickness = 12, 4
-            materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(2, steps)), STEEL)
-            materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(0, 2)), BRASS)
-        fx, fy = x0 + steps // 2, y0 - steps // 2
-        _set(img, fx, fy, STEEL.shade)  # the follower line, a witness mark on the body
+            steps, plate = 11, BRASS
+        x0, y0 = _diag_anchor(steps, thickness)
+        materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(2, steps)), STEEL)
+        materialise(img, _capsule(x0, y0, steps, thickness, step_range=range(0, 2)), plate)
+        for i in (steps // 3, 2 * steps // 3):
+            gx, gy = x0 + i, y0 - i
+            _set(img, gx, gy, BRASS.light)
+            _set(img, gx + 1, gy, BRASS.light)  # witness lines, brass so they read against steel
 
     elif slot == "grip":
         if name == "light_grip":
@@ -550,9 +568,12 @@ def attachment_icon(slot: str, name: str) -> Image.Image:
             materialise(img, _rect_mask(4, 7, 12, 12), BLACK)
         elif name == "angled_grip":
             steps = 6
-            materialise(img, _capsule(2, y0, steps, lambda i: 3 + i // 2), POLYMER)  # noqa: E731
+            angled_t: Callable[[int], int] = lambda i: 3 + i // 2  # noqa: E731
+            x0, y0 = _diag_anchor(steps, 5)
+            materialise(img, _capsule(x0, y0, steps, angled_t), POLYMER)
         elif name == "vertical_grip":
             steps, thickness = 9, 4
+            x0, y0 = _diag_anchor(steps, thickness)
             mask = _capsule(x0, y0, steps, thickness)
             materialise(img, mask, BLACK)
             for i in range(1, steps, 2):
@@ -585,16 +606,16 @@ def attachment_icon(slot: str, name: str) -> Image.Image:
 # about 3-4px wide the way the vanilla arrow's shaft does against its head.
 
 def cartridge_sprite(case_steps: int, width: int, tip_ramp: Ramp, boat_tail: bool = False) -> Image.Image:
-    img = Image.new("RGBA", ICON, TRANSPARENT)
-    x0, y0 = DIAG_X0, DIAG_Y0
     tip_steps = 3
     total = case_steps + tip_steps
+    x0, y0 = _diag_anchor(total, width + 1)  # +1: the rim flares one wider than the case itself
 
     def case_thickness(i: int) -> int:
         if boat_tail and i == case_steps - 1:
             return max(2, width - 1)  # the boat-tail: the case necks in just below the bullet
         return width
 
+    img = Image.new("RGBA", ICON, TRANSPARENT)
     case_mask = _capsule(x0, y0, total, case_thickness, step_range=range(0, case_steps))
     rim_mask = _capsule(x0, y0, total, width + 1, step_range=range(0, 1))
     materialise(img, _union(case_mask, rim_mask), BRASS)
@@ -607,9 +628,9 @@ def cartridge_sprite(case_steps: int, width: int, tip_ramp: Ramp, boat_tail: boo
 def shotshell_sprite() -> Image.Image:
     """12 gauge: a squat diagonal red hull with a brass head, not a bottlenecked bullet --
     `Caliber.GAUGE_12`'s own shape."""
+    total, width = 8, 5
+    x0, y0 = _diag_anchor(total, width)
     img = Image.new("RGBA", ICON, TRANSPARENT)
-    x0, y0 = DIAG_X0, DIAG_Y0
-    total, width = 10, 5
     materialise(img, _capsule(x0, y0, total, width, step_range=range(2, total)), RED)
     materialise(img, _capsule(x0, y0, total, width, step_range=range(0, 3)), BRASS)
     return img
