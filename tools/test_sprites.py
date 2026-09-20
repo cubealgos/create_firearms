@@ -31,8 +31,8 @@ class OuterRingTest(unittest.TestCase):
     def test_every_cartridge_keeps_its_outer_ring_transparent(self):
         offenders = [
             caliber
-            for caliber, (rows, width, tip_ramp, boat_tail) in sprites.CARTRIDGES.items()
-            if touches_outer_ring(sprites.cartridge_sprite(rows, width, tip_ramp, boat_tail))
+            for caliber in sprites.CARTRIDGES
+            if touches_outer_ring(sprites.cartridge_sprite(caliber))
         ]
         if touches_outer_ring(sprites.shotshell_sprite()):
             offenders.append("gauge_12")
