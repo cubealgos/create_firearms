@@ -24,6 +24,9 @@ from pathlib import Path
 
 from PIL import Image
 
+from palette import BLACK, BRASS, COPPER, DARK_OAK, GLASS, GUNMETAL, OAK, POLYMER, RED, \
+    RED_DOT, SPRUCE, STEEL, Ramp
+
 ASSETS = Path("src/main/resources/assets/firearms")
 ITEMS = ASSETS / "items"
 MODELS = ASSETS / "models" / "item"
@@ -111,13 +114,15 @@ SLOT_ANCHOR = {
     "stock": (0, 4),
 }
 
-# caliber -> (case length in the 6-tall body block, tip colour, case colour); `Caliber`.
+# caliber -> (case rows, body width in px, tip ramp, boat-tail base); `Caliber`. Brass case always
+# (`tools/palette.py` BRASS); the tip ramp is the only material that varies per calibre, per DEC-018
+# ("short and fat", "short and slim", "slim with an olive tip", "longest with a boat-tail tip").
 CARTRIDGES = {
-    "acp_45": (7, (196, 122, 69, 255), (205, 170, 80, 255)),
-    "mm_9": (5, (196, 122, 69, 255), (215, 186, 100, 255)),
-    "mm_7_62": (8, (166, 100, 43, 255), (188, 152, 66, 255)),
-    "mm_5_56": (6, (110, 140, 90, 255), (188, 152, 66, 255)),
-    "magnum_300": (9, (140, 82, 34, 255), (163, 128, 50, 255)),
+    "acp_45": (5, 6, COPPER, False),  # .45 ACP: short and fat
+    "mm_9": (5, 4, COPPER, False),  # 9mm: short and slim
+    "mm_7_62": (7, 5, COPPER, False),  # 7.62: medium
+    "mm_5_56": (6, 4, POLYMER, False),  # 5.56: slim, olive tip
+    "magnum_300": (9, 5, COPPER, True),  # .300 Magnum: longest, boat-tail
 }
 
 
@@ -343,61 +348,241 @@ def attachment_glyph(slot: str, name: str) -> Image.Image:
     return img
 
 
+# ---------------------------------------------------------------- standalone attachment icons and
+# cartridges (16x16), round two (`DEC-018-art-direction.md`, `WEAPON-REQ-017`): drawn independently
+# of `attachment_glyph` above (which stays as FA-22's composite-layer path, untouched), in the
+# vanilla/Create habit -- a chunky object filling roughly 10-14px of the canvas, a one-pixel outline
+# in the material's own `outline` tone, `light` on the top/left faces, `base` fill, `shade` on the
+# bottom/right faces, no gradients, no isolated pixels, coloured only from `tools/palette.py`'s
+# ramps (never a hand-picked RGB literal).
+
+def _set(img: Image.Image, x: int, y: int, colour: tuple[int, int, int, int]) -> None:
+    if 0 <= x < img.width and 0 <= y < img.height:
+        img.load()[x, y] = colour
+
+
+def _block(img: Image.Image, x0: int, y0: int, x1: int, y1: int, ramp: Ramp) -> None:
+    """An outlined, top-left-lit rectangular block in a material ramp: a one-pixel `outline` ring,
+    `light` on the top/left interior pixels, `shade` on the bottom/right interior pixels, `base`
+    fill between -- the one shading routine every boxy icon part (mag bodies, sight housings, grip
+    blocks, pads) is built from, so every part reads by the same rule DEC-018 names."""
+    px = img.load()
+    for x in range(x0, x1):
+        for y in range(y0, y1):
+            if not (0 <= x < img.width and 0 <= y < img.height):
+                continue
+            if x in (x0, x1 - 1) or y in (y0, y1 - 1):
+                colour = ramp.outline
+            elif x == x0 + 1 or y == y0 + 1:
+                colour = ramp.light
+            elif x == x1 - 2 or y == y1 - 2:
+                colour = ramp.shade
+            else:
+                colour = ramp.base
+            px[x, y] = colour
+
+
+def _h_tube(img: Image.Image, x0: int, y0: int, length: int, thickness: int, ramp: Ramp,
+            bulge_front: bool = False, bulge_rear: bool = False,
+            rings: dict[int, Ramp] | None = None) -> None:
+    """A horizontal cylinder, column by column, its own outline/light/base/shade rows, with an
+    optional wider `bulge` (a scope's objective/ocular bell) at either end -- the muzzle-device and
+    scope precedent, alongside vanilla's spyglass tube. `rings` swaps one column's ramp (a brass
+    band wrapping the tube at that column's own local thickness, bulge included) rather than
+    stamping a fixed row, so a ring always reads as wrapping the barrel, never floating off it."""
+    px = img.load()
+    rings = rings or {}
+    mid = y0 + thickness // 2
+    for i in range(length):
+        x = x0 + i
+        t = thickness
+        if bulge_front and i >= length - 3:
+            t = thickness + 2
+        if bulge_rear and i < 3:
+            t = thickness + 2
+        ry0, ry1 = mid - t // 2, mid - t // 2 + t
+        col_ramp = rings.get(i, ramp)
+        for y in range(ry0, ry1):
+            if not (0 <= x < img.width and 0 <= y < img.height):
+                continue
+            if y in (ry0, ry1 - 1) or i in (0, length - 1):
+                colour = col_ramp.outline
+            elif y == ry0 + 1:
+                colour = col_ramp.light
+            elif y == ry1 - 2:
+                colour = col_ramp.shade
+            else:
+                colour = col_ramp.base
+            px[x, y] = colour
+
+
+def _stairs(img: Image.Image, x: int, y: int, rows: int, width: int, ramp: Ramp,
+            dx: int = 1, shrink: int = 0) -> None:
+    """A staircase of `_block`-shaded rows stepping sideways one column per row -- a wedge leaning
+    forward (the angled grip), a comb sloping into a butt."""
+    for i in range(rows):
+        w = max(1, width - shrink * i)
+        rx = x + dx * i
+        _block(img, rx, y + i, rx + w, y + i + 1, ramp)
+
+
 def attachment_icon(slot: str, name: str) -> Image.Image:
-    """The glyph re-anchored onto its own 16x16 canvas, centred -- `items/attachment_<slot>.json`'s
-    own icon for the attachment item stack itself, independent of any weapon layer."""
-    layer = attachment_glyph(slot, name)
-    bbox = layer.getbbox()
-    if bbox is None:
-        return Image.new("RGBA", ICON, TRANSPARENT)
-    glyph = layer.crop(bbox)
-    icon = Image.new("RGBA", ICON, TRANSPARENT)
-    x = (ICON[0] - glyph.width) // 2
-    y = (ICON[1] - glyph.height) // 2
-    icon.paste(glyph, (x, y), glyph)
-    return icon
-
-
-# ---------------------------------------------------------------- cartridges (16x16), the
-# `tools/icon.py` cartridge precedent, parametrised per calibre, plus a distinct 12-gauge shotshell.
-
-def cartridge_sprite(case_rows: int, tip: tuple[int, int, int, int], case: tuple[int, int, int, int]) -> Image.Image:
+    """The attachment's own standalone item-stack icon, drawn fresh at 16x16 in the vanilla/Create
+    style rather than cropped from the weapon-layer glyph: a small, chunky, recognisable object
+    (a tube, a box, a post) filling most of the canvas, shaded per `Ramp` and coloured only from
+    `tools/palette.py` (`WEAPON-REQ-017`, `DEC-018`)."""
     img = Image.new("RGBA", ICON, TRANSPARENT)
-    columns = range(5, 11)
-    top = 14 - case_rows - 5
 
-    def row(y: int, colour: tuple[int, int, int, int], shrink: bool = False) -> None:
-        cols = list(columns)[1:-1] if shrink else list(columns)
-        for i, x in enumerate(cols):
-            img.load()[x, y] = shade(colour, -6 * i)
+    if slot == "muzzle":
+        if name == "suppressor":
+            # a fat matte-gunmetal tube with a lighter steel end cap ring at each end -- the
+            # vanilla spyglass's own banded-tube precedent, not a single flat bar.
+            _h_tube(img, 2, 5, 12, 5, STEEL)
+            _h_tube(img, 4, 5, 8, 5, GUNMETAL)  # matte body between the two caps
+        elif name == "flash_hider":
+            # a cone opening toward the muzzle (right), three tines beyond it -- gapped rows, not
+            # a solid block, so each prong reads separately.
+            x0, cone_len = 3, 5
+            for i in range(cone_len):
+                t = 3 + i // 2  # 3,3,4,4,5: widening toward the muzzle
+                ry0 = 7 - t // 2
+                for y in range(ry0, ry0 + t):
+                    edge = y in (ry0, ry0 + t - 1) or i in (0, cone_len - 1)
+                    colour = STEEL.outline if edge else (STEEL.light if y == ry0 + 1 else STEEL.base)
+                    _set(img, x0 + i, y, colour)
+            tip_ry0, tip_t = 7 - 5 // 2, 5
+            for y in (tip_ry0, tip_ry0 + tip_t // 2, tip_ry0 + tip_t - 1):
+                _set(img, x0 + cone_len, y, STEEL.outline)
+                _set(img, x0 + cone_len + 1, y, STEEL.outline)
+        else:  # compensator
+            # a short steel block with two separate copper vent ports on top, not one merged bar.
+            _h_tube(img, 3, 6, 8, 4, STEEL)
+            for cx in (5, 8):
+                _set(img, cx, 7, COPPER.base)
+                _set(img, cx, 8, COPPER.shade)
 
-    row(top, tip, shrink=True)
-    for y in range(top + 1, top + 5):
-        row(y, tip)
-    row(top + 5, (74, 54, 32, 255))  # cannelure
-    for y in range(top + 6, top + 6 + case_rows):
-        row(y, case)
-    row(13, case)  # the rim
-    img.load()[7, 13] = (78, 45, 24, 255)
-    img.load()[8, 13] = (78, 45, 24, 255)
+    elif slot == "optic":
+        if name.startswith("scope_"):
+            magnification = int(name.split("_")[1].rstrip("x"))
+            if magnification <= 4:
+                length = {2: 7, 3: 8, 4: 9}[magnification]
+                bulge_front = bulge_rear = False
+                ring_cols = (length - 3,)
+            elif magnification <= 8:
+                length = {6: 10, 8: 11}[magnification]
+                bulge_front, bulge_rear = True, False
+                ring_cols = (2, length - 4)
+            else:
+                length, bulge_front, bulge_rear = 13, True, True
+                ring_cols = (2, length // 2, length - 4)
+            x0 = 8 - length // 2
+            rings = {r: BRASS for r in ring_cols}
+            _h_tube(img, x0, 5, length, 4, STEEL, bulge_front=bulge_front, bulge_rear=bulge_rear,
+                    rings=rings)
+            _set(img, x0 + length - 2, 6, GLASS.light)
+            _set(img, x0 + length - 2, 7, GLASS.base)  # objective lens, two panes wide
+        elif name == "red_dot":
+            _block(img, 6, 5, 11, 10, BLACK)
+            _block(img, 7, 6, 10, 9, GLASS)
+            _set(img, 8, 7, RED_DOT)
+            _set(img, 7, 10, STEEL.outline)
+            _set(img, 9, 10, STEEL.outline)  # mount legs
+        else:  # holo
+            _block(img, 4, 5, 12, 10, BLACK)
+            _block(img, 5, 6, 11, 9, GLASS)
+            _set(img, 7, 7, GLASS.light)
+            _set(img, 8, 7, GLASS.light)
+            _set(img, 5, 10, STEEL.outline)
+            _set(img, 10, 10, STEEL.outline)  # mount legs
+
+    elif slot == "magazine":
+        if name == "quickdraw_magazine":
+            _block(img, 6, 4, 10, 10, STEEL)
+            _block(img, 6, 10, 10, 12, BRASS)
+        elif name == "extended_magazine":
+            _block(img, 6, 3, 10, 13, STEEL)
+        else:  # extended_quickdraw_magazine
+            _block(img, 6, 3, 10, 12, STEEL)
+            _block(img, 6, 12, 10, 14, BRASS)
+
+    elif slot == "grip":
+        if name == "light_grip":
+            _block(img, 7, 6, 9, 12, BLACK)
+        elif name == "half_grip":
+            _block(img, 5, 7, 11, 12, BLACK)
+        elif name == "angled_grip":
+            _stairs(img, 5, 6, 6, 5, POLYMER, dx=1, shrink=0)
+        elif name == "vertical_grip":
+            _block(img, 7, 4, 10, 12, BLACK)
+            for y in (6, 8, 10):
+                _set(img, 8, y, BLACK.outline)  # grooves
+        else:  # thumb_grip
+            _block(img, 5, 8, 10, 12, DARK_OAK)
+            _set(img, 6, 8, TRANSPARENT)
+            _set(img, 6, 9, TRANSPARENT)  # thumb notch
+
+    else:  # stock
+        if name == "tactical_stock":
+            _block(img, 2, 5, 5, 11, BLACK)  # buttplate
+            for x in range(5, 13):
+                _set(img, x, 5, BLACK.outline)
+                _set(img, x, 10, BLACK.outline)  # skeleton rails, open middle
+            _set(img, 12, 5, BLACK.outline)
+            _set(img, 12, 6, BLACK.outline)
+            _set(img, 12, 9, BLACK.outline)
+            _set(img, 12, 10, BLACK.outline)  # interface strut
+        elif name == "cheek_pad":
+            _block(img, 3, 6, 13, 10, SPRUCE)
+            for x in range(4, 12):
+                _set(img, x, 7, SPRUCE.outline)
+                _set(img, x, 9, SPRUCE.outline)  # two straps
+        else:  # bullet_loops
+            _block(img, 2, 8, 14, 11, OAK)  # leather strip, tanned rather than the dark-oak grip's
+            for x in (3, 5, 7, 9, 11):
+                _set(img, x, 6, BRASS.outline)
+                _set(img, x, 7, BRASS.base)
+                _set(img, x, 8, BRASS.base)  # five cartridges standing in their loops
+
+    return img
+
+
+# ---------------------------------------------------------------- cartridges (16x16), a vanilla-
+# style cartridge standing upright per calibre, plus a distinct 12-gauge shotshell.
+
+def cartridge_sprite(case_rows: int, width: int, tip_ramp: Ramp, boat_tail: bool = False) -> Image.Image:
+    img = Image.new("RGBA", ICON, TRANSPARENT)
+    cx = 8
+    x0, x1 = cx - width // 2, cx - width // 2 + width
+    top = 14 - case_rows - 4
+
+    _set(img, cx - 1 if width > 3 else x0, top, tip_ramp.outline)
+    _set(img, cx, top, tip_ramp.outline)  # pointed nose, narrower than the body
+    _block(img, x0, top + 1, x1, top + 4, tip_ramp)  # bullet tip/ogive
+    for x in range(x0, x1):
+        _set(img, x, top + 4, BRASS.outline)  # cannelure
+    case_y0 = top + 5
+    if boat_tail:
+        _block(img, x0, case_y0, x1, case_y0 + case_rows - 1, BRASS)
+        _block(img, x0 + 1, case_y0 + case_rows - 1, x1 - 1, case_y0 + case_rows, BRASS)
+    else:
+        _block(img, x0, case_y0, x1, case_y0 + case_rows, BRASS)
+    rim_y = case_y0 + case_rows
+    _block(img, x0, rim_y, x1, rim_y + 1, BRASS)
+    _set(img, cx - 1, rim_y, BRASS.outline)
+    _set(img, cx, rim_y, BRASS.outline)  # primer
     return img
 
 
 def shotshell_sprite() -> Image.Image:
-    """12 gauge: a squat hull, not a bottlenecked bullet -- `Caliber.GAUGE_12`'s own shape."""
+    """12 gauge: a squat red hull with a brass head, not a bottlenecked bullet -- `Caliber.GAUGE_12`'s
+    own shape."""
     img = Image.new("RGBA", ICON, TRANSPARENT)
-    hull = (196, 88, 40, 255)
-    brass = (188, 152, 66, 255)
-    for y in range(2, 11):
-        for i, x in enumerate(range(4, 12)):
-            img.load()[x, y] = shade(hull, -4 * i)
-    for y in range(11, 14):
-        for i, x in enumerate(range(4, 12)):
-            img.load()[x, y] = shade(brass, -4 * i)
-    img.load()[7, 12] = (78, 45, 24, 255)
-    img.load()[8, 12] = (78, 45, 24, 255)
+    _block(img, 4, 2, 12, 11, RED)
     for x in range(4, 12):
-        img.load()[x, 1] = shade(hull, -20)  # the crimped top
+        _set(img, x, 2, RED.outline)  # crimped top
+    _block(img, 4, 11, 12, 14, BRASS)
+    _set(img, 7, 12, BRASS.outline)
+    _set(img, 8, 12, BRASS.outline)  # primer
     return img
 
 
@@ -442,8 +627,8 @@ def main() -> None:
             written.append(TEXTURES / "attachment" / f"{name}.png")
 
     # Cartridges.
-    for caliber, (rows, tip, case) in CARTRIDGES.items():
-        save_png(cartridge_sprite(rows, tip, case), TEXTURES / "cartridge" / f"{caliber}.png")
+    for caliber, (rows, width, tip_ramp, boat_tail) in CARTRIDGES.items():
+        save_png(cartridge_sprite(rows, width, tip_ramp, boat_tail), TEXTURES / "cartridge" / f"{caliber}.png")
         write_json(MODELS / "cartridge" / f"{caliber}.json", generated_model(f"{NS}:item/cartridge/{caliber}"))
     save_png(shotshell_sprite(), TEXTURES / "cartridge" / "gauge_12.png")
     write_json(MODELS / "cartridge" / "gauge_12.json", generated_model(f"{NS}:item/cartridge/gauge_12"))
