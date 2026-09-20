@@ -85,3 +85,10 @@ A weapon stack carries the max_damage its own base's recipe gives it (`docs/spec
 - `void aWeaponStackIsNeverEnchantableAndNeverAValidRepairTarget(GameTestHelper helper)`
 - `void aRealAnvilOffersNoMaterialRepairAndNoEnchantForADamagedWeapon(GameTestHelper helper)`
 
+### `class WeaponTooltipGameTest` — `src/gametest/java/firearms/gametest/WeaponTooltipGameTest.java`
+`FA-11`'s acceptance criteria for firearms.client.ui.WeaponTooltip (`docs/spec/domains/ui.md` `UI-REQ-001`): an AKM with a suppressor and a 4x scope lists its name/class, nine derived stat lines, every one of the assault rifle's five slots (occupied or "unequipped"), and its ammo line, in that fixed order; an attachment stack lists its own slot and "+/-" modifier lines; a cartridge stack lists its own calibre.
+- `void akmWithSuppressorAndScope4xListsTheExpectedKeysInOrder(GameTestHelper helper)`
+- `void aSuppressorAttachmentListsItsSlotAndModifiersAsPlusMinusLines(GameTestHelper helper)`
+- `void aCartridgeListsItsCalibre(GameTestHelper helper)`
+- `void anUnrelatedVanillaItemHasNoLines(GameTestHelper helper)`
+
