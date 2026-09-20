@@ -6,7 +6,7 @@ Every type with its summary and every non-private constructor, method and consta
 signature is the contract; read the source only when the summary is not enough.
 
 ### `class SourceSurfaceTest` — `src/test/java/firearms/SourceSurfaceTest.java`
-Three claims about the source tree, checked against the files themselves: the mod opens no socket of its own (COMP-REQ-001: no networking type is referenced outside Minecraft's own packet API), every translation key the code names has an en_us entry, and no source or resource file names PUBG, its weapon names, or its branding (COMP-REQ-002: every weapon here uses only its real-world designation).
+Three claims about the source tree, checked against the files themselves: the mod opens no socket of its own (COMP-REQ-001: no networking type is referenced outside Minecraft's own packet API), every translation key the code names — including a damage type's death message keys, e.g.
 - `void noNetworkingTypeIsReferencedByTheMod()`
 - `void everyTranslationKeyNamedInCodeHasAnEnglishEntry()`
 - `void noSourceOrResourceFileNamesPubgOrItsBranding()`

@@ -15,9 +15,12 @@ signature page before calling into a package you did not write.
 |---|---|---|---|
 | `firearms` | root | Firearms |  |
 | `firearms.client` | root | FirearmsClient |  |
+| `firearms.client.combat` | root | BulletRenderState, BulletRenderer, CombatClient | The bullet's client-only tracer renderer (firearms.combat.BulletEntity, registered as firearms:bullet). |
+| `firearms.combat` | root | BulletEntity, BulletSpawner, CombatRegistration, SpreadMath | The bullet entity and the server-side combat resolution it drives: flight, hit testing, damage, knockback, pellets, and the spread maths the firing code (FA-6) rolls through (docs/spec/domains/combat.md). |
 | `firearms.model` | root | Attachment, Caliber, Clamp, FireMode, Loadout, Modifier, Op, Slot, Stat, StatDerivation, Stats, WeaponBase, WeaponClass | The pure part: the stat derivation function and the shared attach function, with no Minecraft imports (docs/spec/operations/testing.md). |
 | `firearms` | root (test) | SourceSurfaceTest |  |
-| `firearms.gametest` | root (gametest) | SmokeGameTest |  |
+| `firearms.combat` | root (test) | SpreadMathTest |  |
+| `firearms.gametest` | root (gametest) | BulletGameTest, SmokeGameTest |  |
 | `firearms.model` | root (test) | AttachmentModifierTest, LoadoutSlotValidationTest, StatDerivationClampTest, StatDerivationOrderTest, WeaponBaseStatsTest |  |
 
 | build script | what |
