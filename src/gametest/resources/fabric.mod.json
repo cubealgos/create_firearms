@@ -22,7 +22,8 @@
       "firearms.gametest.FiringGameTest",
       "firearms.gametest.MasterBuyBackGameTest",
       "firearms.gametest.NoDuplicateOfferGameTest",
-      "firearms.gametest.TradeFileGameTest"
+      "firearms.gametest.TradeFileGameTest",
+      "firearms.gametest.WeaponTooltipGameTest"
     ]
   },
   "depends": {
