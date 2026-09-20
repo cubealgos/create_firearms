@@ -7,6 +7,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -79,12 +81,28 @@ final class SourceSurfaceTest {
         }
     }
 
+    /**
+     * Every source or resource file this mod ships, except the binary media types under {@code
+     * assets/} (sound, image, font) — {@code .ogg} placeholders landed at `FA-6`
+     * (`assets/firearms/sounds/`) are the first of those, and a naive UTF-8 {@code readString}
+     * over one throws {@link java.nio.charset.MalformedInputException}; item/model textures land
+     * later (`FA-9`) and would hit the identical failure without this filter.
+     */
+    private static final Set<String> BINARY_EXTENSIONS = Set.of(".ogg", ".png", ".jpg", ".jpeg", ".ttf", ".otf");
+
     private static List<Path> allTextFiles() throws IOException {
         try (Stream<Path> mainWalk = Files.walk(MAIN); Stream<Path> resourcesWalk = Files.walk(RESOURCES)) {
             List<Path> files = new ArrayList<>();
-            mainWalk.filter(Files::isRegularFile).forEach(files::add);
-            resourcesWalk.filter(Files::isRegularFile).forEach(files::add);
+            mainWalk.filter(Files::isRegularFile).filter(SourceSurfaceTest::isText).forEach(files::add);
+            resourcesWalk.filter(Files::isRegularFile).filter(SourceSurfaceTest::isText).forEach(files::add);
             return files;
         }
+    }
+
+    private static boolean isText(Path path) {
+        String name = path.getFileName().toString();
+        int dot = name.lastIndexOf('.');
+        String extension = dot < 0 ? "" : name.substring(dot).toLowerCase(Locale.ROOT);
+        return !BINARY_EXTENSIONS.contains(extension);
     }
 }

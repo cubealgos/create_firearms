@@ -1,0 +1,38 @@
+{
+  "fire.pistol": {
+    "subtitle": "subtitle.firearms.fire",
+    "sounds": ["firearms:fire/pistol"]
+  },
+  "fire.smg": {
+    "subtitle": "subtitle.firearms.fire",
+    "sounds": ["firearms:fire/smg"]
+  },
+  "fire.assault_rifle": {
+    "subtitle": "subtitle.firearms.fire",
+    "sounds": ["firearms:fire/assault_rifle"]
+  },
+  "fire.dmr": {
+    "subtitle": "subtitle.firearms.fire",
+    "sounds": ["firearms:fire/dmr"]
+  },
+  "fire.sniper_rifle": {
+    "subtitle": "subtitle.firearms.fire",
+    "sounds": ["firearms:fire/sniper_rifle"]
+  },
+  "fire.shotgun": {
+    "subtitle": "subtitle.firearms.fire",
+    "sounds": ["firearms:fire/shotgun"]
+  },
+  "fire.suppressed": {
+    "subtitle": "subtitle.firearms.fire_suppressed",
+    "sounds": ["firearms:fire/suppressed"]
+  },
+  "reload": {
+    "subtitle": "subtitle.firearms.reload",
+    "sounds": ["firearms:reload"]
+  },
+  "empty": {
+    "subtitle": "subtitle.firearms.empty",
+    "sounds": ["firearms:empty"]
+  }
+}
