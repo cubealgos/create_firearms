@@ -12,6 +12,11 @@ signature is the contract; read the source only when the summary is not enough.
 - `void aWeaponAndAnIronIngotYieldNoAnvilResult(GameTestHelper helper)`
 - `void aRealEnchantingTableOffersNoEnchantmentForAWeapon(GameTestHelper helper)`
 
+### `class AttachDeployingGameTest` — `src/gametest/java/firearms/gametest/AttachDeployingGameTest.java`
+A real DeployerBlockEntity finds and runs AttachDeployingRecipe exactly as Create's own deploying recipes are found — zero mixin (`docs/spec/domains/attach.md` `ATTACH-REQ-005`, `006`; `docs/spec/04-architecture.md` `ARCH-DEC-003`).
+- `void aRealDeployerFindsAndAppliesTheDeployingAttachRecipe(GameTestHelper helper)`
+- `void aSecondSuppressorOnAnAlreadySuppressedUziMatchesNothing(GameTestHelper helper)`
+
 ### `class AttachSmithingGameTest` — `src/gametest/java/firearms/gametest/AttachSmithingGameTest.java`
 A real SmithingMenu runs firearms.attach.AttachSmithingRecipe exactly as the vanilla smithing table would, proving the recipe is actually found by RecipeManager.getRecipeFor(RecipeType.SMITHING, ...) through a real data-loaded data/firearms/recipe/attach.json — zero mixin (`docs/spec/domains/attach.md` `ATTACH-REQ-001`, `002`, `003`; `docs/spec/04-architecture.md` `ARCH-DEC-002`).
 - `void aSuppressorAttachesToAMicroUziIntoTheMuzzleSlot(GameTestHelper helper)`
