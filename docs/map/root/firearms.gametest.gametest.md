@@ -46,6 +46,16 @@ The two data loaders (`WeaponDataLoader`, `AttachmentDataLoader`) produce exactl
 - `void theAttachmentLoaderProducesExactlyThe22AttachmentsWithTheModelsValues(GameTestHelper helper)`
 - `void aDatapackAddedWeaponAndAttachmentInAnExistingClassAndSlotLoadWithZeroNewJava(GameTestHelper helper)`
 
+### `class FiringGameTest` — `src/gametest/java/firearms/gametest/FiringGameTest.java`
+The fire-control loop (`FA-6`, `docs/spec/domains/weapon.md` `WEAPON-REQ-004`, `007`-`013`; `docs/spec/operations/testing.md`): a loaded weapon fires and moves ammo, durability and the cooldown together; an empty weapon reloads from matching cartridges or clicks empty; a held auto weapon repeats at its own fire-rate interval; a pump weapon refuses a second shot inside its own delay; a shotgun spawns its full pellet count from one round; a suppressor changes the sound event FireSounds selects.
+- `void aLoadedWeaponFiresOnceAndMovesAmmoDurabilityAndCooldownTogether(GameTestHelper helper)`
+- `void anEmptyWeaponWithMatchingCartridgesReloadsToMagazineSizeAndConsumesThem(GameTestHelper helper)`
+- `void anEmptyWeaponWithNoMatchingCartridgesFiresNothingAndStaysEmpty(GameTestHelper helper)`
+- `void anAutoWeaponFiresNBulletsOverNTimesFireRateTicksOfHeldUse(GameTestHelper helper)` — `UC-008`: a held auto weapon fires at its own fire-rate interval — 3 shots over exactly 3 * fireRateTicks simulated ticks (the Micro Uzi's own fireRateTicks == 2) — driven directly through the same WeaponItem methods the vanilla "using item" state machine calls, with ItemCooldowns.tick() advanced once per simulated tick.
+- `void aPumpWeaponRefusesASecondShotInsideThePumpDelay(GameTestHelper helper)` — `WEAPON-REQ-004`: pump behaves as semi for cooldown purposes — a second attempt inside that same delay is refused.
+- `void aShotgunTriggerPullSpawnsItsFullPelletCount(GameTestHelper helper)` — `COMBAT-REQ-005`: one trigger pull, all 8 pellets, one round consumed.
+- `void aSuppressorChangesTheFireSoundEventChosen(GameTestHelper helper)` — `WEAPON-REQ-013`, `COMBAT-REQ-009`: a suppressor changes which sound event FireSounds selects.
+
 ### `class ItemRegistrationGameTest` — `src/gametest/java/firearms/gametest/ItemRegistrationGameTest.java`
 Every item `FA-3` registers resolves at its own id: the one weapon item, the five attachment items, and the six cartridge items (`docs/spec/contracts/public-surface.md`).
 - `void everyRegisteredItemResolvesAtItsId(GameTestHelper helper)`
