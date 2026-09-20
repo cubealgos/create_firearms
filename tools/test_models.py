@@ -128,6 +128,30 @@ class RealBakeUvBoundsTest(unittest.TestCase):
         self.assertEqual([], offenders, "every committed model's face uv bakes inside its real atlas PNG (vanilla's own /16 math)")
 
 
+class OrientationTest(unittest.TestCase):
+    """Round 3 (Kevin's in-game verdict on round 2: "they point at the player instead of away from
+    him"): every base's own `role="muzzle"` box must sit at the assembly's own smallest Z and its
+    `role="stock"` box at the largest -- -Z is the muzzle end, +Z is the stock/grip end, matching
+    Create Fly's own potato cannon (`models.py`'s module docstring, orientation section)."""
+
+    def test_muzzle_end_is_the_smallest_z(self):
+        for weapon_id, boxes in models.WEAPON_BOXES.items():
+            muzzle_boxes = [b for b in boxes if b.role == "muzzle"]
+            stock_boxes = [b for b in boxes if b.role == "stock"]
+            self.assertEqual(1, len(muzzle_boxes), f"{weapon_id}: exactly one box should carry role='muzzle'")
+            self.assertEqual(1, len(stock_boxes), f"{weapon_id}: exactly one box should carry role='stock'")
+            muzzle_min_z = min(muzzle_boxes[0].frm[2], muzzle_boxes[0].to[2])
+            stock_max_z = max(stock_boxes[0].frm[2], stock_boxes[0].to[2])
+            all_z = [c for b in boxes for c in (b.frm[2], b.to[2])]
+            self.assertEqual(min(all_z), muzzle_min_z,
+                              f"{weapon_id}: the muzzle box's own smallest Z ({muzzle_min_z}) is not the "
+                              f"whole assembly's smallest Z ({min(all_z)}) -- some other element pokes out further")
+            self.assertEqual(max(all_z), stock_max_z,
+                              f"{weapon_id}: the stock/grip box's own largest Z ({stock_max_z}) is not the "
+                              f"whole assembly's largest Z ({max(all_z)}) -- some other element pokes out further")
+            self.assertLess(muzzle_min_z, stock_max_z, f"{weapon_id}: muzzle end is not forward of the stock/grip end")
+
+
 class NoFloatingElementsTest(unittest.TestCase):
     """Kevin's round-2 connectivity rule, enforced: every element of a base weapon reaches every
     other element of that same base through `models.boxes_connected` edges, and every attachment

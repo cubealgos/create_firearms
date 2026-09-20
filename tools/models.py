@@ -19,12 +19,40 @@ surface). Every atlas face also carries a pixel detail on top of its flat tone -
 ejection port, receiver rivets, wood grain, a lens glint, the red dot, magazine witness lines --
 from `_apply_face_detail`.
 
+Round 3 (Kevin's in-game verdict on round 2: "all weapons kind of look like sniper rifles; they
+point at the player instead of away from him, which is weird; the rotation in the inventory/hotbar
+also looks weird"): two bugs and one proportion problem, all fixed here.
+
+1. **Orientation was backwards.** Round 2's docstring claimed "+Z is the muzzle end" -- the
+   opposite of Create Fly's own potato cannon, decompiled and checked directly
+   (`unzip -p ... assets/create/models/item/potato_cannon/item.json`): its elements run from
+   `z=-2.5` (the muzzle tip) to `z=17.5` (the stock/grip end), and its `display` block -- the exact
+   block round one and two copied verbatim into `BASE_DISPLAY` below -- was authored against *that*
+   orientation. Every base and part box, and every rotation angle and origin, is mirrored on Z
+   (`z' = -z`, folded into the round-3 geometry directly rather than kept as a separate pass) so
+   **-Z is the muzzle end, +Z is the stock/grip end**, matching the cannon exactly. Mirroring a
+   single axis flips handedness, so any element `rotation` around the `x` or `y` axis (whose plane
+   includes Z) has its angle negated too; a `z`-axis rotation (whose plane excludes Z) is
+   unaffected. `test_models.py::test_muzzle_end_is_the_smallest_z` locks this down per weapon.
+2. **Every class was scaled to fill the 16-unit slot**, so a pistol and the AWM read at the same
+   size and nothing looked like its own weapon. Round 3 uses one `SHARED_SCALE` (below) for every
+   class, derived from the AWM alone -- the longest weapon at its own real 24-unit length -- so a
+   pistol is visibly small and a shotgun visibly mid-length, the way Create's own items keep their
+   real relative sizes. Every base's own box list was rebuilt to real relative proportions: pistol
+   and Micro Uzi bulked up (a full-size grip, a thicker stubby receiver) rather than thin sticks
+   stretched to fit; every barrel is 1.5 units across, not 1.
+3. **The inventory/hotbar rotation was the raw potato-cannon values**, which happen to work for the
+   cannon's own geometry but not for a rifle-shaped assembly authored independently. `gui`, `ground`
+   and `fixed` are retuned below to the diagonal side-on read vanilla tools and the cannon's own
+   icon use, `thirdperson_righthand` to point the barrel down the arm, `firstperson_righthand` to a
+   hip-fire pose; `AIM_TRANSFORMATION` (unchanged, still additive) still moves the model on top.
+
 The box DSL: each weapon and each attachment part is a list of `Box(from_xyz, to_xyz, material)`
 in model units (16 units = 1 block), optionally with a `rotation` (a single-axis Blockbench-style
 element rotation, angle one of -45/-22.5/0/22.5/45), a `face_material` override for a detail's own
 material (a scope's glass lens, a compensator's copper port), and a `face_detail` naming a pixel
 pattern to paint on top of a face's flat tone. The weapon lies along the Z axis exactly as Create's
-cannon does: -Z is the stock/grip end, near the player's hand, +Z is the muzzle end.
+cannon does: -Z is the muzzle end, +Z is the stock/grip end, near the player's hand.
 
 The atlas packer gives every box face its own pixel rectangle -- one texel per model unit -- in a
 per-weapon or per-part PNG, shelf-packed into the smallest power-of-two square that fits (up to
@@ -42,7 +70,10 @@ shading, in both the `gui` and `thirdperson_righthand` display poses, bare and f
 from __future__ import annotations
 
 import copy
+import io
+import json
 import math
+import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -66,7 +97,7 @@ from sprites import (
 
 SHEET_PATH = Path(
     "/private/tmp/claude-501/-Users-kevin-Documents-git-personal-create-civilization/"
-    "bb7bc244-01b6-4890-9ca3-da5d384dc21e/scratchpad/fa22-round2.png"
+    "bb7bc244-01b6-4890-9ca3-da5d384dc21e/scratchpad/fa22-round3.png"
 )
 
 FACES = ("north", "south", "east", "west", "up", "down")
@@ -89,15 +120,17 @@ DIRECTIONAL_SHADE = {"up": 1.0, "down": 0.5, "north": 0.8, "south": 0.8, "east":
 # carries (only ever rendered while minecraft:using_item is true, i.e. first/thirdperson only --
 # nothing "uses" an item in a GUI/inventory/ground/fixed slot). The round-1 value above was a
 # near-zero nudge, not a deliberate pose; now that use() is aim-only (WEAPON-REQ-019) the aiming
-# pose needs to read as a clear, deliberate change from the hip-fire pose toward screen centre. The
-# deltas below are chosen relative to BASE_DISPLAY["firstperson_righthand"]'s own
-# [0.25, 5, 0.75] translation (the pose these compose on top of, unchanged by this ticket): y drops
-# by 3.0 (5 -> ~2.0), bringing the gun's hip-pose height down toward vertical centre the way
-# raising a weapon to eye level would; x drops by 0.2 (0.25 -> ~0.05), pulling the off-to-the-side
-# hip stance toward the screen's horizontal centre without fully zeroing it (a small persistent
-# offset keeps the model from looking perfectly axis-locked); z drops by 0.35 (0.75 -> ~0.4),
-# pulling the weapon slightly closer along its own barrel axis (+Z is the muzzle end per the box
-# DSL's own convention, so a negative z delta pulls the whole model back toward the camera/hand).
+# pose needs to read as a clear, deliberate change from the hip-fire pose toward screen centre.
+#
+# Round 3 (Kevin, item 3: "the aiming transformation from AIM_TRANSFORMATION stays additive"): this
+# delta itself is unchanged -- it was chosen relative to round 2's own
+# `BASE_DISPLAY["firstperson_righthand"]` translation, which round 3 replaced (`[0.25, 5, 0.75]` ->
+# `[1, 3, 1]`) along with the muzzle convention it was reasoned against (round 2's docstring
+# claimed +Z was the muzzle end; the module docstring's orientation section above corrects that to
+# -Z). Composed on top of the new hip pose the numbers still move the gun up and in toward screen
+# centre and slightly toward the camera (z is negative, and -Z is now the muzzle direction, so this
+# still pulls the weapon back toward the player's hand rather than pushing the muzzle away) -- the
+# same direction of change as before, just starting from a different hip pose underneath it.
 # Proposed, retune at the sweep -- this is a numeric aesthetic tuning that needs in-game visual
 # confirmation, the same convention this project's own spec uses for every unconfirmed number.
 AIM_TRANSFORMATION = {
@@ -117,6 +150,10 @@ class Box:
     face_material: dict[str, str] = field(default_factory=dict)
     face_detail: dict[str, str] = field(default_factory=dict)
     rotation: dict | None = None  # {"angle": ..., "axis": "x"|"y"|"z", "origin": (x, y, z)}
+    # Metadata only -- never touches the written model JSON. Tags the one box that is this base's
+    # own muzzle/barrel or its own stock/grip end, so `test_models.py` can check round 3's
+    # orientation fix (`test_muzzle_end_is_the_smallest_z`) without guessing which element is which.
+    role: str | None = None  # "muzzle" | "stock" | None
 
 
 def _shade(colour: tuple[int, int, int, int], delta: int) -> tuple[int, int, int, int]:
@@ -192,89 +229,95 @@ def part_touches_base(base_boxes: list[Box], part_boxes: list[Box]) -> bool:
 # stock/grip end, matching Create's own potato cannon.
 
 WEAPON_BOXES: dict[str, list[Box]] = {
+    # Pistol and Micro Uzi are hand-built to their round-3 proportions rather than a scale of round
+    # 2's geometry (Kevin's round-2 verdict: "all weapons kind of look like sniper rifles" -- round
+    # 2's pistol/SMG receivers were the same thin 2x2 cross-section as the rifles' 3x4, just shorter,
+    # so nothing but length told them apart). Both now share the rifles' own 3-wide receiver
+    # footprint (`WEAPON-REQ-016`), a full-size grip/stock, and total length close to their own
+    # `WEAPON-REQ-002` roster proportions (a pistol dwarfed by the AWM, not a shrunk copy of it).
     "m1911": [
-        Box((7, 6, -3.4), (9, 8, 0.6), "gunmetal", face_detail={"north": "rivets"}),  # lower frame
-        Box((7, 8, -3.8), (9, 10, 1.4), "steel", face_material={"east": "black"},
-            face_detail={"west": "serrations", "east": "ejection_port"}),  # slide
-        Box((7.4, 8, 1.4), (8.6, 9, 2.6), "steel"),  # barrel, flush to the slide's own front face
-        Box((7.7, 10, 1.0), (8.3, 10.4, 1.4), "steel"),  # front sight, flush on the slide's top
-        Box((7.7, 10, -3.8), (8.3, 10.4, -3.4), "steel"),  # rear sight, flush on the slide's top
-        Box((7.7, 10.4, -3.9), (8.3, 10.9, -3.5), "gunmetal"),  # hammer spur, atop the rear sight
-        Box((7.3, 5.3, -1.4), (7.7, 6, -1.0), "gunmetal"),  # trigger guard, front leg
-        Box((7.3, 5.0, -1.4), (7.7, 5.3, 0.3), "gunmetal"),  # trigger guard, bottom
-        Box((7.3, 5.3, 0.0), (7.7, 6, 0.4), "gunmetal"),  # trigger guard, rear leg
-        Box((7, 2, -3.6), (9, 6, -1.4), "dark_oak", face_detail={"north": "wood_grain"},
-            rotation={"angle": -22.5, "axis": "x", "origin": (8, 6, -1.6)}),  # grip, angled back and down
-        Box((7.3, 1, -3.0), (8.7, 2, -2.0), "black", face_detail={"north": "witness_lines"}),  # magazine
+        Box((7.25, 7.75, -2.6), (8.75, 9.25, -0.6), "steel", role="muzzle"),  # barrel, 1.5 thick, flush to the slide
+        Box((6.5, 8, -0.6), (9.5, 10, 2.2), "steel", face_material={"east": "black"},
+            face_detail={"west": "serrations", "east": "ejection_port"}),  # slide, full 3-wide receiver footprint
+        Box((6.5, 6, -0.6), (9.5, 8, 2.6), "gunmetal", face_detail={"north": "rivets"}),  # lower frame, flush to the slide
+        Box((7.6, 10, -0.5), (8.4, 10.4, -0.1), "steel"),  # front sight, flush on the slide's top, near the muzzle
+        Box((7.6, 10, 1.8), (8.4, 10.4, 2.2), "steel"),  # rear sight, flush on the slide's top, near the grip
+        Box((7.6, 10.4, 1.8), (8.4, 10.9, 2.4), "gunmetal"),  # hammer spur, atop the rear sight
+        Box((7.3, 5.6, 0.3), (7.7, 6, 0.7), "gunmetal"),  # trigger guard, front leg
+        Box((7.3, 5.3, 0.3), (7.7, 5.6, 1.5), "gunmetal"),  # trigger guard, bottom
+        Box((7.3, 5.6, 1.1), (7.7, 6, 1.5), "gunmetal"),  # trigger guard, rear leg
+        Box((6.5, 2, 2.0), (9.5, 6, 5.4), "dark_oak", face_detail={"north": "wood_grain"},
+            rotation={"angle": -22.5, "axis": "x", "origin": (8, 6, 2.3)}, role="stock"),  # full grip, angled back and down
+        Box((7.3, 1, 2.8), (8.7, 3, 4.6), "black", face_detail={"north": "witness_lines"}),  # magazine, inserted into the grip
     ],
     "micro_uzi": [
-        Box((7, 7, -2.2), (9, 10, 2.6), "gunmetal", face_detail={"north": "rivets"}),  # stubby receiver
-        Box((7.4, 8, 2.6), (8.6, 9, 3.8), "gunmetal"),  # short barrel, flush to the receiver's front
-        Box((7.7, 10, 2.2), (8.3, 10.4, 2.6), "steel"),  # front sight
-        Box((7.7, 10, -2.2), (8.3, 10.4, -1.8), "steel"),  # rear sight
-        Box((7.5, 1, -0.5), (8.5, 7, 1.5), "black", face_detail={"north": "witness_lines"}),  # magazine-in-grip
-        Box((7, 10, -4.5), (9, 10.4, -2.2), "steel"),  # folded wire stock, flat along the top
-        Box((7, 8.6, -5.0), (7.6, 10.4, -4.5), "steel"),  # its rear hoop, dropping down
-        Box((7.3, 6.3, -0.6), (7.7, 7, -0.2), "gunmetal"),  # trigger guard, front leg
-        Box((7.3, 6, -0.6), (7.7, 6.3, 0.3), "gunmetal"),  # trigger guard, bottom
-        Box((7.3, 6.3, 0.0), (7.7, 7, 0.4), "gunmetal"),  # trigger guard, rear leg
+        Box((7.25, 7.75, -4.0), (8.75, 9.25, -2.0), "gunmetal", role="muzzle"),  # short barrel, 1.5 thick
+        Box((6, 6.5, -2.0), (10, 10.5, 2.0), "gunmetal", face_detail={"north": "rivets"}),  # stubby 4-thick receiver
+        Box((7.6, 10.5, -1.9), (8.4, 10.9, -1.5), "steel"),  # front sight
+        Box((7.6, 10.5, 1.6), (8.4, 10.9, 2.0), "steel"),  # rear sight
+        Box((7, 1, 0.2), (9, 6.5, 1.8), "black", face_detail={"north": "witness_lines"}),  # magazine-in-grip
+        Box((7, 9.8, 2.0), (9, 10.6, 6.0), "steel"),  # folded wire stock, flat along the top, flush to the receiver
+        Box((7, 8.6, 5.3), (7.6, 10.6, 6.0), "steel", role="stock"),  # its rear hoop, dropping down
+        Box((7.3, 6.1, -1.0), (7.7, 6.5, -0.6), "gunmetal"),  # trigger guard, front leg
+        Box((7.3, 5.8, -1.0), (7.7, 6.1, 0.2), "gunmetal"),  # trigger guard, bottom
+        Box((7.3, 6.1, -0.2), (7.7, 6.5, 0.2), "gunmetal"),  # trigger guard, rear leg
     ],
     "akm": [
-        Box((6.5, 6, -3.4), (9.5, 10, 4.6), "steel", face_detail={"north": "rivets"}),  # receiver
-        Box((7.4, 7.5, 4.6), (8.6, 8.5, 9.6), "steel"),  # long barrel, flush to the receiver's front
-        Box((7.8, 8.5, 9.0), (8.2, 8.9, 9.4), "gunmetal"),  # front sight, flush on the barrel's top
-        Box((7.8, 10, -1.0), (8.2, 10.4, -0.6), "gunmetal"),  # rear sight, flush on the receiver's top
-        Box((7.7, 8.5, 1.0), (8.3, 8.9, 8.8), "gunmetal"),  # gas tube, flush on the barrel's top
-        Box((7, 6.5, 1.0), (9, 7.5, 5.0), "oak", face_detail={"west": "wood_grain"}),  # handguard, flush to the barrel
-        Box((7, 5.3, -1.6), (7.5, 6, -1.2), "gunmetal"),  # trigger guard, front leg
-        Box((7, 5.0, -1.6), (7.5, 5.3, 0.2), "gunmetal"),  # trigger guard, bottom
-        Box((7, 2, -3.8), (9, 6, -1.8), "dark_oak", face_detail={"north": "wood_grain"},
-            rotation={"angle": -22.5, "axis": "x", "origin": (8, 6, -2)}),  # pistol grip
-        Box((7.3, 3.5, 0.0), (8.7, 6, 1.5), "black", face_detail={"north": "witness_lines"},
-            rotation={"angle": 22.5, "axis": "x", "origin": (8, 6, 1.5)}),  # curved magazine, upper segment
-        Box((7.3, 1.0, 0.8), (8.7, 3.5, 2.3), "black",
-            rotation={"angle": 45, "axis": "x", "origin": (8, 3.5, 1.55)}),  # curved magazine, lower segment
-        Box((6.7, 6.4, -7.6), (9.3, 9, -3.4), "spruce", face_detail={"west": "wood_grain"}),  # wood stock, flush to the receiver's rear
-        Box((6.7, 6.4, -8.0), (9.3, 9, -7.6), "spruce"),  # buttplate
+        Box((6.5, 6, -5.2273), (9.5, 10, 3.8636), "steel", face_detail={"north": "rivets"}),  # receiver
+        Box((7.25, 7.25, -10.9091), (8.75, 8.75, -5.2273), "steel", role="muzzle"),  # long barrel, 1.5 thick
+        Box((7.8, 8.75, -10.6818), (8.2, 9.15, -10.2273), "gunmetal"),  # front sight, flush on the barrel's new top
+        Box((7.8, 10, 0.6818), (8.2, 10.4, 1.1364), "gunmetal"),  # rear sight, flush on the receiver's top
+        Box((7.7, 8.75, -10.0), (8.3, 9.15, -1.1364), "gunmetal"),  # gas tube, flush on the barrel's new top
+        Box((7, 6.5, -5.6818), (9, 7.25, -1.1364), "oak", face_detail={"west": "wood_grain"}),  # handguard, flush to the barrel
+        Box((7, 5.3, 1.3636), (7.5, 6, 1.8182), "gunmetal"),  # trigger guard, front leg
+        Box((7, 5.0, -0.2273), (7.5, 5.3, 1.8182), "gunmetal"),  # trigger guard, bottom
+        Box((7, 2, 2.0455), (9, 6, 4.3182), "dark_oak", face_detail={"north": "wood_grain"},
+            rotation={"angle": 22.5, "axis": "x", "origin": (8, 6, 2.2727)}),  # pistol grip
+        Box((7.3, 3.5, -1.7045), (8.7, 6, -0.0), "black", face_detail={"north": "witness_lines"},
+            rotation={"angle": -22.5, "axis": "x", "origin": (8, 6, -1.7045)}),  # curved magazine, upper segment
+        Box((7.3, 1.0, -2.6136), (8.7, 3.5, -0.9091), "black",
+            rotation={"angle": -45, "axis": "x", "origin": (8, 3.5, -1.7614)}),  # curved magazine, lower segment
+        Box((6.7, 6.4, 3.8636), (9.3, 9, 8.6364), "spruce", face_detail={"west": "wood_grain"}),  # wood stock, flush to the receiver's rear
+        Box((6.7, 6.4, 8.6364), (9.3, 9, 9.0909), "spruce", role="stock"),  # buttplate
     ],
     "ruger_mini_14": [
-        Box((6.5, 6, -3.4), (9.5, 10, 4.6), "gunmetal", face_detail={"north": "rivets"}),  # receiver
-        Box((7.4, 7.5, 4.6), (8.6, 8.5, 11.6), "steel"),  # long barrel, flush to the receiver's front
-        Box((7.8, 8.5, 11.0), (8.2, 8.9, 11.4), "gunmetal"),  # front sight, flush on the barrel's top
-        Box((7.8, 10, -1.0), (8.2, 10.4, -0.6), "gunmetal"),  # rear sight, flush on the receiver's top
-        Box((6.7, 6.4, -8.6), (9.3, 9, -3.4), "spruce", face_detail={"west": "wood_grain"}),  # wood stock, flush to the receiver's rear
-        Box((6.7, 6.4, -9.0), (9.3, 9, -8.6), "spruce"),  # buttplate
-        Box((7, 9, -8.2), (9, 9.5, -7.6), "spruce"),  # comb, flush on the stock's top
-        Box((7, 5.6, 1.0), (9, 6, 5.0), "spruce", face_detail={"west": "wood_grain"}),  # full stock running under the barrel
-        Box((7, 5.3, -1.6), (7.5, 6, -1.2), "gunmetal"),  # trigger guard, front leg
-        Box((7, 5.0, -1.6), (7.5, 5.3, 0.2), "gunmetal"),  # trigger guard, bottom
-        Box((7.3, 3.5, -0.5), (8.7, 6, 1.0), "gunmetal", face_detail={"north": "witness_lines"}),  # small box magazine
+        Box((6.5, 6, -4.9126), (9.5, 10, 3.6311), "gunmetal", face_detail={"north": "rivets"}),  # receiver
+        Box((7.25, 7.25, -12.3883), (8.75, 8.75, -4.9126), "steel", role="muzzle"),  # long barrel, 1.5 thick
+        Box((7.8, 8.75, -12.1748), (8.2, 9.15, -11.7476), "gunmetal"),  # front sight, flush on the barrel's new top
+        Box((7.8, 10, 0.6408), (8.2, 10.4, 1.068), "gunmetal"),  # rear sight, flush on the receiver's top
+        Box((6.7, 6.4, 3.6311), (9.3, 9, 9.1845), "spruce", face_detail={"west": "wood_grain"}),  # wood stock, flush to the receiver's rear
+        Box((6.7, 6.4, 9.1845), (9.3, 9, 9.6117), "spruce", role="stock"),  # buttplate
+        Box((7, 9, 8.1165), (9, 9.5, 8.7573), "spruce"),  # comb, flush on the stock's top
+        Box((7, 5.6, -5.3398), (9, 6, -1.068), "spruce", face_detail={"west": "wood_grain"}),  # full stock running under the barrel
+        Box((7, 5.3, 1.2816), (7.5, 6, 1.7087), "gunmetal"),  # trigger guard, front leg
+        Box((7, 5.0, -0.2136), (7.5, 5.3, 1.7087), "gunmetal"),  # trigger guard, bottom
+        Box((7.3, 3.5, -1.068), (8.7, 6, 0.534), "gunmetal", face_detail={"north": "witness_lines"}),  # small box magazine
     ],
     "awm": [
-        Box((6.5, 6, -3.4), (9.5, 10, 4.6), "gunmetal", face_detail={"north": "rivets"}),  # receiver
-        Box((7.4, 7.5, 4.6), (8.6, 8.5, 12.6), "steel"),  # longest barrel, flush to the receiver's front
-        Box((9.5, 8, -0.5), (10.3, 8.6, 0.5), "steel"),  # bolt handle, flush on the receiver's side
-        Box((7.3, 10, -2.0), (8.7, 10.4, 3.0), "steel"),  # scope rail, flush on the receiver's top
-        Box((6.6, 4.8, 11.6), (7.4, 7.6, 12.2), "steel"),  # bipod, left leg, flush to the barrel
-        Box((8.6, 4.8, 11.6), (9.4, 7.6, 12.2), "steel"),  # bipod, right leg, flush to the barrel
-        Box((6.8, 5.5, -9.2), (9.2, 9, -3.4), "polymer"),  # olive stock, flush to the receiver's rear
-        Box((6.8, 5.5, -9.6), (9.2, 9, -9.2), "polymer"),  # buttplate
-        Box((7, 9, -7.0), (9, 9.6, -5.0), "polymer"),  # cheek riser, flush on the stock's top
-        Box((7.3, 4.8, -0.5), (8.7, 6, 1.0), "gunmetal", face_detail={"north": "witness_lines"}),  # flush magazine
-        Box((7, 5.3, -1.6), (7.5, 6, -1.2), "gunmetal"),  # trigger guard, front leg
-        Box((7, 5.0, -1.6), (7.5, 5.3, 0.2), "gunmetal"),  # trigger guard, bottom
+        Box((6.5, 6, -4.973), (9.5, 10, 3.6757), "gunmetal", face_detail={"north": "rivets"}),  # receiver
+        Box((7.25, 7.25, -13.6216), (8.75, 8.75, -4.973), "steel", role="muzzle"),  # longest barrel, 1.5 thick
+        Box((9.5, 8, -0.5405), (10.3, 8.6, 0.5405), "steel"),  # bolt handle, flush on the receiver's side
+        Box((7.3, 10, -3.2432), (8.7, 10.4, 2.1622), "steel"),  # scope rail, flush on the receiver's top
+        Box((6.6, 4.8, -13.1892), (7.25, 7.6, -12.5405), "steel"),  # bipod, left leg, flush to the 1.5-thick barrel
+        Box((8.75, 4.8, -13.1892), (9.4, 7.6, -12.5405), "steel"),  # bipod, right leg, flush to the 1.5-thick barrel
+        Box((6.8, 5.5, 3.6757), (9.2, 9, 9.9459), "polymer"),  # olive stock, flush to the receiver's rear
+        Box((6.8, 5.5, 9.9459), (9.2, 9, 10.3784), "polymer", role="stock"),  # buttplate
+        Box((7, 9, 5.4054), (9, 9.6, 7.5676), "polymer"),  # cheek riser, flush on the stock's top
+        Box((7.3, 4.8, -1.0811), (8.7, 6, 0.5405), "gunmetal", face_detail={"north": "witness_lines"}),  # flush magazine
+        Box((7, 5.3, 1.2973), (7.5, 6, 1.7297), "gunmetal"),  # trigger guard, front leg
+        Box((7, 5.0, -0.2162), (7.5, 5.3, 1.7297), "gunmetal"),  # trigger guard, bottom
     ],
     "winchester_model_1897": [
-        Box((6.5, 6, -3.4), (9.5, 10, 3.4), "steel", face_detail={"north": "rivets"}),  # receiver
-        Box((7.4, 7.5, 3.4), (8.6, 8.5, 8.4), "steel"),  # barrel, flush to the receiver's front
-        Box((7.8, 8.5, 7.8), (8.2, 8.9, 8.2), "steel"),  # bead front sight, flush on the barrel's top
-        Box((7.7, 10, -3.7), (8.3, 10.6, -3.3), "gunmetal"),  # exposed hammer, flush on the receiver's top
-        Box((7.7, 5.4, 0.0), (8.3, 6.0, 8.0), "brass", face_detail={"north": "witness_lines"}),  # brass tube magazine
-        Box((7.3, 4.6, 1.5), (8.7, 5.4, 4.5), "oak", face_detail={"west": "wood_grain"}),  # pump forend, flush to the tube
-        Box((6.7, 6.4, -6.4), (9.3, 9, -3.4), "oak", face_detail={"west": "wood_grain"}),  # wood stock, flush to the receiver's rear
-        Box((6.7, 6.4, -6.8), (9.3, 9, -6.4), "oak"),  # buttplate
-        Box((7, 5.3, -1.6), (7.5, 6, -1.2), "gunmetal"),  # trigger guard, front leg
-        Box((7, 5.0, -1.6), (7.5, 5.3, 0.2), "gunmetal"),  # trigger guard, bottom
+        Box((6.5, 6, -4.4737), (9.5, 10, 4.4737), "steel", face_detail={"north": "rivets"}),  # receiver
+        Box((7.25, 7.25, -11.0526), (8.75, 8.75, -4.4737), "steel", role="muzzle"),  # barrel, 1.5 thick
+        Box((7.8, 8.75, -10.7895), (8.2, 9.15, -10.2632), "steel"),  # bead front sight, flush on the barrel's new top
+        Box((7.7, 10, 4.3421), (8.3, 10.6, 4.8684), "gunmetal"),  # exposed hammer, flush on the receiver's top
+        Box((7.7, 5.4, -10.5263), (8.3, 6.0, -0.0), "brass", face_detail={"north": "witness_lines"}),  # brass tube magazine
+        Box((7.3, 4.6, -5.9211), (8.7, 5.4, -1.9737), "oak", face_detail={"west": "wood_grain"}),  # pump forend, flush to the tube
+        Box((6.7, 6.4, 4.4737), (9.3, 9, 8.4211), "oak", face_detail={"west": "wood_grain"}),  # wood stock, flush to the receiver's rear
+        Box((6.7, 6.4, 8.4211), (9.3, 9, 8.9474), "oak", role="stock"),  # buttplate
+        Box((7, 5.3, 1.5789), (7.5, 6, 2.1053), "gunmetal"),  # trigger guard, front leg
+        Box((7, 5.0, -0.2632), (7.5, 5.3, 2.1053), "gunmetal"),  # trigger guard, bottom
     ],
 }
 
@@ -294,20 +337,27 @@ WEAPON_FOR_CLASS: dict[str, str] = {weapon_class: weapon_id for weapon_id, (weap
 
 def _scope_boxes(magnification: int) -> list[Box]:
     end_z = 2.0 + min(4, magnification // 3)  # same length-scales-with-magnification rule as FA-21's icon
-    return [Box((-1, 0, -2.5), (1, 2, end_z), "steel", face_material={"south": "glass"},
-                face_detail={"south": "glint"})]
+    # Round 3: mirrored on Z so the objective end (the longer, magnification-scaled end) still
+    # reaches toward the muzzle, now -Z, instead of into the receiver.
+    return [Box((-1, 0, -end_z), (1, 2, 2.5), "steel", face_material={"north": "glass"},
+                face_detail={"north": "glint"})]
 
 
+# Round 3: every part box mirrored on Z (`z' = -z`, angle negated for an x/y-axis rotation, kept for
+# a z-axis one) to match the base geometry's own flip. Most of these were already Z-symmetric and so
+# are unchanged in effect; `angled_grip`'s rotation and every muzzle/optic/stock box (all
+# deliberately asymmetric on Z, per their own "extends toward the muzzle" / "extends backward"
+# comments) are the ones that actually moved.
 PART_BOXES: dict[str, dict[str, list[Box]]] = {
     "muzzle": {
-        "suppressor": [Box((-0.6, -0.5, -1), (0.6, 0.5, 5), "gunmetal", face_detail={"north": "rivets"})],
+        "suppressor": [Box((-0.6, -0.5, -5), (0.6, 0.5, 1), "gunmetal", face_detail={"north": "rivets"})],
         "flash_hider": [
             Box((-0.6, -0.5, -1), (0.6, 0.5, 1), "gunmetal"),
-            Box((-0.3, -0.3, 1), (0.3, 0.3, 2.5), "gunmetal"),
-            Box((-0.6, -0.3, 1), (-0.35, 0.3, 2.2), "gunmetal"),
-            Box((0.35, -0.3, 1), (0.6, 0.3, 2.2), "gunmetal"),
+            Box((-0.3, -0.3, -2.5), (0.3, 0.3, -1), "gunmetal"),
+            Box((-0.6, -0.3, -2.2), (-0.35, 0.3, -1), "gunmetal"),
+            Box((0.35, -0.3, -2.2), (0.6, 0.3, -1), "gunmetal"),
         ],
-        "compensator": [Box((-0.6, -0.5, -1), (0.6, 0.5, 1.5), "steel", face_material={"up": "copper"})],
+        "compensator": [Box((-0.6, -0.5, -1.5), (0.6, 0.5, 1), "steel", face_material={"up": "copper"})],
     },
     "optic": {
         "scope_2x": _scope_boxes(2),
@@ -332,16 +382,16 @@ PART_BOXES: dict[str, dict[str, list[Box]]] = {
         "half_grip": [Box((-0.6, -1.5, -0.6), (0.6, 0, 0.6), "dark_oak", face_detail={"north": "wood_grain"})],
         "vertical_grip": [Box((-0.6, -3, -0.6), (0.6, 0, 0.6), "black")],
         "angled_grip": [Box((-0.8, -2, -0.8), (0.8, 0, 0.8), "polymer",
-                             rotation={"angle": -22.5, "axis": "x", "origin": (0, 0, 0)})],
+                             rotation={"angle": 22.5, "axis": "x", "origin": (0, 0, 0)})],
         "thumb_grip": [Box((-1, -1.2, -1), (1, 0, 1), "dark_oak", face_detail={"north": "wood_grain"})],
     },
     "stock": {
-        # local z ends at 0 -- flush against the base's rearmost fixed surface -- and extends
-        # backward (negative z) from there, so the part sits cleanly behind the fixed stock rather
-        # than overlapping into it.
-        "tactical_stock": [Box((-1.5, -1.5, -1), (1.5, 1.5, 0), "black")],
-        "cheek_pad": [Box((-1.2, 0, -2), (1.2, 1, 0), "dark_oak", face_detail={"north": "wood_grain"})],
-        "bullet_loops": [Box((-1.5, -0.2, -4), (1.5, 0.2, 0), "dark_oak", face_material={"north": "brass"})],
+        # local z starts at 0 -- flush against the base's rearmost fixed surface -- and extends
+        # backward (positive z, now that -Z is the muzzle) from there, so the part sits cleanly
+        # behind the fixed stock rather than overlapping into it.
+        "tactical_stock": [Box((-1.5, -1.5, 0), (1.5, 1.5, 1), "black")],
+        "cheek_pad": [Box((-1.2, 0, 0), (1.2, 1, 2), "dark_oak", face_detail={"north": "wood_grain"})],
+        "bullet_loops": [Box((-1.5, -0.2, 0), (1.5, 0.2, 4), "dark_oak", face_material={"north": "brass"})],
     },
 }
 
@@ -349,33 +399,57 @@ PART_BOXES: dict[str, dict[str, list[Box]]] = {
 # read directly off each class's own weapon geometry above so every anchor is provably flush with
 # or overlapping it (verified by `tools/test_models.py::test_no_floating_elements`).
 PART_ANCHOR: dict[str, dict[str, tuple[float, float, float]]] = {
-    "pistol": {"muzzle": (8, 8.5, 2.6), "optic": (8, 10, -1), "magazine": (8, 1, -2.5)},
+    "pistol": {"muzzle": (8, 8.5, -2.6), "optic": (8, 10, 2.0), "magazine": (8, 1, 3.7)},
     "smg": {
-        "muzzle": (8, 8.5, 3.8), "optic": (8, 10, 0), "magazine": (8, 1, 0.5),
-        "grip": (8, 7, 2), "stock": (8, 9.5, -5.0),
+        "muzzle": (8, 8.5, -4.0), "optic": (8, 10.5, 1.8), "magazine": (8, 1, 1.0),
+        "grip": (8, 6.5, -0.5), "stock": (8, 9.8, 6.0),
     },
     "assault_rifle": {
-        "muzzle": (8, 8, 9.6), "optic": (8, 10, -0.8), "magazine": (8, 1.0, 1.55),
-        "grip": (8, 6.5, 3.0), "stock": (8, 7.7, -8.0),
+        "muzzle": (8, 8, -10.9091), "optic": (8, 10, 0.9091), "magazine": (8, 1.0, -1.7614),
+        "grip": (8, 6.5, -3.4091), "stock": (8, 7.7, 9.0909),
     },
-    "dmr": {"muzzle": (8, 8, 11.6), "optic": (8, 10, -0.8), "magazine": (8, 3.5, 0.25), "stock": (8, 7.7, -9.0)},
-    "sniper_rifle": {"muzzle": (8, 8, 12.6), "optic": (8, 10.4, 0.5), "magazine": (8, 4.8, 0.25), "stock": (8, 7.25, -9.6)},
-    "shotgun": {"muzzle": (8, 8, 8.4), "magazine": (8, 5.4, 4.0)},
+    "dmr": {"muzzle": (8, 8, -12.3883), "optic": (8, 10, 0.8544), "magazine": (8, 3.5, -0.267), "stock": (8, 7.7, 9.6117)},
+    "sniper_rifle": {
+        "muzzle": (8, 8, -13.6216), "optic": (8, 10.4, -0.5405), "magazine": (8, 4.8, -0.2703), "stock": (8, 7.25, 10.3784),
+    },
+    "shotgun": {"muzzle": (8, 8, -11.0526), "magazine": (8, 5.4, -5.2632)},
 }
 
-# Display transforms, started from Create's potato cannon. `_tuned_scale` (below) computes the
-# gui/ground/fixed scale per class from the class's own loaded bounding box under the gui rotation,
-# so the longest rifle fills the 16-unit slot without clipping and a pistol does not look tiny
-# (Kevin, round 2, item 5); `_z_push` pulls a longer gun's thirdperson pose further back so it does
-# not clip into the player model.
+# Round 3 display transforms (Kevin's round-2 verdict: "they point at the player instead of away
+# from him... the rotation in the inventory/hotbar also looks weird"). Round 1/2 simply copied
+# Create's own potato-cannon `display` block verbatim, cannon geometry and all -- it happened to
+# read fine for a shape authored specifically against those numbers, and wrong for ours (see the
+# module docstring's orientation section). Round 3 keeps only what generalises -- vanilla applies
+# `rotation` as Euler X, Y, Z in that order around the model's own pivot (8, 8, 8), exactly what
+# `_rotate_view` below already does, and what the preview renderer has used since round 1 -- and
+# replaces every numeric value:
+#
+# - `gui`: a diagonal side-on read, the way vanilla draws a bow/trident/fishing rod across its own
+#   16x16 canvas and the way the cannon's own icon reads (muzzle top-right, stock bottom-left) --
+#   `[30, -135, 0]` tips the barrel toward the viewer and swings it across the slot on the diagonal;
+#   `fixed` is the same idea held to a plain profile silhouette (`[0, 90, 0]`, a pure side view, no
+#   tilt) the way an item frame shows a sword edge-on.
+# - `ground`: no rotation at all -- the weapon already lies along its own Z axis, so identity *is*
+#   "lying flat", unlike the cannon (modelled with its own long axis off Z) which needed a 90-degree
+#   correction.
+# - `thirdperson_righthand`: no rotation, translated down and back along the arm
+#   (`[0, 1, -2]`) so the barrel (Z) continues the forearm's own direction instead of the cannon's
+#   -15-degree swing, which pointed a Z-mirrored barrel at the player exactly as Kevin described.
+# - `firstperson_righthand`: a small downward tilt (`[0, -5, 0]`) and a hip-carry translation
+#   (`[1, 3, 1]`); `AIM_TRANSFORMATION` (unchanged, still additive) raises this to eye level.
+#
+# `gui`/`ground`/`fixed` get one `SHARED_SCALE` (below), not a per-class fit-to-slot scale, so real
+# relative size survives into every context, in-hand included -- an AWM held at its own 24 units next
+# to a pistol at 8 looks the way a real AWM next to a real M1911 looks, not two copies of the same
+# rifle scaled to fill a box (Kevin, round 2: "all weapons kind of look like sniper rifles").
 BASE_DISPLAY = {
-    "thirdperson_righthand": {"rotation": [0, -15, 0], "translation": [0, 0, -4]},
-    "thirdperson_lefthand": {"rotation": [0, -15, 0], "translation": [0, 0, -4]},
-    "firstperson_righthand": {"rotation": [5, 5, 5], "translation": [0.25, 5, 0.75]},
-    "firstperson_lefthand": {"rotation": [5, 5, 5], "translation": [0.25, 5, 0.75]},
-    "ground": {"rotation": [0, 0, 90], "scale": [0.77, 0.77, 0.77]},
-    "gui": {"rotation": [64, 47, -47], "translation": [0.25, -0.25, 0], "scale": [0.86, 0.86, 0.86]},
-    "fixed": {"rotation": [0, 90, 0], "scale": [0.72, 0.72, 0.72]},
+    "thirdperson_righthand": {"rotation": [0, 0, 0], "translation": [0, 1, -2]},
+    "thirdperson_lefthand": {"rotation": [0, 0, 0], "translation": [0, 1, -2]},
+    "firstperson_righthand": {"rotation": [0, -5, 0], "translation": [1, 3, 1]},
+    "firstperson_lefthand": {"rotation": [0, -5, 0], "translation": [1, 3, 1]},
+    "ground": {"rotation": [0, 0, 0]},
+    "gui": {"rotation": [30, -135, 0]},
+    "fixed": {"rotation": [0, 90, 0]},
 }
 
 PIVOT = (8.0, 8.0, 8.0)
@@ -444,41 +518,49 @@ def _all_elements(weapon_id: str, loaded: bool) -> list[Box]:
     return elements
 
 
-def _gui_bbox_extent(weapon_id: str) -> tuple[float, float]:
-    """The (width, height) of the fully-loaded weapon's own bounding box after only the `gui`
-    rotation (no scale, no translation) -- what `_tuned_scale` fits into the 16-unit slot."""
+def _rotated_bbox_center_and_extent(weapon_id: str, rotation: list[float]) -> tuple[tuple[float, float, float], float]:
+    """The fully-loaded weapon's own bounding-box centre and largest (x or y) extent after a given
+    display rotation (no scale, no translation applied) -- what `SHARED_SCALE` fits into the
+    16-unit slot for the longest weapon, and what every class's own `gui`/`ground`/`fixed`
+    translation centres for its own (shorter or longer) silhouette."""
     xs: list[float] = []
     ys: list[float] = []
+    zs: list[float] = []
     for box in _all_elements(weapon_id, loaded=True):
         for corner in _element_corners_after_own_rotation(box):
-            rx, ry, _rz = _rotate_view(corner, BASE_DISPLAY["gui"]["rotation"], PIVOT)
+            rx, ry, rz = _rotate_view(corner, rotation, PIVOT)
             xs.append(rx)
             ys.append(ry)
-    return max(xs) - min(xs), max(ys) - min(ys)
+            zs.append(rz)
+    center = ((max(xs) + min(xs)) / 2, (max(ys) + min(ys)) / 2, (max(zs) + min(zs)) / 2)
+    extent = max(max(xs) - min(xs), max(ys) - min(ys))
+    return center, extent
 
 
-def _tuned_scale(weapon_id: str, target_fill: float = 0.94, min_scale: float = 0.35, max_scale: float = 1.15) -> float:
-    width, height = _gui_bbox_extent(weapon_id)
-    extent = max(width, height)
-    if extent <= 0:
-        return 1.0
-    return max(min_scale, min(max_scale, target_fill * 16 / extent))
+def _context_translation(weapon_id: str, rotation: list[float], scale: float) -> list[float]:
+    """Vanilla scales and rotates an item's `elements` about the fixed pivot (8, 8, 8) and only then
+    adds `translation` untouched -- so centring the model's own (rotated, scaled) bounding box in
+    its slot/frame/ground tile is `scale * (pivot - bbox_center)` per axis (`WEAPON-REQ-016` round
+    3, item 3: "translation to centre the model's own bounding box")."""
+    (cx, cy, cz), _extent = _rotated_bbox_center_and_extent(weapon_id, rotation)
+    return [round(scale * (PIVOT[0] - cx), 4), round(scale * (PIVOT[1] - cy), 4), round(scale * (PIVOT[2] - cz), 4)]
 
 
-def _z_push(weapon_id: str) -> float:
-    zs = [c for box in WEAPON_BOXES[weapon_id] for c in (box.frm[2], box.to[2])]
-    extent = max(zs) - min(zs)
-    return -round(max(0.0, (extent - 8.0) * 0.2), 4)
+# One shared scale for every class (Kevin, round 3, item 2), derived from the AWM alone -- the
+# longest weapon at its own real 24-unit length -- fit to the 16-unit slot under the `gui` rotation.
+# Every shorter class uses this exact same number, so their own real (smaller) size shows through
+# instead of being stretched back up to fill the slot.
+_AWM_ID = WEAPON_FOR_CLASS["sniper_rifle"]
+_, _AWM_GUI_EXTENT = _rotated_bbox_center_and_extent(_AWM_ID, BASE_DISPLAY["gui"]["rotation"])
+SHARED_SCALE = round(0.94 * 16 / _AWM_GUI_EXTENT, 4)
 
 
 def class_display(class_name: str) -> dict:
     weapon_id = WEAPON_FOR_CLASS[class_name]
-    scale = round(_tuned_scale(weapon_id), 4)
     display = copy.deepcopy(BASE_DISPLAY)
     for context in ("ground", "gui", "fixed"):
-        display[context]["scale"] = [scale, scale, scale]
-    for context in ("thirdperson_righthand", "thirdperson_lefthand"):
-        display[context]["translation"][2] = round(display[context]["translation"][2] + _z_push(weapon_id), 4)
+        display[context]["scale"] = [SHARED_SCALE, SHARED_SCALE, SHARED_SCALE]
+        display[context]["translation"] = _context_translation(weapon_id, display[context]["rotation"], SHARED_SCALE)
     return display
 
 
@@ -745,9 +827,40 @@ def generate_weapon_item_json() -> None:
 
 
 # ---------------------------------------------------------------- preview renderer (review only,
-# not a game asset): rotate every element (its own rotation, then a display pose's rotation) around
-# the model's own pivot (8, 8, 8), project orthographically, sample each face's own atlas pixels
-# through an inverse affine map, shade by vanilla's directional table, and paint back-to-front.
+# not a game asset): rotate every element (its own rotation, then a display pose's full
+# rotation/scale/translation) around the model's own pivot (8, 8, 8), project orthographically,
+# sample each face's own atlas pixels through an inverse affine map, shade by vanilla's directional
+# table, and paint back-to-front.
+#
+# Round 3 (Kevin: "verify your preview renderer uses the same order and pivot"): round 1/2's
+# renderer only ever applied a display context's `rotation`, then independently recentred whatever
+# came out in its own bounding box -- it never actually exercised `scale` or `translation`, so it
+# could not have caught round 2's wrong-orientation display block, and it cannot be calibrated
+# against a real reference. `_apply_display` now applies vanilla's own composition -- rotate around
+# the pivot, then scale around the pivot (uniform scale, so this commutes with the rotate step
+# either order), then add `translation` untouched -- and `_display_origin` maps model-space (8, 8)
+# to the caller's target point unconditionally, the same fixed camera framing vanilla itself uses,
+# instead of re-centring per render. `_context_translation` (above) was derived against this exact
+# composition, so a class's own computed `gui`/`ground`/`fixed` translation lands its bounding box
+# exactly on the pivot -- and `render_cannon` below feeds Create's own real elements, atlas and
+# `display` block through this same pipeline as a calibration check.
+
+def _apply_display(p: tuple[float, float, float], display: dict) -> tuple[float, float, float]:
+    rotation = display.get("rotation", [0, 0, 0])
+    scale = display.get("scale", [1.0, 1.0, 1.0])[0]
+    translation = display.get("translation", [0, 0, 0])
+    p = _rotate_view(p, rotation, PIVOT)
+    p = tuple(PIVOT[i] + (p[i] - PIVOT[i]) * scale for i in range(3))
+    return (p[0] + translation[0], p[1] + translation[1], p[2] + translation[2])
+
+
+def _display_origin(target_x: float, target_y: float, px_per_unit: float) -> tuple[float, float]:
+    """Model-space (8, 8) -- the pivot's own x/y, screen-flipped the same way `_collect_faces`
+    flips every point -- maps to `(target_x, target_y)` unconditionally: vanilla's own camera for
+    every display context is fixed, not adapted per item, so a display transform's whole job is to
+    place the model relative to that fixed point (`_context_translation` does exactly that)."""
+    return target_x - PIVOT[0] * px_per_unit, target_y - (16 - PIVOT[1]) * px_per_unit
+
 
 def _affine_from_correspondence(p_from: list[tuple[float, float]], p_to: list[tuple[float, float]]):
     (x0, y0), (x1, y1), (x2, y2) = p_from
@@ -791,23 +904,33 @@ class RenderedFace:
         self.shade = shade
 
 
-def _collect_faces(elements: list[Box], atlas_of: dict, uv_of: dict, view_rotation: list[float]) -> list[RenderedFace]:
+def _collect_faces(elements: list[Box], atlas_of: dict, uv_of: dict, display: dict,
+                    wh_of: dict | None = None) -> list[RenderedFace]:
+    """`display` is a full display-context dict (`rotation`, optional `scale`, optional
+    `translation`), applied by `_apply_display`. `wh_of`, when given, overrides `_face_dims`'s own
+    unit-per-texel assumption with each face's real atlas pixel size -- needed for `render_cannon`,
+    whose real atlas is not packed at our own 1-texel-per-unit convention; every face our own
+    generator packs keeps `_face_dims`'s answer, since we chose that convention ourselves."""
     faces: list[RenderedFace] = []
     for element_index, box in enumerate(elements):
         atlas = atlas_of[element_index]
         dims = _face_dims(box)
         for face_name in FACES:
+            key = (element_index, face_name)
+            if key not in uv_of:
+                continue  # the cannon's own real model omits hidden faces; nothing else does.
             corners3d = _face_corner_points(box)[face_name]
             transformed = []
             for c in corners3d:
                 if box.rotation:
                     c = _rotate_axis(c, box.rotation["angle"], box.rotation["axis"], box.rotation["origin"])
-                c = _rotate_view(c, view_rotation, PIVOT)
+                c = _apply_display(c, display)
                 transformed.append(c)
             screen = [(p[0], 16 - p[1]) for p in transformed]
             depth = sum(p[2] for p in transformed) / 4
-            uv = uv_of[(element_index, face_name)][:2]
-            faces.append(RenderedFace(screen, depth, atlas, uv, dims[face_name], DIRECTIONAL_SHADE[face_name]))
+            uv = uv_of[key][:2]
+            wh = wh_of[key] if wh_of is not None else dims[face_name]
+            faces.append(RenderedFace(screen, depth, atlas, uv, wh, DIRECTIONAL_SHADE[face_name]))
     return faces
 
 
@@ -850,22 +973,7 @@ def _draw_faces(canvas: Image.Image, faces: list[RenderedFace], origin_x: float,
                 out[px, py] = (int(r * face.shade), int(g * face.shade), int(bch * face.shade), al)
 
 
-def _faces_bbox_center(faces: list[RenderedFace]) -> tuple[float, float]:
-    xs = [p[0] for f in faces for p in f.screen]
-    ys = [p[1] for f in faces for p in f.screen]
-    return (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
-
-
-def _centered_origin(faces: list[RenderedFace], target_x: float, target_y: float, px_per_unit: float) -> tuple[float, float]:
-    """A render's post-rotation bounding box is rarely centred on the pivot (8, 8, 8) it was
-    rotated around -- a rifle's stock and barrel extend unevenly either side of it. Centre on the
-    box's own bounding box instead, so it lands in the middle of its cell (or its inventory slot)
-    rather than drifting toward whichever end the rotation happened to swing furthest."""
-    cx, cy = _faces_bbox_center(faces)
-    return target_x - cx * px_per_unit, target_y - cy * px_per_unit
-
-
-def render_view(canvas: Image.Image, weapon_id: str, loaded: bool, rotation: list[float],
+def render_view(canvas: Image.Image, weapon_id: str, loaded: bool, display: dict,
                  target_x: float, target_y: float, px_per_unit: float) -> None:
     elements = _all_elements(weapon_id, loaded)
     atlas_of, uv_of = {}, {}
@@ -874,33 +982,96 @@ def render_view(canvas: Image.Image, weapon_id: str, loaded: bool, rotation: lis
         atlas_of[i] = atlas
         for face_name in FACES:
             uv_of[(i, face_name)] = uv_map[(0, face_name)]
-    faces = _collect_faces(elements, atlas_of, uv_of, rotation)
-    origin_x, origin_y = _centered_origin(faces, target_x, target_y, px_per_unit)
+    faces = _collect_faces(elements, atlas_of, uv_of, display)
+    origin_x, origin_y = _display_origin(target_x, target_y, px_per_unit)
+    _draw_faces(canvas, faces, origin_x, origin_y, px_per_unit)
+
+
+# ---------------------------------------------------------------- Create's own potato cannon,
+# decompiled straight from its jar, as the round-3 calibration row (Kevin, item 3): our renderer
+# fed Create's own real elements, real atlas and real `display` block must reproduce Create's own
+# known GUI icon (diagonal, muzzle top-right) and held pose (pointing forward) -- otherwise the
+# renderer's transform math is wrong, not just our own numbers, and nothing else on the sheet can
+# be trusted. A dev-machine aid only, never a build dependency: `main()` skips this row with a
+# printed note when the jar isn't cached locally, so `ModelsCommandTest`'s `python3 tools/models.py`
+# subprocess still exits 0 without it.
+
+CANNON_JAR = Path(
+    "/Users/kevin/.gradle/caches/modules-2/files-2.1/maven.modrinth/create-fly/"
+    "26.2-rc-2-6.0.9-1/fe6f561de7d3b13e384dce6482760f766cb00cc0/"
+    "create-fly-26.2-rc-2-6.0.9-1.jar"
+)
+
+
+def _load_cannon_reference():
+    if not CANNON_JAR.is_file():
+        return None
+    try:
+        with zipfile.ZipFile(CANNON_JAR) as jar:
+            model = json.loads(jar.read("assets/create/models/item/potato_cannon/item.json"))
+            png_bytes = jar.read("assets/create/textures/item/potato_cannon.png")
+    except (KeyError, OSError, zipfile.BadZipFile):
+        return None
+    atlas = Image.open(io.BytesIO(png_bytes)).convert("RGBA")
+    real_w, real_h = atlas.size
+    elements: list[Box] = []
+    uv_of: dict[tuple[int, str], tuple[int, int]] = {}
+    wh_of: dict[tuple[int, str], tuple[int, int]] = {}
+    for i, el in enumerate(model["elements"]):
+        rot = el.get("rotation")
+        rotation = None
+        if rot and rot.get("angle"):
+            rotation = {"angle": rot["angle"], "axis": rot["axis"], "origin": tuple(rot["origin"])}
+        elements.append(Box(tuple(el["from"]), tuple(el["to"]), "steel", rotation=rotation))
+        for face_name, face in el["faces"].items():
+            u0, v0, u1, v1 = face["uv"]  # the cannon's own uv sometimes runs high-to-low (a mirror).
+            x0, x1 = sorted((u0 / 16 * real_w, u1 / 16 * real_w))
+            y0, y1 = sorted((v0 / 16 * real_h, v1 / 16 * real_h))
+            uv_of[(i, face_name)] = (round(x0), round(y0))
+            wh_of[(i, face_name)] = (max(1, round(x1 - x0)), max(1, round(y1 - y0)))
+    return elements, atlas, uv_of, wh_of, model["display"]
+
+
+def render_cannon(canvas: Image.Image, elements, atlas, uv_of, wh_of, display: dict,
+                   target_x: float, target_y: float, px_per_unit: float) -> None:
+    atlas_of = {i: atlas for i in range(len(elements))}
+    faces = _collect_faces(elements, atlas_of, uv_of, display, wh_of)
+    origin_x, origin_y = _display_origin(target_x, target_y, px_per_unit)
     _draw_faces(canvas, faces, origin_x, origin_y, px_per_unit)
 
 
 def render_sheet(path: Path) -> None:
     px_per_unit = 8
-    cell_w, cell_h = 300, 260
+    cell_w, cell_h = 280, 260
     header = 70
     label_h = 20
-    columns = ("gui bare", "gui loaded", "thirdperson bare", "thirdperson loaded")
-    rows = list(WEAPONS)
-    sheet = Image.new("RGBA", (len(columns) * cell_w, header + len(rows) * cell_h + 260), (235, 235, 235, 255))
+    columns = ("gui", "firstperson", "thirdperson", "ground")
+    cannon_ref = _load_cannon_reference()
+    rows: list[str] = (["potato_cannon (Create's own, calibration)"] if cannon_ref else []) + list(WEAPONS)
+    sheet = Image.new("RGBA", (len(columns) * cell_w, header + len(rows) * cell_h + 340), (235, 235, 235, 255))
     draw = ImageDraw.Draw(sheet)
-    draw.text((8, 6), "FA-22 round 2 -- rotated, textured preview (gui and thirdperson poses, 8x)", fill=(20, 20, 20, 255))
+    draw.text((8, 6), "FA-22 round 3 -- real display transforms (rotation, scale, translation), 8x", fill=(20, 20, 20, 255))
+    draw.text((8, 20), "top row: Create's own potato cannon through this renderer, its own real display block -- must match its known in-game look",
+               fill=(120, 60, 20, 255))
     for col, title in enumerate(columns):
         draw.text((col * cell_w + 8, 40), title, fill=(90, 90, 90, 255))
 
-    for row, weapon_id in enumerate(rows):
+    for row, row_id in enumerate(rows):
         cy = header + row * cell_h
-        draw.text((8, cy + 2), weapon_id, fill=(20, 20, 20, 255))
+        draw.text((8, cy + 2), row_id, fill=(20, 20, 20, 255))
         origin_x = cell_w // 2
         origin_y = cy + label_h + cell_h // 2
-        gui_rot = BASE_DISPLAY["gui"]["rotation"]
-        third_rot = BASE_DISPLAY["thirdperson_righthand"]["rotation"]
-        for col, (loaded, rotation) in enumerate([(False, gui_rot), (True, gui_rot), (False, third_rot), (True, third_rot)]):
-            render_view(sheet, weapon_id, loaded, rotation, col * cell_w + origin_x, origin_y, px_per_unit)
+        if cannon_ref and row == 0:
+            elements, atlas, uv_of, wh_of, cannon_display = cannon_ref
+            for col, context in enumerate(("gui", "firstperson_righthand", "thirdperson_righthand", "ground")):
+                render_cannon(sheet, elements, atlas, uv_of, wh_of, cannon_display.get(context, {}),
+                               col * cell_w + origin_x, origin_y, px_per_unit)
+            continue
+        weapon_id = row_id
+        display = class_display(WEAPONS[weapon_id][0])
+        for col, context in enumerate(("gui", "firstperson_righthand", "thirdperson_righthand", "ground")):
+            render_view(sheet, weapon_id, True, display.get(context, BASE_DISPLAY[context]),
+                        col * cell_w + origin_x, origin_y, px_per_unit)
 
     # Atlases, labelled, along the bottom.
     atlas_y = header + len(rows) * cell_h + 20
@@ -913,9 +1084,9 @@ def render_sheet(path: Path) -> None:
         draw.text((x, atlas_y + shown.height + 2), weapon_id, fill=(60, 60, 60, 255))
         x += shown.width + 16
 
-    # A mock 3x3 inventory grid at 2x, gui pose, gui scale -- the actual slot read.
+    # A mock 3x3 inventory grid at 2x, the real gui display transform -- the actual slot read.
     grid_y = atlas_y + 100
-    draw.text((8, grid_y - 16), "3x3 inventory mock (2x, gui pose and scale)", fill=(20, 20, 20, 255))
+    draw.text((8, grid_y - 16), "3x3 inventory mock (2x, real gui display transform)", fill=(20, 20, 20, 255))
     slot_px = 32  # a 16-unit slot at 2 pixels per unit
     gap = 6
     weapon_ids = list(WEAPONS)
@@ -927,26 +1098,8 @@ def render_sheet(path: Path) -> None:
         if i >= len(weapon_ids):
             continue
         weapon_id = weapon_ids[i]
-        weapon_class = WEAPONS[weapon_id][0]
-        display = class_display(weapon_class)
-        scale = display["gui"]["scale"][0]
-        rotation = display["gui"]["rotation"]
-        elements = _all_elements(weapon_id, loaded=True)
-        atlas_of, uv_of = {}, {}
-        for idx, box in enumerate(elements):
-            size, atlas, uv_map = build_atlas([box])
-            atlas_of[idx] = atlas
-            for face_name in FACES:
-                uv_of[(idx, face_name)] = uv_map[(0, face_name)]
-        faces = _collect_faces(elements, atlas_of, uv_of, rotation)
-        # `_collect_faces` already applied rotation around PIVOT; apply the gui scale around the
-        # render's own bounding-box centre (not the pivot -- see `_centered_origin`), then centre
-        # the scaled result in the slot, at 2 pixels per model unit.
-        cx, cy = _faces_bbox_center(faces)
-        for face in faces:
-            face.screen = [(cx + (x - cx) * scale, cy + (y - cy) * scale) for (x, y) in face.screen]
-        origin_x, origin_y = _centered_origin(faces, slot_x + slot_px / 2, slot_y + slot_px / 2, 2)
-        _draw_faces(sheet, faces, origin_x, origin_y, 2)
+        display = class_display(WEAPONS[weapon_id][0])
+        render_view(sheet, weapon_id, True, display["gui"], slot_x + slot_px / 2, slot_y + slot_px / 2, 2)
 
     path.parent.mkdir(parents=True, exist_ok=True)
     sheet.save(path)
@@ -985,8 +1138,10 @@ def main() -> None:
     generate_weapon_item_json()
     render_sheet(SHEET_PATH)
 
+    calibration_note = ("" if _load_cannon_reference()
+                         else f" (no potato-cannon calibration row -- {CANNON_JAR.name} not found locally)")
     print(f"wrote {len(written)} atlases; every weapon model, class display parent, part model "
-          f"and items/weapon.json is under {ASSETS}; sheet at {SHEET_PATH}")
+          f"and items/weapon.json is under {ASSETS}; sheet at {SHEET_PATH}{calibration_note}")
 
 
 if __name__ == "__main__":
