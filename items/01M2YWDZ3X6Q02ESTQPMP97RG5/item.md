@@ -54,3 +54,46 @@ this mod's own recipe lookup only, if `RecipeMap`'s live-`getType()` bucketing d
 the research's disassembly predicts). Blocked by `FA-3`'s per-slot attachment components. `ATTACH-REQ-004`
 and `ATTACH-DEC-002` (detach tools) are withdrawn by `decisions/DEC-017-no-detach-durability.md` —
 not implemented, ids not reused.
+
+## Findings
+
+**The slot-match/merge logic cannot live in `firearms.model`, confirming the ticket's own
+suspicion.** `firearms.attach.Attach` (matching + assembling) reads/writes `ItemStack` and
+`DataComponentType`, both Minecraft types, so it lives in the new `firearms.attach` package
+instead. Only the empty-slot-and-class-has-it *decision* — `AttachRule.canAttach(WeaponClass,
+Slot, boolean slotOccupied)` — is pure and lands in `firearms.model`, unit-tested for all 6
+classes × their own slots (empty and occupied) plus every slot a class lacks (30 combinations,
+`AttachRuleTest`, 18 parameterized cases across 3 methods). `verifyPurePackage` stayed green with
+this split.
+
+**Template-slot verdict**: no template ingredient is needed or accepted. `SmithingRecipe`'s
+`templateIngredient()` returns `Optional<Ingredient>`, and `AttachSmithingRecipe` returns
+`Optional.empty()` — the vanilla default `matches()` (disassembled, not used directly since this
+class overrides `matches(SmithingRecipeInput, Level)` itself) resolves an empty `Optional` via
+`Ingredient.testOptionalIngredient` to "the template slot's stack must itself be empty," which is
+exactly `ATTACH-REQ-001`'s "template slot = empty." No template item of any kind exists for this
+recipe. Proven live: `AttachSmithingGameTest` builds a real `SmithingMenu`, leaves the template
+slot untouched, and gets a correct result — confirming the 26.2 `SmithingRecipe` does *not*
+require a template ingredient, resolving the ticket's own open question on this point.
+
+**`docs/spec/contracts/public-surface.md`'s recipe-id proposal was `firearms:attach`, not
+`firearms:attach_smithing`.** This ticket's own brief specified `firearms:attach_smithing` as the
+serializer id to register and implement against; the public-surface contract has been updated in
+this change to record that as the confirmed id (`firearms:deploy_attach` for the deploying front
+end is still only a proposal, to be confirmed at `FA-8`). Flagging for Kevin: if `firearms:attach`
+was actually intended, this is a one-line rename before 1.0 ships (the surface is not yet public).
+
+**`SmithingRecipe` (interface) vs. `SimpleSmithingRecipe` (abstract base class)**: implemented the
+interface directly, per the ticket's own wording ("`AttachSmithingRecipe implements
+SmithingRecipe`"), rather than extending vanilla's `SimpleSmithingRecipe`. This means `group()`,
+`showNotification()` and `placementInfo()` are hand-written rather than inherited — all three are
+trivial for a recipe with no per-instance data (one recipe matches every base × every attachment
+generically), so the duplication cost against `SimpleSmithingRecipe`'s own implementation is
+minimal.
+
+**No `isBaseIngredient`/`isAdditionIngredient`/`isTemplateIngredient` methods exist on 26.2's
+`SmithingRecipe` or `Recipe`** (checked by `javap` against the merged 26.2 jar); the ticket's own
+phrasing anticipating them was not borne out. The actual interface members implemented instead are
+`baseIngredient()`, `additionIngredient()` (`Optional<Ingredient>`) and `templateIngredient()`
+(`Optional<Ingredient>`), which is what the smithing table's slot-filter/highlight system
+(`RecipePropertySet.SMITHING_BASE`/`_TEMPLATE`/`_ADDITION`) actually reads.
