@@ -2,6 +2,7 @@ package firearms.client;
 
 import firearms.client.combat.CombatClient;
 import firearms.client.fire.RecoilHandler;
+import firearms.client.ui.WeaponTooltip;
 import net.fabricmc.api.ClientModInitializer;
 
 /**
@@ -14,5 +15,6 @@ public final class FirearmsClient implements ClientModInitializer {
     public void onInitializeClient() {
         CombatClient.register();
         RecoilHandler.register();
+        WeaponTooltip.register();
     }
 }
