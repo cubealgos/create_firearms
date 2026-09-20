@@ -29,14 +29,14 @@ re-deriving anything server-side.
 
 ## Acceptance criteria
 
-- [ ] A tooltip on any 1.0 weapon lists its derived stats and every slot's occupant or "empty,"
+- [x] A tooltip on any 1.0 weapon lists its derived stats and every slot's occupant or "empty,"
       correct immediately after gaining an attachment with no stale read (`UI-REQ-001`).
-- [ ] The recoil kick visibly renders on every shot, at each of the six weapons' own fire modes
+- [x] The recoil kick visibly renders on every shot, at each of the six weapons' own fire modes
       (client checklist item).
-- [ ] The recoil kick carries no server authority — a game test or code-review check confirms
+- [x] The recoil kick carries no server authority — a game test or code-review check confirms
       nothing server-side reads the client recoil packet as an input to damage, ammo, or hit
       resolution.
-- [ ] `just check` green.
+- [x] `just check` green.
 
 ## Constraints and prior findings
 
