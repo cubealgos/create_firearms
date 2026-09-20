@@ -1,5 +1,7 @@
 package firearms.model;
 
+import java.util.List;
+
 /**
  * A base weapon: its id, class, calibre and bare {@link Stats}, with no attachment folded in yet.
  * The six 1.0 constants below are `docs/spec/domains/weapon.md` §3's roster table, literally
@@ -57,5 +59,16 @@ public record WeaponBase(String id, WeaponClass weaponClass, Caliber caliber, St
     public static final WeaponBase WINCHESTER_MODEL_1897 = new WeaponBase(
         "winchester_model_1897", WeaponClass.SHOTGUN, Caliber.GAUGE_12,
         new Stats(2, 4.0, 8.0, 8.0, 15, FireMode.PUMP, 6, 55, 3.5, 0.0, 200, 8, 1.0)
+    );
+
+    /**
+     * All six 1.0 base weapons, mirroring {@code firearms.model.Attachment#ALL}'s own reason for
+     * existing: this record is pure/common with no Minecraft import, so a hardcoded list here is
+     * safe to match against on either logical side, including a remote client that never loads
+     * {@code firearms.data.WeaponRegistry} (`firearms.client.fire.ClientLoadouts`, `FA-24`, mirroring
+     * {@code firearms.client.scope.ScopedWeapon}'s own precedent for the identical technique).
+     */
+    public static final List<WeaponBase> ALL = List.of(
+        M1911, MICRO_UZI, AKM, RUGER_MINI_14, AWM, WINCHESTER_MODEL_1897
     );
 }

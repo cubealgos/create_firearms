@@ -22,9 +22,9 @@ import net.minecraft.world.phys.Vec3;
 /**
  * `docs/spec/domains/weapon.md` `WEAPON-REQ-005`: while the player holds the aim control, the
  * derived spread cone narrows by the attached optic's own aim-spread modifier; with no optic
- * attached, aiming narrows spread by no amount beyond the hip-fire value. `FiringLogic.isAiming`
- * (no dedicated control yet, `WEAPON-REQ-005`'s own javadoc) reads sneaking as the interim aim
- * signal — proven directly here — and `FiringLogic#fire`'s own ternary selects between
+ * attached, aiming narrows spread by no amount beyond the hip-fire value. Since `FA-24`
+ * (`docs/spec/decisions/DEC-019-controls.md`), `FiringLogic.isAiming` reads the use control held on
+ * the exact stack in hand (`WEAPON-REQ-019`) — proven directly here — and `FiringLogic#fire`'s own ternary selects between
  * {@code Stats#spread()} and {@code Stats#spreadWhileAiming()} on that signal, feeding the choice
  * into the server-rolled bullet vector (`COMBAT-REQ-001`). The spread roll itself is proven, for
  * every radius and azimuth, to never exceed its own cone in `SpreadMathTest`
@@ -45,15 +45,24 @@ public final class AimSpreadSelectionGameTest {
     private static final double SPREAD_WHILE_AIMING_DEGREES = 3.0 * 0.85; // AKM/M1911 spread x red dot's 0.85 (attach.md §3)
     private static final double ANGLE_EPSILON_DEGREES = 0.01;
 
-    @GameTest
-    public void isAimingReadsTheSneakKeyAsTheInterimAimSignal(GameTestHelper helper) {
+    /**
+     * `WEAPON-REQ-019`, `docs/spec/decisions/DEC-019-controls.md`: since `FA-24`, aiming is the use
+     * control held on this exact stack — {@code isUsingItem() && getUseItem() == stack}, an identity
+     * check — never sneaking, which {@link FiringLogic#isAiming} no longer reads at all.
+     */
+    @GameTest(structure = "firearms_gametest:open_range")
+    public void isAimingReadsTheUseItemIdentityAsTheAimSignal(GameTestHelper helper) {
         ServerPlayer player = mockShooter(helper);
+        ItemStack stack = weaponStack();
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
 
-        player.setShiftKeyDown(false);
-        helper.assertFalse(FiringLogic.isAiming(player), "not sneaking must not read as aiming (WEAPON-REQ-005)");
+        helper.assertFalse(FiringLogic.isAiming(player, stack), "not using the item must not read as aiming (WEAPON-REQ-019)");
 
-        player.setShiftKeyDown(true);
-        helper.assertTrue(FiringLogic.isAiming(player), "sneaking must read as aiming (WEAPON-REQ-005)");
+        player.startUsingItem(InteractionHand.MAIN_HAND);
+        helper.assertTrue(FiringLogic.isAiming(player, stack), "holding the use control on this exact stack must read as aiming (WEAPON-REQ-019)");
+
+        player.stopUsingItem();
+        helper.assertFalse(FiringLogic.isAiming(player, stack), "releasing the use control must stop reading as aiming (WEAPON-REQ-019)");
 
         helper.succeed();
     }
@@ -64,7 +73,7 @@ public final class AimSpreadSelectionGameTest {
         ItemStack stack = weaponStack();
         player.setItemInHand(InteractionHand.MAIN_HAND, stack);
 
-        player.setShiftKeyDown(false);
+        player.stopUsingItem(); // a fresh mock player already isn't using anything; explicit for the hip-fire phase (WEAPON-REQ-019).
         boolean anyHipShotExceededTheAimingCone = false;
         for (int i = 0; i < HIP_FIRE_TRIALS; i++) {
             double angle = fireOnceAndMeasureAngle(helper, player, stack);
@@ -77,7 +86,8 @@ public final class AimSpreadSelectionGameTest {
             "WEAPON-REQ-005: hip-fire must use the wider 3.0 degree cone, not the aiming-narrowed 2.55 degree one — "
                 + HIP_FIRE_TRIALS + " hip-fire shots never once exceeded the aiming cone");
 
-        player.setShiftKeyDown(true);
+        // WEAPON-REQ-019: the stack is already in the main hand (set above), so getUseItem() == stack holds by identity.
+        player.startUsingItem(InteractionHand.MAIN_HAND);
         for (int i = 0; i < AIMING_TRIALS; i++) {
             double angle = fireOnceAndMeasureAngle(helper, player, stack);
             helper.assertTrue(angle <= SPREAD_WHILE_AIMING_DEGREES + ANGLE_EPSILON_DEGREES,

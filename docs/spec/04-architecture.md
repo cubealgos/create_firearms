@@ -163,7 +163,8 @@ or presence directly (research `smithing-and-item-model-layers-26-2.md` §B.2, �
 holds because each slot is its own directly-valued component (`ARCH-DEC-005`); a combined map or
 any derived branch key would need the same accessor-mixin fallback `create_metered_motor`'s MM-15
 already used once. One model file per base weapon, not one per base×attachment combination
-(`domains/weapon.md` `WEAPON-REQ-013`).
+(`domains/weapon.md` `WEAPON-REQ-012`). Since `decisions/DEC-018-art-direction.md` each layer is a
+cuboid element model rather than a sprite (`WEAPON-REQ-016`); the composite shape is unchanged.
 
 ## Runtime topology (sheet §3.1)
 
