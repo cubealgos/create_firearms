@@ -57,3 +57,55 @@ fallback if automatic-fire entity counts prove too expensive, `ARCH-FAIL-004`). 
 multiplier and despawn-life tick counts (proposed 40 ticks) are open questions confirmed at this
 ticket (`domains/combat.md` §7). Blocked by `FA-3`'s item/component surface (a bullet's damage and
 velocity read the derived stats `FA-2` computes from the components `FA-3` registers).
+
+## Findings
+
+- **`FA-3` blocker sidestepped by construction, not by waiting**: `BulletEntity`/`BulletSpawner`
+  take damage, muzzle velocity, spread and pellet count as plain parameters (`BulletSpawner
+  .spawnBullet`/`spawnPellets`), never reading `firearms:base`/`firearms:attachment_*` components
+  or calling the stat derivation function themselves. `FA-6`'s firing loop is the one that will read
+  `FA-3`'s components and `FA-2`'s derived stats, then hand the numbers to `BulletSpawner`. This
+  ticket built and tested entirely against `firearms.combat`/`firearms.client.combat`, touching
+  neither `firearms.model` (parallel `FA-2`) nor any `FA-3` file — so the formal `blocked_by`
+  relation never actually gated this ticket's own work, and can be closed out as soon as `FA-3`
+  lands without any rework here.
+- **Gravity and life decided, not just proposed**: `GRAVITY_PER_TICK = 0.02` blocks/tick² (below
+  vanilla arrow's `0.05`, per the sheet's own "cartridge rounds drop less" framing) and
+  `LIFE_TICKS = 40` (the sheet's own proposed number). Both are still flagged `proposed, retune at
+  the balance sweep` in `BulletEntity`'s Javadoc, matching every other 1.0 stat's own tone — this
+  ticket answered the "first ticket" half of `domains/combat.md` §7's "first ticket, balance sweep"
+  resolution path, but did not edit `docs/spec/domains/combat.md` §7's open-questions table itself
+  (out of this ticket's assigned scope: `docs/spec/` is a copy of heimathafen's vault, and no
+  instruction here extended to updating vault source). Recommend a follow-up ticket or spec-sync
+  pass formally closes that open question in the vault, quoting `GRAVITY_PER_TICK`/`LIFE_TICKS` as
+  the answer.
+- **Water is unaffected, not "slows or stops"**: implemented literally per `domains/combat.md` §3's
+  own proposal ("unaffected flight, retune at the sweep") — no water special-casing in
+  `BulletEntity.tick()` at all. A separate paraphrase of this ticket's brief said "water slows or
+  stops per spec"; the spec itself says the opposite is the current proposal, so the spec's literal
+  text won out.
+- **`death.attack.firearms.bullet.player` may be unreachable at 1.0**: read against the 26.2 jar's
+  own `DamageSource.getLocalizedDeathMessage()`, the `.player`-suffixed message key convention
+  (confirmed live for `cactus`/`fall`/`drown`/etc.) is produced by `CombatTracker`'s own "died from
+  an indirect cause while fighting someone" path, not by `DamageSource`'s own resolution — which,
+  whenever both a direct and a causing entity are present (true for every bullet hit), only ever
+  emits the base key or a `.item`-suffixed one (never `.player`). Both keys are shipped and checked
+  by `SourceSurfaceTest` per this ticket's literal instruction; whether `.player` is ever actually
+  selected for a bullet kill is worth confirming on the client checklist rather than assumed.
+- **`@GameTest`'s `padding` attribute does not move the invisible test-boundary barrier** in 26.2:
+  `TestInstanceBlockEntity.processStructureBoundary()` (which both places and removes the barrier
+  walls) builds from `getStructureBounds()` — the raw, unpadded structure box — never
+  `getTestBounds()`/`getBoundsWithPadding()`. `padding` only widens what `GameTestHelper
+  .getBoundsWithPadding()` reports to a test's own assertions; it does nothing to let a fast-moving
+  entity actually travel further before clipping the barrier. Four of this ticket's six game tests
+  needed real distance (20–48 blocks) and all silently failed against the default
+  `fabric-gametest-api-v1:empty` (8×8×8) structure regardless of `padding` value, until switched to
+  a bundled larger structure (`firearms_gametest:open_range`,
+  `src/gametest/resources/data/firearms_gametest/gametest/structure/open_range.snbt`, 4×30×60, all
+  air). Worth a heimathafen vault note for any future ticket writing a long-range game test in this
+  Minecraft version.
+- **Knockback strength (`0.35f`) is this ticket's own pick**, not derived from any vanilla constant
+  — `domains/combat.md` only says "small base value, comparable to an arrow's"; a plain (unenchanted)
+  vanilla arrow's own `AbstractArrow.doKnockback` applies zero knockback (the value comes entirely
+  from the Punch enchantment), so "comparable to an arrow's" has no zero-enchant baseline to copy
+  numerically. Flagged in `BulletEntity`'s own Javadoc as a proposed constant.
