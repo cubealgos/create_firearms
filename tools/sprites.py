@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
 """Draw every FA-9 item sprite and write the item model files that reference them: six base-weapon
 silhouettes, 22 attachment glyphs (each both a standalone 16x16 icon and a 32x16 weapon-layer
-overlay pre-positioned at its slot's fixed anchor), and six cartridges -- all hand-pixelled here with
-Pillow in Create's own flat, per-column-shaded item-sprite style (`tools/icon.py`'s own cartridge
-precedent), nothing read from any game or copied asset (`docs/spec/operations/compliance.md`
-`COMP-REQ-002`).
+overlay pre-positioned at its slot's fixed anchor), and six cartridges -- nothing read from any game
+or copied asset (`docs/spec/operations/compliance.md` `COMP-REQ-002`). The 28 standalone attachment
+icons and cartridges (`attachment_icon`, `cartridge_sprite`, `shotshell_sprite`) are, as of round
+five, plain decodes of the hand-authored grids in `pixel_art.py` -- see that module's own docstring
+for the construction rules and why the mask/capsule geometry that used to live here is gone. The six
+base-weapon silhouettes and the 22 weapon-layer overlays (`weapon_sprite`, `attachment_glyph`) are
+unrelated, own code, untouched by round five.
 
 Layering approach (`docs/spec/04-architecture.md` `ARCH-DEC-006`): a slot's attachment overlay is
 drawn on a transparent canvas the same 32x16 size as every base weapon texture, with the glyph
@@ -23,6 +26,8 @@ import json
 from pathlib import Path
 
 from PIL import Image
+
+import pixel_art
 
 ASSETS = Path("src/main/resources/assets/firearms")
 ITEMS = ASSETS / "items"
@@ -111,14 +116,11 @@ SLOT_ANCHOR = {
     "stock": (0, 4),
 }
 
-# caliber -> (case length in the 6-tall body block, tip colour, case colour); `Caliber`.
-CARTRIDGES = {
-    "acp_45": (7, (196, 122, 69, 255), (205, 170, 80, 255)),
-    "mm_9": (5, (196, 122, 69, 255), (215, 186, 100, 255)),
-    "mm_7_62": (8, (166, 100, 43, 255), (188, 152, 66, 255)),
-    "mm_5_56": (6, (110, 140, 90, 255), (188, 152, 66, 255)),
-    "magnum_300": (9, (140, 82, 34, 255), (163, 128, 50, 255)),
-}
+# every caliber id (`Caliber`) except the shotshell, which is drawn by `shotshell_sprite()`
+# instead -- each one is its own hand-authored grid in `pixel_art.py` (round five), no longer a
+# geometry tuple: .45 ACP short and fat, 9mm short and slim, 7.62 medium, 5.56 slim with an olive
+# tip, .300 Magnum longest with a boat-tail base (DEC-018).
+CARTRIDGES = ("acp_45", "mm_9", "mm_7_62", "mm_5_56", "magnum_300")
 
 
 def shade(colour: tuple[int, int, int, int], delta: int) -> tuple[int, int, int, int]:
@@ -343,62 +345,46 @@ def attachment_glyph(slot: str, name: str) -> Image.Image:
     return img
 
 
-def attachment_icon(slot: str, name: str) -> Image.Image:
-    """The glyph re-anchored onto its own 16x16 canvas, centred -- `items/attachment_<slot>.json`'s
-    own icon for the attachment item stack itself, independent of any weapon layer."""
-    layer = attachment_glyph(slot, name)
-    bbox = layer.getbbox()
-    if bbox is None:
-        return Image.new("RGBA", ICON, TRANSPARENT)
-    glyph = layer.crop(bbox)
-    icon = Image.new("RGBA", ICON, TRANSPARENT)
-    x = (ICON[0] - glyph.width) // 2
-    y = (ICON[1] - glyph.height) // 2
-    icon.paste(glyph, (x, y), glyph)
-    return icon
+# ---------------------------------------------------------------- standalone attachment icons and
+# cartridges (16x16), round five (Kevin, round-four review: "they are better but all still bad;
+# take a look at the spyglass versus our scopes"). Every one of these 28 icons is now a
+# hand-authored 16x16 pixel grid in `pixel_art.py` -- these three functions do nothing but decode a
+# grid into an image, pixel by pixel; no capsule, mask or box geometry lives here any more (that
+# machinery, round three and four's own, only ever served these three functions and is gone with
+# them -- `attachment_glyph` above, `weapon_sprite` and everything below keep their own,
+# independent code unchanged). See `pixel_art.py`'s own docstring for the construction rules every
+# grid follows.
 
-
-# ---------------------------------------------------------------- cartridges (16x16), the
-# `tools/icon.py` cartridge precedent, parametrised per calibre, plus a distinct 12-gauge shotshell.
-
-def cartridge_sprite(case_rows: int, tip: tuple[int, int, int, int], case: tuple[int, int, int, int]) -> Image.Image:
+def _decode(name: str) -> Image.Image:
+    rows, legend = pixel_art.ICONS[name]
     img = Image.new("RGBA", ICON, TRANSPARENT)
-    columns = range(5, 11)
-    top = 14 - case_rows - 5
-
-    def row(y: int, colour: tuple[int, int, int, int], shrink: bool = False) -> None:
-        cols = list(columns)[1:-1] if shrink else list(columns)
-        for i, x in enumerate(cols):
-            img.load()[x, y] = shade(colour, -6 * i)
-
-    row(top, tip, shrink=True)
-    for y in range(top + 1, top + 5):
-        row(y, tip)
-    row(top + 5, (74, 54, 32, 255))  # cannelure
-    for y in range(top + 6, top + 6 + case_rows):
-        row(y, case)
-    row(13, case)  # the rim
-    img.load()[7, 13] = (78, 45, 24, 255)
-    img.load()[8, 13] = (78, 45, 24, 255)
+    px = img.load()
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            if ch != ".":
+                px[x, y] = legend[ch]
     return img
+
+
+def attachment_icon(slot: str, name: str) -> Image.Image:
+    """The attachment's own standalone item-stack icon: `pixel_art.ICONS[name]`, decoded verbatim.
+    `slot` isn't needed to find the grid (every attachment name is unique across slots) but is kept
+    in the signature so every call site still reads `attachment_icon(slot, name)` next to its
+    sibling `attachment_glyph(slot, name)` above."""
+    del slot
+    return _decode(name)
+
+
+# ---------------------------------------------------------------- cartridges (16x16): the same
+# decode, keyed by caliber id.
+
+def cartridge_sprite(caliber: str) -> Image.Image:
+    return _decode(caliber)
 
 
 def shotshell_sprite() -> Image.Image:
-    """12 gauge: a squat hull, not a bottlenecked bullet -- `Caliber.GAUGE_12`'s own shape."""
-    img = Image.new("RGBA", ICON, TRANSPARENT)
-    hull = (196, 88, 40, 255)
-    brass = (188, 152, 66, 255)
-    for y in range(2, 11):
-        for i, x in enumerate(range(4, 12)):
-            img.load()[x, y] = shade(hull, -4 * i)
-    for y in range(11, 14):
-        for i, x in enumerate(range(4, 12)):
-            img.load()[x, y] = shade(brass, -4 * i)
-    img.load()[7, 12] = (78, 45, 24, 255)
-    img.load()[8, 12] = (78, 45, 24, 255)
-    for x in range(4, 12):
-        img.load()[x, 1] = shade(hull, -20)  # the crimped top
-    return img
+    """12 gauge: `pixel_art.ICONS["gauge_12"]`, decoded verbatim."""
+    return _decode("gauge_12")
 
 
 # ---------------------------------------------------------------- model/item-definition JSON
@@ -436,8 +422,8 @@ def main() -> None:
             written.append(TEXTURES / "attachment" / f"{name}.png")
 
     # Cartridges.
-    for caliber, (rows, tip, case) in CARTRIDGES.items():
-        save_png(cartridge_sprite(rows, tip, case), TEXTURES / "cartridge" / f"{caliber}.png")
+    for caliber in CARTRIDGES:
+        save_png(cartridge_sprite(caliber), TEXTURES / "cartridge" / f"{caliber}.png")
         write_json(MODELS / "cartridge" / f"{caliber}.json", generated_model(f"{NS}:item/cartridge/{caliber}"))
     save_png(shotshell_sprite(), TEXTURES / "cartridge" / "gauge_12.png")
     write_json(MODELS / "cartridge" / "gauge_12.json", generated_model(f"{NS}:item/cartridge/gauge_12"))
