@@ -18,8 +18,8 @@ A script registers every `@GameTest` class found on disk; the merge tooling runs
 
 ## Acceptance criteria
 
-- [ ] Every `@GameTest` class under `src/gametest/java` is listed in the entrypoint; `just check` runs all of them.
-- [ ] Merged through a Forgejo pull request into `development`.
+- [x] Every `@GameTest` class under `src/gametest/java` is listed in the entrypoint; `just check` runs all of them.
+- [x] Merged through a Forgejo pull request into `development`.
 
 ## Constraints and prior findings
 
