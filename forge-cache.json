@@ -1,7 +1,17 @@
 {
   "pulls": {
-    "at": 1789891690.287943,
+    "at": 1789893669.974733,
     "payload": [
+      {
+        "author": "scheeren",
+        "base": "development",
+        "ci": "",
+        "head": "feature/fa-2-stat-model",
+        "index": "3",
+        "state": "merged",
+        "title": "feat(firearms): the pure stat model: classes, slots, calibres, the six bases, the 22 attachments, the derivation with clamp-and-log (FA-2)",
+        "updated": "2026-09-20T08:08:22Z"
+      },
       {
         "author": "scheeren",
         "base": "development",

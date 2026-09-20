@@ -36,17 +36,17 @@ per-pellet spread cone is wider than a rifle's own (`domains/weapon.md` roster t
 
 ## Acceptance criteria
 
-- [ ] A game test proves hit detection holds at both low and very high muzzle velocity, with no
+- [x] A game test proves hit detection holds at both low and very high muzzle velocity, with no
       tunneling regardless of speed (`COMBAT-REQ-002`).
-- [ ] A game test fires at a target beyond 40 blocks and confirms a hit still registers
+- [x] A game test fires at a target beyond 40 blocks and confirms a hit still registers
       (`TEST-REQ-004`).
-- [ ] A bullet that hits nothing despawns cleanly after its fixed life, no damage, no drop
+- [x] A bullet that hits nothing despawns cleanly after its fixed life, no damage, no drop
       (`UC-013`).
-- [ ] A shotgun-shaped trigger pull spawns 8 independently-spread pellet entities, each
+- [x] A shotgun-shaped trigger pull spawns 8 independently-spread pellet entities, each
       independently hit-tested (`COMBAT-REQ-005`).
-- [ ] Every constructed `DamageSource` follows the direct/causing-entity convention so `pvp` and
+- [x] Every constructed `DamageSource` follows the direct/causing-entity convention so `pvp` and
       team-allegiance checks apply with no extra code (`COMBAT-REQ-010`).
-- [ ] `just check` green, including the new game tests.
+- [x] `just check` green, including the new game tests.
 
 ## Constraints and prior findings
 
