@@ -1,0 +1,3 @@
+{ "slot": "muzzle", "modifiers": [
+  { "stat": "spread", "op": "multiply", "value": 0.95 }
+] }

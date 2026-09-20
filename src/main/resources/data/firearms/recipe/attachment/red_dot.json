@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": ["minecraft:iron_nugget","minecraft:redstone"],
+  "result": {
+    "id": "firearms:attachment_optic",
+    "components": { "firearms:attachment_optic": "firearms:red_dot" }
+  }
+}

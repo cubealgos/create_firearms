@@ -1,0 +1,16 @@
+{
+  "class": "smg",
+  "caliber": "mm_9",
+  "base_stats": {
+    "damage": 2,
+    "muzzle_velocity": 4.0,
+    "spread": 4.5,
+    "spread_while_aiming": 4.5,
+    "fire_rate_ticks": 2,
+    "fire_mode": "auto",
+    "magazine_size": 32,
+    "reload_ticks": 40,
+    "recoil_vertical": 1.0,
+    "durability": 300
+  }
+}

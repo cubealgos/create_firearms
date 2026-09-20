@@ -1,0 +1,3 @@
+{ "slot": "grip", "modifiers": [
+  { "stat": "recoil_vertical", "op": "multiply", "value": 0.80 }
+] }

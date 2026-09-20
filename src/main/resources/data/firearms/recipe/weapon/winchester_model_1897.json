@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "key": { "I": "minecraft:iron_ingot", "#": "minecraft:stick", "R": "minecraft:redstone" },
+  "pattern": [
+    "III",
+    "I#R",
+    "R  "
+  ],
+  "result": {
+    "id": "firearms:weapon",
+    "components": {
+      "firearms:base": { "weapon_id": "firearms:winchester_model_1897" },
+      "minecraft:max_damage": 200,
+      "minecraft:damage": 0
+    }
+  }
+}

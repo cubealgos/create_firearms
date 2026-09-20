@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": ["minecraft:copper_ingot","minecraft:copper_ingot","minecraft:copper_ingot","minecraft:iron_nugget","minecraft:iron_nugget"],
+  "result": {
+    "id": "firearms:attachment_optic",
+    "components": { "firearms:attachment_optic": "firearms:scope_15x" }
+  }
+}

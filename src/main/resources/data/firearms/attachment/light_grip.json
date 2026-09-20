@@ -1,0 +1,3 @@
+{ "slot": "grip", "modifiers": [
+  { "stat": "fire_rate_ticks", "op": "multiply", "value": 0.95 }
+] }

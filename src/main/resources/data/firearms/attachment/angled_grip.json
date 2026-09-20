@@ -1,0 +1,3 @@
+{ "slot": "grip", "modifiers": [
+  { "stat": "reload_ticks", "op": "multiply", "value": 0.9 }
+] }

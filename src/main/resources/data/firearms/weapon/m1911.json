@@ -1,0 +1,16 @@
+{
+  "class": "pistol",
+  "caliber": "acp_45",
+  "base_stats": {
+    "damage": 3,
+    "muzzle_velocity": 4.0,
+    "spread": 3.0,
+    "spread_while_aiming": 3.0,
+    "fire_rate_ticks": 6,
+    "fire_mode": "semi",
+    "magazine_size": 7,
+    "reload_ticks": 30,
+    "recoil_vertical": 1.5,
+    "durability": 250
+  }
+}

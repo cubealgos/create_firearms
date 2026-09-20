@@ -1,0 +1,17 @@
+{
+  "class": "shotgun",
+  "caliber": "gauge_12",
+  "base_stats": {
+    "damage": 2,
+    "muzzle_velocity": 4.0,
+    "spread": 8.0,
+    "spread_while_aiming": 8.0,
+    "fire_rate_ticks": 15,
+    "fire_mode": "pump",
+    "magazine_size": 6,
+    "reload_ticks": 55,
+    "recoil_vertical": 3.5,
+    "durability": 200,
+    "pellets": 8
+  }
+}

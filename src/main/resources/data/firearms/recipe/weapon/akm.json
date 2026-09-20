@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "key": { "I": "minecraft:iron_ingot", "#": "minecraft:stick", "R": "minecraft:redstone" },
+  "pattern": [
+    "III",
+    "II#",
+    "#RR"
+  ],
+  "result": {
+    "id": "firearms:weapon",
+    "components": {
+      "firearms:base": { "weapon_id": "firearms:akm" },
+      "minecraft:max_damage": 400,
+      "minecraft:damage": 0
+    }
+  }
+}

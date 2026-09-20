@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": ["minecraft:iron_ingot","minecraft:redstone"],
+  "result": {
+    "id": "firearms:attachment_magazine",
+    "components": { "firearms:attachment_magazine": "firearms:quickdraw_magazine" }
+  }
+}

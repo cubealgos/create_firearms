@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": ["create:brass_sheet","minecraft:gunpowder","minecraft:iron_nugget","minecraft:iron_nugget","minecraft:iron_nugget"],
+  "result": {
+    "id": "firearms:cartridge_mm_7_62",
+    "count": 4
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": ["minecraft:stick"],
+  "result": {
+    "id": "firearms:attachment_grip",
+    "components": { "firearms:attachment_grip": "firearms:light_grip" }
+  }
+}
