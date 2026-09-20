@@ -15,9 +15,10 @@ signature page before calling into a package you did not write.
 |---|---|---|---|
 | `firearms` | root | Firearms |  |
 | `firearms.client` | root | FirearmsClient |  |
-| `firearms.model` | root |  | The pure part: the stat derivation function and the shared attach function, with no Minecraft imports (docs/spec/operations/testing.md). |
+| `firearms.model` | root | Attachment, Caliber, Clamp, FireMode, Loadout, Modifier, Op, Slot, Stat, StatDerivation, Stats, WeaponBase, WeaponClass | The pure part: the stat derivation function and the shared attach function, with no Minecraft imports (docs/spec/operations/testing.md). |
 | `firearms` | root (test) | SourceSurfaceTest |  |
 | `firearms.gametest` | root (gametest) | SmokeGameTest |  |
+| `firearms.model` | root (test) | AttachmentModifierTest, LoadoutSlotValidationTest, StatDerivationClampTest, StatDerivationOrderTest, WeaponBaseStatsTest |  |
 
 | build script | what |
 |---|---|
