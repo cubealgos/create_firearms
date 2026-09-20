@@ -15,9 +15,11 @@ import org.junit.jupiter.api.Test;
 /**
  * Three claims about the source tree, checked against the files themselves: the mod opens no
  * socket of its own (COMP-REQ-001: no networking type is referenced outside Minecraft's own packet
- * API), every translation key the code names has an {@code en_us} entry, and no source or resource
- * file names PUBG, its weapon names, or its branding (COMP-REQ-002: every weapon here uses only its
- * real-world designation).
+ * API), every translation key the code names — including a damage type's death message keys, e.g.
+ * {@code firearms.combat.CombatRegistration}'s {@code death.attack.firearms.bullet[.player]}
+ * (`COMBAT-REQ-004`) — has an {@code en_us} entry, and no source or resource file names PUBG, its
+ * weapon names, or its branding (COMP-REQ-002: every weapon here uses only its real-world
+ * designation).
  */
 final class SourceSurfaceTest {
     private static final Path MAIN = Path.of("src/main/java");
@@ -26,7 +28,7 @@ final class SourceSurfaceTest {
     private static final Pattern NETWORKING = Pattern.compile(
         "java\\.net\\.|java\\.nio\\.channels\\.|HttpClient|Socket|URLConnection|HttpURLConnection");
     private static final Pattern KEY = Pattern.compile(
-        "\"((?:item|block|screen|tooltip|command)\\.firearms\\.[a-z_.]+)\"");
+        "\"((?:item|block|screen|tooltip|command)\\.firearms\\.[a-z_.]+|death\\.attack\\.firearms\\.[a-z_.]+)\"");
     private static final Pattern PUBG = Pattern.compile("pubg|playerunknown", Pattern.CASE_INSENSITIVE);
 
     @Test

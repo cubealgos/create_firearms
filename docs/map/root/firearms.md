@@ -6,7 +6,7 @@ Every type with its summary and every non-private constructor, method and consta
 signature is the contract; read the source only when the summary is not enough.
 
 ### `class Firearms` — `src/main/java/firearms/Firearms.java`
-The mod's server-and-common entrypoint: registers the components, the items and the data loaders (FA-3).
+The mod's server-and-common entrypoint: registers the components, the items, the data loaders (FA-3) and the bullet entity (FA-5).
 - `String MOD_ID`
 - `Logger LOGGER`
 - `Identifier id(String path)`

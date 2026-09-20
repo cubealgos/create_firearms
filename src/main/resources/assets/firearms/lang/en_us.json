@@ -41,5 +41,7 @@
   "item.firearms.cartridge_mm_7_62": "7.62mm Cartridge",
   "item.firearms.cartridge_mm_5_56": "5.56mm Cartridge",
   "item.firearms.cartridge_magnum_300": ".300 Magnum Cartridge",
-  "item.firearms.cartridge_gauge_12": "12 Gauge Shell"
+  "item.firearms.cartridge_gauge_12": "12 Gauge Shell",
+  "death.attack.firearms.bullet": "%1$s was shot by %2$s",
+  "death.attack.firearms.bullet.player": "%1$s was shot while fighting %2$s"
 }

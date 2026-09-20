@@ -13,7 +13,8 @@
       "firearms.gametest.ComponentCodecGameTest",
       "firearms.gametest.StatDerivationGameTest",
       "firearms.gametest.CraftingRecipeGameTest",
-      "firearms.gametest.WeaponDurabilityAndAnvilGameTest"
+      "firearms.gametest.WeaponDurabilityAndAnvilGameTest",
+      "firearms.gametest.BulletGameTest"
     ]
   },
   "depends": {
