@@ -8,6 +8,7 @@ import firearms.fire.FireSounds;
 import firearms.fire.RecoilPacket;
 import firearms.item.ItemRegistration;
 import firearms.combat.CombatRegistration;
+import firearms.item.CreativeTabRegistration;
 import firearms.trade.TradeRegistration;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
@@ -42,6 +43,7 @@ public final class Firearms implements ModInitializer {
         RecoilPacket.register();
         AttachRegistration.register();
         TradeRegistration.register();
+        CreativeTabRegistration.register();
         if (FabricLoader.getInstance().isDevelopmentEnvironment()) DebugCommand.register();
         LOGGER.info("Firearms ready beside Create Fly");
     }

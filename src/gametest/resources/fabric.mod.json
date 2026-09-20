@@ -25,7 +25,8 @@
       "firearms.gametest.TradeFileGameTest",
       "firearms.gametest.WeaponTooltipGameTest",
       "firearms.gametest.AmmoCartridgeGameTest",
-      "firearms.gametest.AimSpreadSelectionGameTest"
+      "firearms.gametest.AimSpreadSelectionGameTest",
+      "firearms.gametest.CreativeTabGameTest"
     ]
   },
   "depends": {

@@ -1,4 +1,6 @@
 {
+  "itemGroup.firearms.firearms": "Create: Firearms",
+
   "item.firearms.weapon": "Weapon",
   "item.firearms.weapon.m1911": "M1911",
   "item.firearms.weapon.micro_uzi": "Micro Uzi",

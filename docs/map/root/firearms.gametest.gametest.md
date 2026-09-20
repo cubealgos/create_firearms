@@ -56,6 +56,11 @@ Every one of the six base weapons, 22 attachments and six cartridges crafts at a
 - `void everyAttachmentCraftsWithItsOwnIngredients(GameTestHelper helper)`
 - `void everyCartridgeCraftsFourAtATime(GameTestHelper helper)`
 
+### `class CreativeTabGameTest` — `src/gametest/java/firearms/gametest/CreativeTabGameTest.java`
+`FA-25`'s acceptance criteria for the one creative-mode tab firearms:firearms (`docs/spec/domains/ui.md` `UI-REQ-007`, `docs/spec/decisions/DEC-019-controls.md` §Creative tab): registered, iconed with a bare M1911, and its display list — #ownedByFirearms filters out the gametest source set's own data/datapack_test/ weapon and attachment (`DataLoaderGameTest`'s own namespace, loaded into the same catalogues this tab reads and so unavoidably present in the tab's live contents during this test run) — holds, in order, the six bare weapons, one fully loaded example per class with every one of that class's own slots filled and firearms:ammo.loaded above zero, the 22 attachments each with its own slot component set, and the six cartridges.
+- `void theTabIsRegisteredWithTheM1911Icon(GameTestHelper helper)`
+- `void theDisplayListHoldsEveryItemInOrder(GameTestHelper helper)`
+
 ### `class DataLoaderGameTest` — `src/gametest/java/firearms/gametest/DataLoaderGameTest.java`
 The two data loaders (`WeaponDataLoader`, `AttachmentDataLoader`) produce exactly this mod's own 6 + 22 entries, with the model's own values (`docs/spec/domains/weapon.md` `WEAPON-DEC-003`) — this mod's own shipped data/firearms/weapon/*.json and data/firearms/attachment/*.json files ship the same numbers those constants do — and a weapon or attachment shipped by an entirely different namespace (the shape any real datapack addition takes) loads through the identical, unmodified loader with zero new Java (`SURFACE-REQ-003`; the gametest source set's own data/datapack_test/ files stand in for a third party's datapack).
 - `void theWeaponLoaderProducesExactlyTheSixBasesWithTheModelsValues(GameTestHelper helper)`
