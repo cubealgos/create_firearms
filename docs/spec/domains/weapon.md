@@ -138,8 +138,6 @@ for aiming vs. hip-fire, distinguished by whether the player is currently using 
 | Question | Blocks | Decided by |
 |---|---|---|
 | Exact crafting-table grids and material quantities for the six base weapons | `WEAPON-REQ-006` | first ticket |
-| Whether the AWM's `semi (bolt-cycle)` fire mode needs a distinct third fire-mode value from `semi`, or reuses `semi` with only a longer fire-rate stat | `WEAPON-REQ-004` | first ticket; this sheet proposes reuse, since the observable difference is fully captured by the fire-rate number already in the roster table |
-| The exact vanilla `Item.Properties` durability/cooldown-group wiring (`useCooldown` vs. a hand-rolled `ItemCooldowns` call per shot for `auto` mode) | `WEAPON-REQ-009` | first ticket; research `create-fly-potato-cannon-and-deploying-26-2.md` §C.1 confirms `useCooldown` is applied automatically from `use()`/`finishUsingItem()` but not `releaseUsing()` |
 | Whether `WEAPON-FAIL-006`'s same-item anvil combine-repair path is an acceptable residual gap or needs a narrow `AnvilMenu` mixin to close fully, against "as few new mixins as possible" | `WEAPON-REQ-014` | first ticket; confirmed present by disassembling `AnvilMenu.createResult()` against the 26.2 jar — gated only on `ItemStack.isDamageableItem()` and same-`Item` identity between the two input stacks, entirely independent of the `REPAIRABLE` component |
 
 ## 8. Decisions
@@ -168,3 +166,28 @@ for aiming vs. hip-fire, distinguished by whether the player is currently using 
   source components. **Cost if wrong:** re-adding either component later is one line in the item's
   registration, not a redesign — but the residual anvil combine-repair gap `WEAPON-FAIL-006` names
   needs a mixin either way if it must close too, regardless of which way this decision goes.
+- `WEAPON-DEC-006` — **The AWM's "semi (bolt-cycle)" reuses plain `semi`; no third fire-mode value**
+  (`FA-6`, settling §7's own open question; confirmed rather than re-litigated per that ticket's own
+  instruction, since testing did not show the reuse to be observably wrong): `FireMode` stays a
+  two-real-value enum (`semi`, `auto`) plus `pump`, and the AWM's `WeaponBase` constant carries
+  `FireMode.SEMI` with its own 30-tick `fireRateTicks` — the only place its bolt-cycle feel needed
+  to live, per this sheet's own original proposal. **Cost if wrong:** a fourth `FireMode` value is
+  an additive enum constant plus one new `switch` arm wherever fire mode is dispatched
+  (`firearms.item.WeaponItem`), not a redesign of the roster or the derivation function.
+- `WEAPON-DEC-007` — **Fire-rate pacing is vanilla `ItemCooldowns`, called by hand once per shot from
+  a server-side `onUseTick`, not the automatic `useCooldown` property** (`FA-6`, settling §7's own
+  open question): `useCooldown`/`UseCooldown.apply()` only fires from `ItemStack.use()`/
+  `finishUsingItem()`, once per interaction, which cannot pace `auto`'s repeated per-tick shots at
+  all and would double-apply for `semi`/`pump` (once from the component, once from this mod's own
+  call) if used at all; `firearms.item.WeaponItem` instead starts the vanilla "using item" session
+  uniformly from `use()`/`useOn()` and dispatches every fire-or-reload attempt through
+  `firearms.fire.FiringLogic#attempt` from `onUseTick`, calling `player.getCooldowns().addCooldown(...)`
+  itself with the derived `fireRateTicks`/`reloadTicks` value. Every base weapon shares the one
+  `firearms:weapon` item, so `ItemCooldowns`'s own default cooldown-group-by-item-id would collide
+  across different base weapons; `FiringLogic` keys every check and every start to a throwaway stack
+  copy carrying a `minecraft:use_cooldown` component whose `cooldownGroup` is the base weapon's own
+  id (`firearms:m1911`, and so on), never persisted back onto the real stack
+  (`docs/spec/contracts/data-contract.md` `DATA-REQ-005`). **Cost if wrong:** switching to a
+  `useCooldown`-driven `semi`/`pump` path later is a small `WeaponItem`/`FiringLogic` change, not a
+  redesign — `auto` would still need the hand-rolled per-shot call regardless, since no vanilla
+  mechanism paces a repeating interaction.
