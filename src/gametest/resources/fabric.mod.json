@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "id": "firearms_gametest",
+  "version": "1.0.0",
+  "name": "Firearms game tests",
+  "license": "MIT",
+  "environment": "server",
+  "entrypoints": {
+    "fabric-gametest": [
+      "firearms.gametest.SmokeGameTest"
+    ]
+  },
+  "depends": {
+    "firearms": "*"
+  }
+}

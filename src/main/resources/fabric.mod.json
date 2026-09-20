@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "firearms",
+  "version": "${version}",
+  "name": "Create: Firearms",
+  "description": "A roster of modern firearms under real-world designations, built from a base weapon plus attachments at the smithing table or by deployers, with dynamic stats, traded by weaponsmiths and fletchers.",
+  "authors": [
+    "Cube Algos"
+  ],
+  "contact": {
+    "homepage": "https://modrinth.com/mod/firearms",
+    "sources": "https://git.cubealgos.de/cubealgos/create_firearms",
+    "issues": "https://github.com/cubealgos/create_firearms/issues"
+  },
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "firearms.Firearms"
+    ],
+    "client": [
+      "firearms.client.FirearmsClient"
+    ]
+  },
+  "mixins": [
+    "firearms.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": ">=0.160.0",
+    "create": "6.0.9-1"
+  }
+}

@@ -1,0 +1,16 @@
+Create: Firearms is MIT-licensed (LICENSE).
+
+It runs on and is built against:
+- Create Fly (ZurrTum/Create-Fly), CC0-1.0, mod id `create`: the deployer block this mod's
+  deploying-recipe attach front end runs on, and `create:brass_sheet`, reused as-is as every
+  cartridge's casing material (`domains/ammo.md` `AMMO-DEC-001`).
+- Create (Creators of Create), MIT: the upstream Create Fly ports.
+- Fabric Loader and Fabric API (FabricMC), Apache-2.0.
+- Minecraft (Mojang): weapons, attachments and cartridges are this mod's own items, crafted and
+  attached through the vanilla crafting table and smithing table with no Mojang asset (texture,
+  model or sound) copied. Later tickets (`domains/combat.md` `COMBAT-REQ-006`–`008`) add three
+  client-side mixins narrowly widening `Player.isScoping()` for a firearm with a magnified optic
+  attached; no server-side mixin exists anywhere in this mod (`04-architecture.md` `ARCH-DEC-001`).
+- Every weapon uses only its real-world designation; no PUBG name, branding, logo, splash art or
+  texture appears anywhere in this mod, its listing or its repository
+  (`operations/compliance.md` `COMP-REQ-002`).
