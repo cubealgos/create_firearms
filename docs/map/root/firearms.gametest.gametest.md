@@ -12,6 +12,11 @@ signature is the contract; read the source only when the summary is not enough.
 - `void aWeaponAndAnIronIngotYieldNoAnvilResult(GameTestHelper helper)`
 - `void aRealEnchantingTableOffersNoEnchantmentForAWeapon(GameTestHelper helper)`
 
+### `class AttachDeployingGameTest` — `src/gametest/java/firearms/gametest/AttachDeployingGameTest.java`
+A real DeployerBlockEntity finds and runs AttachDeployingRecipe exactly as Create's own deploying recipes are found — zero mixin (`docs/spec/domains/attach.md` `ATTACH-REQ-005`, `006`; `docs/spec/04-architecture.md` `ARCH-DEC-003`).
+- `void aRealDeployerFindsAndAppliesTheDeployingAttachRecipe(GameTestHelper helper)`
+- `void aSecondSuppressorOnAnAlreadySuppressedUziMatchesNothing(GameTestHelper helper)`
+
 ### `class AttachSmithingGameTest` — `src/gametest/java/firearms/gametest/AttachSmithingGameTest.java`
 A real SmithingMenu runs firearms.attach.AttachSmithingRecipe exactly as the vanilla smithing table would, proving the recipe is actually found by RecipeManager.getRecipeFor(RecipeType.SMITHING, ...) through a real data-loaded data/firearms/recipe/attach.json — zero mixin (`docs/spec/domains/attach.md` `ATTACH-REQ-001`, `002`, `003`; `docs/spec/04-architecture.md` `ARCH-DEC-002`).
 - `void aSuppressorAttachesToAMicroUziIntoTheMuzzleSlot(GameTestHelper helper)`
@@ -46,9 +51,37 @@ The two data loaders (`WeaponDataLoader`, `AttachmentDataLoader`) produce exactl
 - `void theAttachmentLoaderProducesExactlyThe22AttachmentsWithTheModelsValues(GameTestHelper helper)`
 - `void aDatapackAddedWeaponAndAttachmentInAnExistingClassAndSlotLoadWithZeroNewJava(GameTestHelper helper)`
 
+### `class DebugCommandGameTest` — `src/gametest/java/firearms/gametest/DebugCommandGameTest.java`
+FA-12's three acceptance-criteria game tests for firearms.debug.DebugCommand, run in the game test environment, which is itself a development environment (FabricLoader.isDevelopmentEnvironment() is true under runGameTest, exactly as it is under runClient), so the command is registered and reachable here.
+- `void giveAkmSuppressorScope4xYieldsBothSlotsFilledWithMatchingDerivedStats(GameTestHelper helper)`
+- `void giveWinchester1897VerticalGripFailsWithTheErrorKey(GameTestHelper helper)`
+- `void statsOnAHeldWeaponPrintsTheExpectedLines(GameTestHelper helper)`
+
+### `class FiringGameTest` — `src/gametest/java/firearms/gametest/FiringGameTest.java`
+The fire-control loop (`FA-6`, `docs/spec/domains/weapon.md` `WEAPON-REQ-004`, `007`-`013`; `docs/spec/operations/testing.md`): a loaded weapon fires and moves ammo, durability and the cooldown together; an empty weapon reloads from matching cartridges or clicks empty; a held auto weapon repeats at its own fire-rate interval; a pump weapon refuses a second shot inside its own delay; a shotgun spawns its full pellet count from one round; a suppressor changes the sound event FireSounds selects.
+- `void aLoadedWeaponFiresOnceAndMovesAmmoDurabilityAndCooldownTogether(GameTestHelper helper)`
+- `void anEmptyWeaponWithMatchingCartridgesReloadsToMagazineSizeAndConsumesThem(GameTestHelper helper)`
+- `void anEmptyWeaponWithNoMatchingCartridgesFiresNothingAndStaysEmpty(GameTestHelper helper)`
+- `void anAutoWeaponFiresNBulletsOverNTimesFireRateTicksOfHeldUse(GameTestHelper helper)` — `UC-008`: a held auto weapon fires at its own fire-rate interval — 3 shots over exactly 3 * fireRateTicks simulated ticks (the Micro Uzi's own fireRateTicks == 2) — driven directly through the same WeaponItem methods the vanilla "using item" state machine calls, with ItemCooldowns.tick() advanced once per simulated tick.
+- `void aPumpWeaponRefusesASecondShotInsideThePumpDelay(GameTestHelper helper)` — `WEAPON-REQ-004`: pump behaves as semi for cooldown purposes — a second attempt inside that same delay is refused.
+- `void aShotgunTriggerPullSpawnsItsFullPelletCount(GameTestHelper helper)` — `COMBAT-REQ-005`: one trigger pull, all 8 pellets, one round consumed.
+- `void aSuppressorChangesTheFireSoundEventChosen(GameTestHelper helper)` — `WEAPON-REQ-013`, `COMBAT-REQ-009`: a suppressor changes which sound event FireSounds selects.
+
 ### `class ItemRegistrationGameTest` — `src/gametest/java/firearms/gametest/ItemRegistrationGameTest.java`
 Every item `FA-3` registers resolves at its own id: the one weapon item, the five attachment items, and the six cartridge items (`docs/spec/contracts/public-surface.md`).
 - `void everyRegisteredItemResolvesAtItsId(GameTestHelper helper)`
+
+### `class MasterBuyBackGameTest` — `src/gametest/java/firearms/gametest/MasterBuyBackGameTest.java`
+FA-13, `docs/spec/domains/trade.md` §3 "The master buy-back trades", `TRADE-REQ-004`, `TRADE-REQ-005`: the weaponsmith/5/master_akm trade's ItemCost accepts an AKM carrying its named muzzle and optic attachments and rejects one missing either, while an unconstrained slot (magazine) is never inspected at all — the structural guarantee research `smithing-and-item-model-layers-26-2.md` §D.3 confirms.
+- `void masterAkmAcceptsTheNamedConfigurationWithAnyUnconstrainedSlot(GameTestHelper helper)`
+- `void masterAkmRejectsAMissingOrWrongNamedAttachment(GameTestHelper helper)`
+- `void masterAkmGivesFortyEightEmeralds(GameTestHelper helper)`
+
+### `class NoDuplicateOfferGameTest` — `src/gametest/java/firearms/gametest/NoDuplicateOfferGameTest.java`
+FA-13, `docs/spec/domains/trade.md` §7: a weaponsmith that already offers a firearms:weapon stack refuses a second weapon-selling offer, through firearms:no_firearm_offered reading the villager's live offers off LootContextParams.THIS_ENTITY — modelled directly on create_metered_motor's own NoDuplicateOfferGameTest.
+- `void aVillagerAlreadyOfferingAWeaponRefusesASecond(GameTestHelper helper)`
+- `void aVillagerWithNoWeaponOfferYetAllowsOne(GameTestHelper helper)`
+- `void aWeaponsmithLevelledThroughAllLevelsDrawsAtMostOneWeaponOffer(GameTestHelper helper)` — The real production trade files, drawn in the same trade-by-trade order AbstractVillager.addOffersFromTradeSet appends into a villager's live getOffers() list (`firearms.trade.NoFirearmOffered`'s own javadoc): every weapon-selling trade across all three levels that carry one is offered in turn, and at most one ever succeeds, since each carries the firearms:no_firearm_offered guard.
 
 ### `class SmokeGameTest` — `src/gametest/java/firearms/gametest/SmokeGameTest.java`
 M0: the mod loads beside Create Fly; everything else follows.
@@ -57,6 +90,10 @@ M0: the mod loads beside Create Fly; everything else follows.
 ### `class StatDerivationGameTest` — `src/gametest/java/firearms/gametest/StatDerivationGameTest.java`
 A weapon stack carrying a firearms:base component reads its own base weapon back out of WeaponRegistry and derives its final stats through StatDerivation, matching the bare roster row exactly (`docs/spec/domains/weapon.md` `WEAPON-REQ-003`).
 - `void aWeaponStackReadsItsBaseAndDerivesStats(GameTestHelper helper)`
+
+### `class TradeFileGameTest` — `src/gametest/java/firearms/gametest/TradeFileGameTest.java`
+FA-13: every weaponsmith and fletcher trade file this ticket ships resolves through Registries.VILLAGER_TRADE and is tagged into its own trade level (`TRADE-REQ-001`, `TRADE-REQ-002`; `docs/spec/domains/trade.md` §3's catalogue table).
+- `void everyTradeFileResolvesAndIsTaggedIntoItsLevel(GameTestHelper helper)`
 
 ### `class WeaponDurabilityAndAnvilGameTest` — `src/gametest/java/firearms/gametest/WeaponDurabilityAndAnvilGameTest.java`
 A weapon stack carries the max_damage its own base's recipe gives it (`docs/spec/domains/weapon.md` §3), is never enchantable and never accepts a material repair — closed by omitting repairable(...)/enchantable(...) at registration, not by a mixin (`WEAPON-REQ-014`, `015`; `decisions/DEC-017-no-detach-durability.md`) — proven against a real AnvilMenu#createResult(), the same menu class the smithing table's own repair path runs through.

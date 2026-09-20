@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "firearms:weaponsmith/2/emerald_suppressor",
+    "firearms:weaponsmith/2/emerald_compensator",
+    "firearms:weaponsmith/2/emerald_flash_hider"
+  ]
+}

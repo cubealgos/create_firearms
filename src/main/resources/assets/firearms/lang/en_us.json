@@ -43,5 +43,15 @@
   "item.firearms.cartridge_magnum_300": ".300 Magnum Cartridge",
   "item.firearms.cartridge_gauge_12": "12 Gauge Shell",
   "death.attack.firearms.bullet": "%1$s was shot by %2$s",
-  "death.attack.firearms.bullet.player": "%1$s was shot while fighting %2$s"
+  "death.attack.firearms.bullet.player": "%1$s was shot while fighting %2$s",
+
+  "command.firearms.debug.give.done": "Gave %1$s with %2$s attachment(s)",
+  "command.firearms.debug.give.unknown_base": "Unknown weapon base: %s",
+  "command.firearms.debug.give.unknown_attachment": "Unknown attachment: %s",
+  "command.firearms.debug.give.cannot_attach": "%s cannot attach: its slot is missing from this weapon's class, or already filled",
+  "command.firearms.debug.stats.no_item": "Not holding a firearms weapon",
+  "subtitle.firearms.fire": "Gunshot",
+  "subtitle.firearms.fire_suppressed": "Suppressed gunshot",
+  "subtitle.firearms.reload": "Weapon reloading",
+  "subtitle.firearms.empty": "Weapon clicks empty"
 }

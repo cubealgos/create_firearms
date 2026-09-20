@@ -5,15 +5,30 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
-The shared attach function and the smithing front end over it (`FA-7`, `docs/spec/domains/attach.md`): firearms.attach.Attach reads and writes the Minecraft-typed firearms:base/firearms:attachment_ components, deferring the pure empty-slot-and-class-has-it decision to firearms.model.AttachRule; firearms.attach.AttachSmithingRecipe is the one SmithingRecipe implementor the vanilla smithing table finds with zero mixin (`docs/spec/04-architecture.md` `ARCH-DEC-002`).
+The shared attach function and its two front ends (`FA-7`, `FA-8`, `docs/spec/domains/attach.md`): firearms.attach.Attach reads and writes the Minecraft-typed firearms:base/firearms:attachment_ components, deferring the pure empty-slot-and-class-has-it decision to firearms.model.AttachRule; firearms.attach.AttachSmithingRecipe is the one SmithingRecipe implementor the vanilla smithing table finds with zero mixin (`docs/spec/04-architecture.md` `ARCH-DEC-002`), and firearms.attach.AttachDeployingRecipe is the one Recipe implementor a Create deployer finds the same way, in both belt and world/depot mode (`ARCH-DEC-003`).
 
 ### `class Attach` — `src/main/java/firearms/attach/Attach.java`
 The one shared attach function both attach front ends call (`docs/spec/domains/attach.md` `ATTACH-DEC-001`, `ATTACH-REQ-008`): #matches(ItemStack, ItemStack) decides whether addition may attach to base, and #assemble(ItemStack, ItemStack) builds the resulting stack once a caller has already confirmed that match.
 - `boolean matches(ItemStack base, ItemStack addition)` — Whether addition (an attachment item) may attach into base (a weapon stack): base must carry a firearms:base component naming a currently-loaded weapon, addition must be one of the five AttachmentItems, and that attachment's own slot must be one base's class has and does not yet carry a component for (`ATTACH-REQ-001`, `ATTACH-FAIL-001`, `ATTACH-REQ-002`/`ATTACH-FAIL-003`).
 - `ItemStack assemble(ItemStack base, ItemStack addition)` — A copy of base with addition's own slot component set to addition's attachment id, every other component of base unchanged (`ATTACH-REQ-003`).
 
+### `class AttachDeployingRecipe` — `src/main/java/firearms/attach/AttachDeployingRecipe.java`
+The custom Recipe implementor docs/spec/04-architecture.md ARCH-DEC-003 calls for: target = firearms:weapon (any base), ingredient (the deployer's held item) = one of the five attachment items, keepHeldItem() == false (`ATTACH-REQ-006`).
+- `AttachDeployingRecipe INSTANCE`
+- `MapCodec<AttachDeployingRecipe> CODEC`
+- `StreamCodec<RegistryFriendlyByteBuf, AttachDeployingRecipe> STREAM_CODEC`
+- `RecipeSerializer<AttachDeployingRecipe> SERIALIZER`
+- `boolean matches(ItemApplicationInput input, Level level)`
+- `List<ItemStack> assemble(ItemApplicationInput input, RandomSource random)` — A thin adapter reading target/ingredient off ItemApplicationInput and calling the shared attach function (`ATTACH-REQ-008`); never re-implements slot-match or component-merge itself.
+- `RecipeSerializer<AttachDeployingRecipe> getSerializer()`
+- `RecipeType<AttachDeployingRecipe> getType()`
+- `boolean keepHeldItem()` — Never keeps the held attachment: consumed on a successful attach (`ATTACH-REQ-006`).
+- `Ingredient target()`
+- `Ingredient ingredient()`
+- `List<ProcessingOutput> results()` — Empty — see class Javadoc, "Why assemble() is overridden".
+
 ### `class AttachRegistration` — `src/main/java/firearms/attach/AttachRegistration.java`
-Registers AttachSmithingRecipe's serializer as firearms:attach_smithing (`docs/spec/contracts/public-surface.md`), through the same public BuiltInRegistries.RECIPE_SERIALIZER door every mod recipe uses — no mixin (`docs/spec/04-architecture.md` `ARCH-DEC-002`).
+Registers AttachSmithingRecipe's serializer as firearms:attach_smithing and AttachDeployingRecipe's as firearms:attach_deploying (`docs/spec/contracts/public-surface.md`), through the same public BuiltInRegistries.RECIPE_SERIALIZER door every mod recipe uses — no mixin (`docs/spec/04-architecture.md` `ARCH-DEC-002`, `ARCH-DEC-003`).
 - `void register()`
 
 ### `class AttachSmithingRecipe` — `src/main/java/firearms/attach/AttachSmithingRecipe.java`
