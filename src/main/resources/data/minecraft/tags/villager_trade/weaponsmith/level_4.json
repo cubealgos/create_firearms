@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "firearms:weaponsmith/4/emerald_ruger_mini_14",
+    "firearms:weaponsmith/4/emerald_awm",
+    "firearms:weaponsmith/4/emerald_tactical_stock",
+    "firearms:weaponsmith/4/emerald_cheek_pad",
+    "firearms:weaponsmith/4/emerald_bullet_loops"
+  ]
+}

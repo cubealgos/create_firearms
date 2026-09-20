@@ -1,0 +1,10 @@
+{
+  "wants": { "id": "minecraft:emerald", "count": 12 },
+  "gives": {
+    "id": "firearms:attachment_optic",
+    "components": { "firearms:attachment_optic": "firearms:scope_4x" }
+  },
+  "max_uses": 12,
+  "reputation_discount": 0.2,
+  "xp": 10
+}

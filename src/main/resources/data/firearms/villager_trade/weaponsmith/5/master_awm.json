@@ -1,0 +1,14 @@
+{
+  "wants": {
+    "id": "firearms:weapon",
+    "count": 1,
+    "components": {
+      "firearms:base": { "weapon_id": "firearms:awm" },
+      "firearms:attachment_muzzle": "firearms:suppressor",
+      "firearms:attachment_optic": "firearms:scope_8x"
+    }
+  },
+  "gives": { "id": "minecraft:emerald", "count": 64 },
+  "max_uses": 1,
+  "xp": 30
+}

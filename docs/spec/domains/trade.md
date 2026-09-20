@@ -73,12 +73,25 @@ them) stay free — proven structurally, since `DataComponentExactPredicate.test
 
 ### JSON shape
 
+**Correction (`FA-13`)**: every 1.0 base weapon is a stack of the single `firearms:weapon` item,
+distinguished only by its own `firearms:base` component (`docs/spec/contracts/public-surface.md`,
+`firearms.item.WeaponItem`) — there is no per-weapon item id such as `firearms:akm` to name in
+`wants`/`gives` directly. The shape below is the real one, landed by `FA-13`:
+
 ```json
-{ "wants": { "id": "firearms:akm", "count": 1,
-             "components": { "firearms:attachment_muzzle": "firearms:suppressor",
+{ "wants": { "id": "firearms:weapon", "count": 1,
+             "components": { "firearms:base": { "weapon_id": "firearms:akm" },
+                              "firearms:attachment_muzzle": "firearms:suppressor",
                               "firearms:attachment_optic": "firearms:scope_4x" } },
   "gives": { "id": "minecraft:emerald", "count": 48 }, "max_uses": 1 }
 ```
+
+A bare-weapon sale trade's own `gives` carries the identical `firearms:base` component plus the
+weapon's own `minecraft:max_damage`/`minecraft:damage` pair, mirroring that weapon's crafting
+recipe output exactly (`data/firearms/recipe/weapon/*.json`); an attachment sale trade's `gives`
+names one of the five `firearms:attachment_<slot>` items with that slot's own component set to the
+specific attachment id, e.g. `{"id": "firearms:attachment_muzzle", "components":
+{"firearms:attachment_muzzle": "firearms:suppressor"}}`.
 
 ## 4. Use cases
 
@@ -107,8 +120,10 @@ them) stay free — proven structurally, since `DataComponentExactPredicate.test
 
 | Question | Blocks | Decided by |
 |---|---|---|
-| Exact trade prices across both professions and all levels | `TRADE-REQ-001`, `002` | first ticket, balance sweep |
-| Whether a `merchant_predicate` duplicate-offer guard (mirroring `create_metered_motor`'s `no_motor_offered` `LootItemCondition`) is worth adding to the buy-back trades | `TRADE-REQ-004` | first ticket; most vanilla trades omit one, so this sheet proposes omitting it too unless a duplicate-offer problem is actually observed |
+| Exact trade prices across both professions and all levels | `TRADE-REQ-001`, `002` | first ticket, balance sweep; `FA-13` ships the catalogue's proposed prices as-is |
+
+Resolved by `FA-13`: whether a `merchant_predicate` duplicate-offer guard is worth adding — see
+`TRADE-DEC-003`, which overturns this sheet's own earlier lean toward omitting one.
 
 ## 8. Decisions
 
@@ -122,3 +137,24 @@ them) stay free — proven structurally, since `DataComponentExactPredicate.test
   unconstrained slots free** (this sheet's mechanism for Kevin's ruling, confirmed structurally
   sound by research §D.3). The full component-shape reasoning lives in `04-architecture.md`
   `ARCH-DEC-005`; restated here as the trade-domain consumer of that shape.
+- `TRADE-DEC-003` — **A `firearms:no_firearm_offered` merchant predicate guards every
+  bare-weapon-selling trade, so a weaponsmith never holds more than one weapon offer at once**
+  (`FA-13`'s own ticket brief, settling §7's open question the opposite way from this sheet's
+  original lean toward omitting a guard). Modelled directly on `create_metered_motor`'s
+  `no_motor_offered` condition (research `smithing-and-item-model-layers-26-2.md` §D.2):
+  `firearms.trade.NoFirearmOffered` inspects the merchant's live offers and refuses a further
+  weapon-selling trade once any offer already gives a `firearms:weapon` stack — item identity
+  alone is enough, since every 1.0 base weapon shares that one item, distinguished only by its own
+  `firearms:base` component. The guard sits on the bare-weapon sale trades only (the six
+  `emerald_<weapon>` trades at weaponsmith levels 1, 3 and 4), never on an attachment or cartridge
+  trade, and never on the master buy-back trades themselves — a buy-back trade `wants` a weapon
+  rather than giving one, so the same duplicate-sale concern does not apply to it, and each class
+  has exactly one buy-back trade in the whole catalogue regardless. **Reason to override the
+  sheet's own "most vanilla trades omit one" lean**: with weapon-selling trades spread across three
+  separate weaponsmith levels (an SMG at level 1, two more classes at level 3, two more at level 4),
+  a villager reaching level 4+ could otherwise draw several different weapons for sale
+  simultaneously; the guard keeps a weaponsmith's weapon stock to at most one offer, matching a
+  merchant that specializes rather than stocks the whole catalogue. **Cost if wrong:** the
+  predicate is one `merchant_predicate` field per trade file plus one loot condition class; dropping
+  it later is a data-only edit to the affected trade JSONs, no Java change needed to remove the
+  behaviour (only to remove the now-unused registration).

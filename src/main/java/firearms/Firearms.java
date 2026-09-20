@@ -8,6 +8,7 @@ import firearms.fire.FireSounds;
 import firearms.fire.RecoilPacket;
 import firearms.item.ItemRegistration;
 import firearms.combat.CombatRegistration;
+import firearms.trade.TradeRegistration;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.resources.Identifier;
@@ -16,6 +17,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * The mod's server-and-common entrypoint: registers the components, the items, the data loaders
+ * (FA-3), the bullet entity (FA-5), the attach smithing recipe serializer (FA-7), and the
+ * villager trade path's merchant predicate (FA-13).
  * (FA-3), the bullet entity (FA-5), the attach smithing recipe serializer (FA-7) and, only in a
  * development environment, the {@code /firearms debug} command (FA-12).
  * (FA-3), the bullet entity (FA-5), and firing's own sounds and recoil packet type (FA-6).
@@ -38,6 +41,7 @@ public final class Firearms implements ModInitializer {
         FireSounds.register();
         RecoilPacket.register();
         AttachRegistration.register();
+        TradeRegistration.register();
         if (FabricLoader.getInstance().isDevelopmentEnvironment()) DebugCommand.register();
         LOGGER.info("Firearms ready beside Create Fly");
     }
