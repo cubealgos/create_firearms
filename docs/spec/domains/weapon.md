@@ -98,6 +98,12 @@ the class has, each gated on `minecraft:has_component` against that slot's own c
 for aiming vs. hip-fire, distinguished by whether the player is currently using the item
 (`ItemDisplayContext`, research `smithing-and-item-model-layers-26-2.md` §B.4).
 
+Since `decisions/DEC-018-art-direction.md` (Kevin, 2026-09-20) every layer is a cuboid element
+model, not a sprite: the base layer is the weapon's 3D model with its own texture atlas, each slot
+layer is a 3D part positioned at the slot's anchor in model units, and the same composite renders
+in every display context (inventory included) as Create's potato cannon does. Standalone
+attachment items and cartridges remain flat 16×16 sprites in the vanilla/Create pixel style.
+
 ## 4. Use cases
 
 `UC-001`, `UC-007`–`UC-014`, `UC-018`, `UC-019` in `02-journeys.md`.
@@ -121,6 +127,10 @@ for aiming vs. hip-fire, distinguished by whether the player is currently using 
 | `WEAPON-REQ-013` | The system shall play a distinct fire sound and a distinct empty-click sound per weapon; a suppressor attachment shall reduce the fire sound's effective volume/range (`domains/combat.md` `COMBAT-REQ-009`). | Must | `00-context.md` |
 | `WEAPON-REQ-014` | The system shall not set `DataComponents.REPAIRABLE` (`Item.Properties.repairable(...)`) on any weapon item, so `ItemStack.isValidRepairItem` always returns false and the anvil's material-repair path (combining a weapon with a repair item such as an iron ingot) never produces a result for it. | Must | Kevin, 2026-09-20: "not repairable in an anvil"; `decisions/DEC-017-no-detach-durability.md` |
 | `WEAPON-REQ-015` | The system shall not set `DataComponents.ENCHANTABLE` (`Item.Properties.enchantable(...)`) on any weapon item and shall not add any weapon item to any vanilla enchantment's supported-items tag, so `ItemStack.isEnchantable()` returns false (the enchanting table offers nothing for it) and `Enchantment.canEnchant()` fails for every enchantment (an anvil combination with an enchanted book transfers nothing and produces an empty result). | Must | Kevin, 2026-09-20: "not enchantable"; `decisions/DEC-017-no-detach-durability.md` |
+| `WEAPON-REQ-016` | Every base weapon's item model shall be a cuboid element model with a per-weapon texture atlas, and every mounted attachment a cuboid part model positioned at its slot's anchor, composited as `WEAPON-REQ-012` describes and rendered as a 3D model in every display context; both generated deterministically by `tools/models.py`. | Must | `decisions/DEC-018-art-direction.md` |
+| `WEAPON-REQ-017` | Every texture and sprite of the mod shall follow the vanilla/Create pixel style: 16×16 canvases for sprites, a one-pixel outline in the material's darkest tone, three to four tones per material lit from the top-left, colours from the shared palette in `tools/palette.py`, no gradients or anti-aliasing. | Must | `decisions/DEC-018-art-direction.md` |
+| `WEAPON-REQ-018` | The attack control (left click) shall fire the held firearm and the use control (right click), held, shall aim it; a use press shall never fire. Firing travels as this mod's own client-to-server payload and is validated by the server's `FiringLogic` (cooldown, ammo, durability) exactly as before; `auto` repeats while the attack control is held. While a firearm is held, the attack control shall not swing, break blocks or melee-hit. | Must | `decisions/DEC-019-controls.md` |
+| `WEAPON-REQ-019` | Aiming shall last exactly as long as the use control is held (a bow-length use duration ended only by release, never by a shot or a cooldown); with no magnifying optic (none, red dot, holo) the aiming pose is iron sights: centred model, no zoom, no overlay. | Must | `decisions/DEC-019-controls.md` |
 
 ## 6. Failure modes
 

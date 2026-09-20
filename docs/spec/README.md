@@ -118,6 +118,8 @@ not in either note is marked "to verify at the first ticket" where it appears.
 | `DEC-015` | No JEI/EMI category at 1.0 | written |
 | `DEC-016` | `create_villager_customers` needs a component-predicate match rule; recorded, not scoped here | written |
 | `DEC-017` | Attachments never come off; ordinary durability; not repairable; not enchantable | written |
+| `DEC-018` | Art direction: vanilla/Create pixel style, weapons and mounted attachments as 3D cuboid models, small items flat | written |
+| `DEC-019` | Controls: left click fires, right click held aims, iron sights without an optic; a creative tab | written |
 
 ## Open questions gathered
 
