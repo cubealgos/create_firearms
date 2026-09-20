@@ -50,13 +50,18 @@ WEAPON_CLASSES = {
 
 # weapon id -> (class, body colour, accent colour, body span (x0, x1 exclusive))
 WEAPONS = {
-    "m1911": ("pistol", (74, 76, 82, 255), (48, 49, 54, 255), (9, 24)),
-    "micro_uzi": ("smg", (40, 41, 46, 255), (22, 22, 26, 255), (5, 27)),
-    "akm": ("assault_rifle", (96, 78, 52, 255), (58, 46, 30, 255), (3, 30)),
-    "ruger_mini_14": ("dmr", (112, 90, 58, 255), (70, 55, 35, 255), (2, 31)),
-    "awm": ("sniper_rifle", (74, 84, 68, 255), (48, 55, 44, 255), (1, 31)),
-    "winchester_model_1897": ("shotgun", (100, 74, 44, 255), (60, 44, 26, 255), (3, 29)),
+    "m1911": ("pistol", (86, 88, 94, 255), (120, 78, 46, 255), (9, 22)),
+    "micro_uzi": ("smg", (34, 35, 39, 255), (18, 18, 21, 255), (6, 24)),
+    "akm": ("assault_rifle", (78, 80, 86, 255), (150, 108, 58, 255), (4, 25)),
+    "ruger_mini_14": ("dmr", (54, 60, 70, 255), (128, 92, 50, 255), (3, 25)),
+    "awm": ("sniper_rifle", (70, 74, 78, 255), (92, 112, 66, 255), (2, 24)),
+    "winchester_model_1897": ("shotgun", (72, 74, 80, 255), (140, 100, 54, 255), (4, 23)),
 }
+
+# body colour = receiver/slide steel; accent colour = this weapon's own wood/polymer/grip tone,
+# reused across all its wood or polymer furniture so each weapon reads as one coherent material
+# pairing rather than a single flat stick (Kevin, 2026-09-20 FA-21: the FA-9 pass read as flat
+# sticks and grey blocks).
 
 # slot -> (name, accent colour) -- every attachment in `data/firearms/attachment/*.json`. Kept
 # bright enough to read against Minecraft's own light inventory background, not just against a
@@ -64,9 +69,9 @@ WEAPONS = {
 # slot siblings.
 ATTACHMENTS = {
     "muzzle": {
-        "suppressor": (172, 172, 180, 255),  # pale gunmetal tube
+        "suppressor": (58, 58, 64, 255),  # dark tube, matte -- longest of the three
         "flash_hider": (90, 60, 40, 255),  # dark bronze prongs
-        "compensator": (96, 100, 110, 255),  # mid gunmetal block
+        "compensator": (96, 100, 110, 255),  # mid gunmetal block, slotted
     },
     "optic": {
         "scope_2x": (74, 96, 80, 255),
@@ -121,44 +126,127 @@ def shade(colour: tuple[int, int, int, int], delta: int) -> tuple[int, int, int,
     return (max(0, min(255, r + delta)), max(0, min(255, g + delta)), max(0, min(255, b + delta)), a)
 
 
+def _outlined_block(img: Image.Image, x0: int, y0: int, x1: int, y1: int,
+                     colour: tuple[int, int, int, int]) -> None:
+    """A filled rectangle in Create's own flat item-sprite style (`tools/icon.py` precedent,
+    the extracted-for-reference-only `create:wrench`/`create:precision_mechanism` look): a dark
+    1px outline ring, a lightened highlight row just inside the top edge, flat fill between --
+    never a copy of any reference pixel, just the same shading convention applied to our own
+    geometry."""
+    px = img.load()
+    for x in range(x0, x1):
+        for y in range(y0, y1):
+            if not (0 <= x < img.width and 0 <= y < img.height):
+                continue
+            on_edge = y in (y0, y1 - 1) or x in (x0, x1 - 1)
+            px[x, y] = shade(colour, -70) if on_edge else colour
+    if y1 - y0 >= 3 and x1 - x0 >= 3:
+        for x in range(x0 + 1, x1 - 1):
+            if 0 <= x < img.width and 0 <= y0 + 1 < img.height:
+                px[x, y0 + 1] = shade(colour, 35)
+
+
+def _taper(img: Image.Image, x: int, y: int, rows: int, width: int,
+           colour: tuple[int, int, int, int], dx: int = -1, shrink: int = 0) -> None:
+    """A staircase of shrinking rows stepping sideways one column per row -- a curved magazine, an
+    angled grip, a sloped comb, anything that reads as leaning rather than square."""
+    px = img.load()
+    for i in range(rows):
+        w = max(1, width - shrink * i)
+        rx = x + dx * i
+        for xi in range(rx, rx + w):
+            if 0 <= xi < img.width and 0 <= y + i < img.height:
+                px[xi, y + i] = colour if i not in (0, rows - 1) else shade(colour, -30)
+
+
+def _line(img: Image.Image, x0: int, y0: int, x1: int, y1: int,
+          colour: tuple[int, int, int, int]) -> None:
+    """A thin 1px straight accent line (gas tube, tube magazine, wire stock strut)."""
+    px = img.load()
+    dx = 1 if x1 >= x0 else -1
+    dy = 1 if y1 >= y0 else -1
+    steps = max(abs(x1 - x0), abs(y1 - y0), 1)
+    for i in range(steps + 1):
+        x = x0 + round((x1 - x0) * i / steps)
+        y = y0 + round((y1 - y0) * i / steps)
+        if 0 <= x < img.width and 0 <= y < img.height:
+            px[x, y] = colour
+
+
 # ---------------------------------------------------------------- base weapons (32x16)
 
+# Every weapon shares one 4-row receiver/slide band (rows 6-9) so the fixed slot anchors --
+# `SLOT_ANCHOR`, FA-9's, unchanged -- keep landing in the same sensible place (muzzle at the
+# barrel, optic above the receiver, magazine/grip hanging off its bottom edge, stock at the rear)
+# no matter which weapon's silhouette is drawn under them. What makes each weapon recognisable is
+# everything added around that shared band: barrel length, furniture material and shape, and the
+# one or two fixed (non-attachment) features called out in the ticket per weapon.
+BODY_TOP, BODY_BOTTOM = 6, 10
+
+
 def weapon_sprite(weapon_id: str) -> Image.Image:
-    """A simple flat side-view silhouette: a body bar with a highlighted top edge and a shadowed
-    bottom edge (Create's own flat per-row shading), a barrel stub toward the muzzle end, and for a
-    class with a stock/grip, a dropped-down rear/underside block. Recognisably different per weapon
-    by body span, height and colour, not by fine detail -- `docs/spec/operations/compliance.md`
-    keeps this our own simple geometry, not a copy of any real silhouette."""
+    """Each of the six weapons gets its own hand-composed silhouette built from `_outlined_block`,
+    `_taper` and `_line` -- a receiver/slide band common to all six (so the fixed per-slot anchors
+    keep lining up), plus the weapon's own barrel length, material and one or two distinguishing
+    fixed features named in the ticket. Own simple geometry throughout, not a copy of any real gun
+    or any reference sprite's silhouette (`docs/spec/operations/compliance.md` `COMP-REQ-002`)."""
     weapon_class, body, accent, (x0, x1) = WEAPONS[weapon_id]
     img = Image.new("RGBA", CANVAS, TRANSPARENT)
-    px = img.load()
+    top, bottom = BODY_TOP, BODY_BOTTOM
 
-    top, bottom = 6, 9  # the receiver/body band, three rows tall
-    for x in range(x0, x1):
-        px[x, top] = shade(body, 35)
-        for y in range(top + 1, bottom):
-            px[x, y] = body
-        px[x, bottom] = shade(body, -35)
+    _outlined_block(img, x0, top, x1, bottom, body)
 
-    # barrel: a thin two-row stub reaching toward the right edge.
-    barrel_end = min(31, x1 + 3)
-    for x in range(x1 - 2, barrel_end):
-        px[x, top] = shade(accent, 20)
-        px[x, top + 1] = accent
+    if weapon_id == "m1911":
+        # compact slide/frame, hammer spur, grip angled back and down.
+        img.load()[x0 + 1, top - 1] = shade(body, -60)  # hammer spur
+        _outlined_block(img, x0 + 3, bottom - 1, x0 + 6, bottom, shade(body, -20))  # trigger guard
+        _taper(img, x0 + 1, bottom, 4, 5, accent, dx=-1, shrink=1)  # grip, angled back
+        _line(img, x1, top, x1 + 2, top, shade(body, -40))  # short barrel, barely proud of the slide
 
-    # grip/stock classes drop a block below the body toward the left of the span.
-    if weapon_class in ("pistol", "smg", "assault_rifle"):
-        gx0 = x0 + 2
-        gx1 = min(x1, gx0 + 4)
-        for x in range(gx0, gx1):
-            for y in range(bottom + 1, min(15, bottom + 5)):
-                px[x, y] = accent if y < 14 else shade(accent, -25)
+    elif weapon_id == "micro_uzi":
+        # stubby box receiver; the long straight magazine doubles as the grip (the real Uzi's own
+        # magazine-in-grip layout), one tall straight housing, not two separate stubs; a folded
+        # wire stock lies flat along the receiver's top rather than dangling below.
+        _outlined_block(img, 13, bottom - 1, 16, 15, accent)  # long straight magazine-in-grip
+        _line(img, x0 - 5, top, x0, top, shade(body, 25))  # folded wire stock, flat along the top
+        _line(img, x0 - 5, top + 1, x0 - 5, bottom - 1, shade(body, 25))  # its rear hoop, dropping down
+        _line(img, x1, top, x1 + 3, top, shade(body, -40))  # short barrel
 
-    # a stocked class (dmr, sniper_rifle, shotgun) extends a narrow butt to the left edge.
-    if weapon_class in ("dmr", "sniper_rifle", "shotgun"):
-        for x in range(0, x0):
-            px[x, top + 1] = shade(accent, 15)
-            px[x, top + 2] = accent
+    elif weapon_id == "akm":
+        # curved magazine sweeping forward, wooden handguard and stock, gas tube over the barrel.
+        _taper(img, 14, bottom, 6, 3, accent, dx=1, shrink=0)  # curved magazine, sweeps toward muzzle
+        _outlined_block(img, x0 - 4, top, x0, bottom, accent)  # wooden stock block
+        _outlined_block(img, x1 - 7, bottom - 1, x1 - 1, bottom, shade(accent, 20))  # wooden handguard
+        _line(img, x1 - 8, top, x1 + 1, top, shade(body, -50))  # gas tube over the barrel
+        _outlined_block(img, x0 + 2, bottom - 1, x0 + 5, bottom + 2, shade(body, -15))  # pistol grip
+        _line(img, x1, top, x1 + 4, top, shade(body, -40))  # barrel
+
+    elif weapon_id == "ruger_mini_14":
+        # full wooden stock spanning the rear half, long barrel, small box magazine.
+        _outlined_block(img, x0 - 3, top, x0 + 6, bottom + 2, accent)  # full wood stock, rear half
+        _taper(img, x0 + 3, bottom + 2, 2, 6, accent, dx=1, shrink=2)  # comb taper into the butt
+        _outlined_block(img, 14, bottom - 1, 17, bottom + 3, shade(body, -20))  # small box magazine
+        _line(img, x1, top, x1 + 6, top, shade(body, -40))  # long barrel
+
+    elif weapon_id == "awm":
+        # long barrel, bolt handle, scope rail, green polymer stock, bipod stubs near the muzzle.
+        _outlined_block(img, x0 - 2, top + 3, x0 + 5, bottom + 3, accent)  # green polymer stock
+        _line(img, x0 + 3, bottom + 3, x0 + 1, bottom + 5, shade(accent, -30))  # angled toe
+        _line(img, 10, top, 20, top, shade(body, -50))  # scope rail along the receiver top
+        img.load()[18, top - 1] = shade(body, -60)  # bolt handle
+        img.load()[18, top - 2] = shade(body, -60)
+        img.load()[x1 - 4, bottom + 1] = shade(body, -50)  # bipod stub, left leg
+        img.load()[x1 - 2, bottom + 1] = shade(body, -50)  # bipod stub, right leg
+        _line(img, x1, top, x1 + 7, top, shade(body, -40))  # longest barrel
+
+    else:  # winchester_model_1897
+        # pump forend detached from the receiver line, tube magazine under the barrel, exposed
+        # hammer, wooden stock.
+        img.load()[x0 + 1, top - 1] = shade(body, -60)  # exposed hammer
+        _outlined_block(img, x0 - 4, top, x0, bottom, accent)  # wooden stock block
+        _line(img, x0 + 2, bottom - 1, x1 - 2, bottom - 1, (168, 150, 108, 255))  # tube magazine, brass
+        _outlined_block(img, 10, bottom, 17, bottom + 2, shade(accent, -10))  # pump forend, dropped a row
+        _line(img, x1, top, x1 + 5, top, shade(body, -40))  # barrel
 
     return img
 
@@ -215,30 +303,38 @@ def attachment_glyph(slot: str, name: str) -> Image.Image:
         _rect(img, ax, ay + height - 1, ax + 3, ay + height, shade(accent, -30))
         if name == "extended_quickdraw_magazine":
             _rect(img, ax, ay + 1, ax + 3, ay + 2, (150, 130, 70, 255))  # a banded accent stripe
+        if "quickdraw" in name:
+            img.load()[ax + 3, ay] = shade(accent, 30)  # the quickdraw tab, sticking out sideways
+            img.load()[ax + 3, ay + 1] = shade(accent, 30)
 
     elif slot == "grip":
-        shapes = {
-            "light_grip": (3, 4),
-            "half_grip": (3, 5),
-            "vertical_grip": (3, 6),
-            "angled_grip": (5, 4),
-            "thumb_grip": (4, 4),
-        }
-        width, height = shapes[name]
-        if name == "angled_grip":
+        # light: a thin post. half: a short post, only the lower half of a full grip. vertical: a
+        # full post. angled: a wedge, leaning forward. thumb: a small rest with a notch.
+        if name == "light_grip":
+            _rect(img, ax, ay, ax + 2, ay + 4, accent)
+        elif name == "half_grip":
+            _rect(img, ax, ay + 3, ax + 3, ay + 6, accent)  # only the lower half, dropped down
+            _rect(img, ax, ay + 5, ax + 3, ay + 6, shade(accent, -30))
+        elif name == "vertical_grip":
+            _rect(img, ax, ay, ax + 3, ay + 6, accent)
+            _rect(img, ax, ay + 5, ax + 3, ay + 6, shade(accent, -30))
+        elif name == "angled_grip":
+            width, height = 5, 4
             for i in range(height):
                 _rect(img, ax + i, ay + i, ax + i + width - i, ay + i + 1, accent)
-        else:
-            _rect(img, ax, ay, ax + width, ay + height, accent)
-            if name == "thumb_grip":
-                img.load()[ax + width, ay] = shade(accent, 20)
+        else:  # thumb_grip: a small rest with a notch cut for the thumb
+            _rect(img, ax, ay, ax + 4, ay + 4, accent)
+            img.load()[ax + 1, ay] = TRANSPARENT
+            img.load()[ax + 1, ay + 1] = TRANSPARENT
+            img.load()[ax + 3, ay] = shade(accent, 20)
 
     else:  # stock
         if name == "tactical_stock":
-            _rect(img, ax, ay + 1, ax + 6, ay + 3, accent)
-            _rect(img, ax, ay, ax + 1, ay + 5, shade(accent, -20))  # buttplate
+            _rect(img, ax, ay + 1, ax + 6, ay + 5, accent)  # a squared pad
+            _rect(img, ax, ay + 1, ax + 1, ay + 5, shade(accent, -20))  # buttplate
         elif name == "cheek_pad":
-            _rect(img, ax + 2, ay + 1, ax + 7, ay + 3, accent)
+            _rect(img, ax + 2, ay + 2, ax + 7, ay + 4, accent)  # the pad
+            _rect(img, ax + 3, ay + 1, ax + 6, ay + 2, shade(accent, 15))  # raised above the comb line
         else:  # bullet_loops
             _rect(img, ax, ay + 2, ax + 8, ay + 3, (74, 54, 32, 255))  # the strap
             for i, x in enumerate(range(ax + 1, ax + 8, 2)):
