@@ -5,6 +5,15 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
+### `class BulletGameTest` — `src/gametest/java/firearms/gametest/BulletGameTest.java`
+The bullet entity's flight, hit resolution, block discard, despawn and pellet spawn (`docs/spec/domains/combat.md`; `docs/spec/operations/testing.md` `TEST-REQ-004`).
+- `void aBulletHitsATargetTwentyBlocksAwayAndDealsTheGivenDamage(GameTestHelper helper)` — firearms_gametest:open_range is a 4x30x60 all-air structure this mod ships (src/gametest/resources/data/firearms_gametest/gametest/structure/open_range.snbt): the default fabric-gametest-api-v1:empty structure is only 8x8x8, and its invisible barrier walls sit exactly at that boundary — padding widens the region GameTestHelper#getBoundsWithPadding() reports, but not where the barriers themselves are placed (`TestInstanceBlockEntity.processStructureBoundary` builds from the raw, unpadded structure bounds), so a bullet travelling any real distance needs a genuinely larger structure, not a larger padding value.
+- `void aBulletHitsATargetBeyondFortyBlocks(GameTestHelper helper)` — `TEST-REQ-004`: comfortably beyond every 1.0 weapon's muzzle-velocity/despawn-life range.
+- `void aVeryHighVelocityBulletDoesNotTunnelThroughATarget(GameTestHelper helper)` — `COMBAT-REQ-002`: the swept-segment hit test covers the whole tick's movement, so an unrealistically high velocity that crosses the target well within a single tick still registers — a fixed-length or endpoint-only probe would miss this.
+- `void aBulletFiredAtAWallDiscardsWithNoPenetration(GameTestHelper helper)` — `COMBAT-FAIL-002`: removed on the block hit, no penetration.
+- `void aBulletWithNothingToHitDespawnsAfterItsLifeWithNoDamageOrDrop(GameTestHelper helper)` — `COMBAT-REQ-003`, `UC-013`: no damage, no drop, just a clean removal after the fixed life.
+- `void aShotgunTriggerPullSpawnsEightIndependentlySpreadPellets(GameTestHelper helper)` — `COMBAT-REQ-005`: one trigger pull, eight independently-spread pellet entities.
+
 ### `class SmokeGameTest` — `src/gametest/java/firearms/gametest/SmokeGameTest.java`
 M0: the mod loads beside Create Fly; everything else follows.
 - `void theModLoadsBesideCreateFly(GameTestHelper helper)`

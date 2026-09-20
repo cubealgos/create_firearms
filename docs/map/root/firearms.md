@@ -9,5 +9,6 @@ signature is the contract; read the source only when the summary is not enough.
 The mod's server-and-common entrypoint.
 - `String MOD_ID`
 - `Logger LOGGER`
+- `Identifier id(String path)`
 - `void onInitialize()`
 
