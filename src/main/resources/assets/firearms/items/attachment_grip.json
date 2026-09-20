@@ -1,0 +1,48 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:component",
+    "component": "firearms:attachment_grip",
+    "cases": [
+      {
+        "when": "firearms:light_grip",
+        "model": {
+          "type": "minecraft:model",
+          "model": "firearms:item/attachment/light_grip"
+        }
+      },
+      {
+        "when": "firearms:half_grip",
+        "model": {
+          "type": "minecraft:model",
+          "model": "firearms:item/attachment/half_grip"
+        }
+      },
+      {
+        "when": "firearms:angled_grip",
+        "model": {
+          "type": "minecraft:model",
+          "model": "firearms:item/attachment/angled_grip"
+        }
+      },
+      {
+        "when": "firearms:vertical_grip",
+        "model": {
+          "type": "minecraft:model",
+          "model": "firearms:item/attachment/vertical_grip"
+        }
+      },
+      {
+        "when": "firearms:thumb_grip",
+        "model": {
+          "type": "minecraft:model",
+          "model": "firearms:item/attachment/thumb_grip"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "firearms:item/attachment/light_grip"
+    }
+  }
+}
