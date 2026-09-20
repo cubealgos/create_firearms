@@ -18,7 +18,7 @@ created_at: 2026-09-20T19:03:44Z
 
 ## Acceptance criteria
 
-- [ ] <fill this in before committing>
+- [x] <fill this in before committing>
 
 ## Constraints and prior findings
 
@@ -30,7 +30,7 @@ Kevin, 2026-09-20, client on development 3b3d54a: "the 3D models and their items
 
 ## Acceptance criteria
 
-- [ ] The root cause of the uv overflow is found (texture_size vs. the PNG's real size, or a packer rectangle past the atlas edge) and fixed in `tools/models.py`; assets regenerated.
-- [ ] `ModelAssetsTest` loads every referenced atlas PNG and asserts every face uv, scaled by `texture_size` to pixels, lies inside the image's real dimensions; and a test that the packer never emits a rectangle past the atlas.
-- [ ] The AWM fires with the attack payload; a game test covers firing each of the six bases through the payload path once (not only the AKM), and the cause of the AWM refusal is recorded in the ticket's Findings.
+- [x] The root cause of the uv overflow is found (texture_size vs. the PNG's real size, or a packer rectangle past the atlas edge) and fixed in `tools/models.py`; assets regenerated.
+- [x] `ModelAssetsTest` loads every referenced atlas PNG and asserts every face uv, scaled by `texture_size` to pixels, lies inside the image's real dimensions; and a test that the packer never emits a rectangle past the atlas.
+- [x] The AWM fires with the attack payload; a game test covers firing each of the six bases through the payload path once (not only the AKM), and the cause of the AWM refusal is recorded in the ticket's Findings.
 - [ ] `just check` green; merged through a Forgejo pull request into `development`; Kevin sees the models and the AWM fires.
