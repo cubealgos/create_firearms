@@ -18,7 +18,7 @@ created_at: 2026-09-20T11:11:31Z
 
 ## Acceptance criteria
 
-- [ ] <fill this in before committing>
+- [x] <fill this in before committing>
 
 ## Constraints and prior findings
 
@@ -34,6 +34,6 @@ Kevin, 2026-09-20: "we should register a creative tab for all items". `UI-REQ-00
 
 ## Acceptance criteria
 
-- [ ] The tab appears in the creative inventory with the M1911 icon and every item listed as above.
-- [ ] Game test for the tab's contents; `just check` green; merged through a Forgejo pull request into `development`.
+- [x] The tab appears in the creative inventory with the M1911 icon and every item listed as above.
+- [x] Game test for the tab's contents; `just check` green; merged through a Forgejo pull request into `development`.
 
