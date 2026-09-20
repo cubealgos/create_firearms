@@ -1,0 +1,69 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:component",
+    "component": "firearms:attachment_optic",
+    "cases": [
+      {
+        "when": "firearms:scope_2x",
+        "model": {
+          "type": "minecraft:model",
+          "model": "firearms:item/attachment/scope_2x"
+        }
+      },
+      {
+        "when": "firearms:scope_3x",
+        "model": {
+          "type": "minecraft:model",
+          "model": "firearms:item/attachment/scope_3x"
+        }
+      },
+      {
+        "when": "firearms:scope_4x",
+        "model": {
+          "type": "minecraft:model",
+          "model": "firearms:item/attachment/scope_4x"
+        }
+      },
+      {
+        "when": "firearms:scope_6x",
+        "model": {
+          "type": "minecraft:model",
+          "model": "firearms:item/attachment/scope_6x"
+        }
+      },
+      {
+        "when": "firearms:scope_8x",
+        "model": {
+          "type": "minecraft:model",
+          "model": "firearms:item/attachment/scope_8x"
+        }
+      },
+      {
+        "when": "firearms:scope_15x",
+        "model": {
+          "type": "minecraft:model",
+          "model": "firearms:item/attachment/scope_15x"
+        }
+      },
+      {
+        "when": "firearms:red_dot",
+        "model": {
+          "type": "minecraft:model",
+          "model": "firearms:item/attachment/red_dot"
+        }
+      },
+      {
+        "when": "firearms:holo",
+        "model": {
+          "type": "minecraft:model",
+          "model": "firearms:item/attachment/holo"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "firearms:item/attachment/scope_2x"
+    }
+  }
+}
