@@ -105,10 +105,7 @@ licensed.
 ### A note on the roster
 
 Every weapon here uses only its real-world firearm designation (M1911, Micro Uzi, AKM, Ruger
-Mini-14, AWM, Winchester Model 1897) — these are firearm model names, not any game's property. A
-well-known battle-royale game informed the roster and slot layout during design, the same way an
-earlier cubealgos add-on used the vanilla spyglass as a mechanical reference rather than a
-branding one; no name, logo, splash art, sound, or texture from that or any other game appears
-anywhere in this mod, its listing, or its repository. Every stat and price in this listing is a
-proposed starting point, balance-swept before 1.0, not a promise that these exact numbers ship
-unchanged in a future update.
+Mini-14, AWM, Winchester Model 1897) — these are firearm model names. Every texture, model and
+sound in this mod is drawn and recorded fresh for it; none of it is copied from any other game.
+Every stat and price in this listing is a proposed starting point, balance-swept before 1.0, not a
+promise that these exact numbers ship unchanged in a future update.
