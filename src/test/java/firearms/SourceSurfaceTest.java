@@ -3,6 +3,7 @@ package firearms;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -65,7 +66,11 @@ final class SourceSurfaceTest {
     void noSourceOrResourceFileNamesPubgOrItsBranding() throws IOException {
         List<String> offenders = new ArrayList<>();
         for (Path file : allTextFiles()) {
-            String text = Files.readString(file);
+            // ISO-8859-1 rather than Files.readString's strict UTF-8: every byte maps to exactly
+            // one char, so this never throws on a binary file's content, and FA-9's own PNG
+            // sprites live under src/main/resources too — COMP-REQ-002 ("no texture ... references
+            // PUBG") means this scan must cover them, not choke on them.
+            String text = new String(Files.readAllBytes(file), StandardCharsets.ISO_8859_1);
             if (PUBG.matcher(text).find()) {
                 offenders.add(file.toString());
             }

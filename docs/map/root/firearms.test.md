@@ -5,6 +5,14 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
+### `class ModelAssetsTest` — `src/test/java/firearms/ModelAssetsTest.java`
+`FA-9`'s item model assets, checked against the files themselves rather than by loading Minecraft, the same create_metered_motor ModelAssetsTest precedent this mirrors: every items/*.json model reference resolves to a model file that exists, every model file's own texture reference resolves to a PNG that exists, every base weapon's composite carries exactly its own class's slot condition layers (`WeaponClass#slots()`) and no other, and every attachment id `data/firearms/attachment/*.json` names has both a sprite and a model, wired into its own slot's items/attachment_.json (`docs/spec/04-architecture.md` `ARCH-DEC-006`, `docs/spec/domains/weapon.md` `WEAPON-REQ-012`).
+- `void everyItemDefinitionModelReferenceResolvesToAnExistingModelFile()`
+- `void everyModelsTextureReferenceResolvesToAnExistingPng()`
+- `void everyBaseHasExactlyItsOwnClasssSlotLayersAndNoOther()`
+- `void everyAttachmentIdHasASpriteAModelAndIsWiredIntoItsOwnSlotsItemDefinition()`
+- `void baseWeaponAndLayerTexturesAre32x16AndAttachmentAndCartridgeIconsAre16x16()`
+
 ### `class SourceSurfaceTest` — `src/test/java/firearms/SourceSurfaceTest.java`
 Three claims about the source tree, checked against the files themselves: the mod opens no socket of its own (COMP-REQ-001: no networking type is referenced outside Minecraft's own packet API), every translation key the code names — including a damage type's death message keys, e.g.
 - `void noNetworkingTypeIsReferencedByTheMod()`
