@@ -27,12 +27,12 @@ use.
 
 ## Acceptance criteria
 
-- [ ] Neither command is registered outside a development environment (proven by a game test or an
+- [x] Neither command is registered outside a development environment (proven by a game test or an
       explicit environment-gate unit test, mirroring the siblings' own pattern).
-- [ ] `/firearms debug give akm suppressor scope_4x` produces an AKM with exactly those two slots
+- [x] `/firearms debug give akm suppressor scope_4x` produces an AKM with exactly those two slots
       filled and every other slot empty.
-- [ ] `/firearms debug stats` prints the same numbers the tooltip renders for an identical item.
-- [ ] `just check` green.
+- [x] `/firearms debug stats` prints the same numbers the tooltip renders for an identical item.
+- [x] `just check` green.
 
 ## Constraints and prior findings
 
