@@ -1,0 +1,81 @@
+{
+  "parent": "firearms:item/weapon/class/assault_rifle",
+  "texture_size": [
+    32,
+    32
+  ],
+  "textures": {
+    "0": "firearms:item/weapon/part/muzzle_suppressor",
+    "particle": "firearms:item/weapon/part/muzzle_suppressor"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        7.5,
+        9
+      ],
+      "to": [
+        9,
+        9.5,
+        15
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            16,
+            0,
+            18,
+            2
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            18,
+            0,
+            20,
+            2
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            4,
+            0,
+            10,
+            2
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            10,
+            0,
+            16,
+            2
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            2,
+            6
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            2,
+            0,
+            4,
+            6
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

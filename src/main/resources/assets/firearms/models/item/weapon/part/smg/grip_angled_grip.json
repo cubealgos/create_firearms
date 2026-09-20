@@ -1,0 +1,81 @@
+{
+  "parent": "firearms:item/weapon/class/smg",
+  "texture_size": [
+    32,
+    32
+  ],
+  "textures": {
+    "0": "firearms:item/weapon/part/grip_angled_grip",
+    "particle": "firearms:item/weapon/part/grip_angled_grip"
+  },
+  "elements": [
+    {
+      "from": [
+        7.2,
+        4,
+        1.7
+      ],
+      "to": [
+        8.8,
+        6,
+        3.3
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            2,
+            2
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            2,
+            0,
+            4,
+            2
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            4,
+            0,
+            6,
+            2
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            6,
+            0,
+            8,
+            2
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            8,
+            0,
+            10,
+            2
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            10,
+            0,
+            12,
+            2
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

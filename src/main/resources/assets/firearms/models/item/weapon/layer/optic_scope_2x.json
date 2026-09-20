@@ -1,6 +1,0 @@
-{
-  "parent": "minecraft:item/generated",
-  "textures": {
-    "layer0": "firearms:item/weapon/layer/optic_scope_2x"
-  }
-}

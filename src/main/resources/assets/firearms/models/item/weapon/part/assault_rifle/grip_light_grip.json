@@ -1,0 +1,81 @@
+{
+  "parent": "firearms:item/weapon/class/assault_rifle",
+  "texture_size": [
+    32,
+    32
+  ],
+  "textures": {
+    "0": "firearms:item/weapon/part/grip_light_grip",
+    "particle": "firearms:item/weapon/part/grip_light_grip"
+  },
+  "elements": [
+    {
+      "from": [
+        7.6,
+        4.5,
+        2.1
+      ],
+      "to": [
+        8.4,
+        6.5,
+        2.9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            1,
+            2
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            1,
+            0,
+            2,
+            2
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            2,
+            0,
+            3,
+            2
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            3,
+            0,
+            4,
+            2
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            4,
+            0,
+            5,
+            1
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            5,
+            0,
+            6,
+            1
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

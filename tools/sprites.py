@@ -424,21 +424,15 @@ def save_png(img: Image.Image, path: Path) -> None:
 def main() -> None:
     written: list[Path] = []
 
-    # Base weapons.
-    for weapon_id in WEAPONS:
-        save_png(weapon_sprite(weapon_id), TEXTURES / "weapon" / f"{weapon_id}.png")
-        write_json(MODELS / "weapon" / f"{weapon_id}.json", generated_model(f"{NS}:item/weapon/{weapon_id}"))
-        written.append(TEXTURES / "weapon" / f"{weapon_id}.png")
+    # Base weapons and the weapon-layer overlays are `tools/models.py`'s own cuboid models and
+    # atlases since `decisions/DEC-018-art-direction.md` (FA-22); this generator no longer writes
+    # `models/item/weapon/**` or `textures/item/weapon/**` for the base or the slot layers.
 
-    # Attachments: standalone icon + weapon-layer overlay, one glyph reused for both.
+    # Attachments: standalone icon only (the weapon-layer overlay moved to `tools/models.py`).
     for slot, names in ATTACHMENTS.items():
         for name in names:
             save_png(attachment_icon(slot, name), TEXTURES / "attachment" / f"{name}.png")
             write_json(MODELS / "attachment" / f"{name}.json", generated_model(f"{NS}:item/attachment/{name}"))
-
-            save_png(attachment_glyph(slot, name), TEXTURES / "weapon" / "layer" / f"{slot}_{name}.png")
-            write_json(MODELS / "weapon" / "layer" / f"{slot}_{name}.json",
-                       generated_model(f"{NS}:item/weapon/layer/{slot}_{name}"))
             written.append(TEXTURES / "attachment" / f"{name}.png")
 
     # Cartridges.
@@ -467,53 +461,10 @@ def main() -> None:
     for caliber in list(CARTRIDGES) + ["gauge_12"]:
         write_json(ITEMS / f"cartridge_{caliber}.json", {"model": model_ref(f"item/cartridge/{caliber}")})
 
-    # items/weapon.json: select on firearms:base -> per-base composite of base layer + slot layers.
-    weapon_cases = []
-    for weapon_id, (weapon_class, *_rest) in WEAPONS.items():
-        base_model = model_ref(f"item/weapon/{weapon_id}")
-        base_layer = {
-            "type": "minecraft:condition",
-            "property": "minecraft:using_item",
-            "on_true": {**base_model, "transformation": {"translation": [0.0, 0.05, -0.1]}},
-            "on_false": base_model,
-        }
-        slot_layers = []
-        for slot in SLOTS:
-            if slot not in WEAPON_CLASSES[weapon_class]:
-                continue
-            slot_cases = [
-                {"when": f"{NS}:{name}", "model": model_ref(f"item/weapon/layer/{slot}_{name}")}
-                for name in ATTACHMENTS[slot]
-            ]
-            slot_layers.append({
-                "type": "minecraft:condition",
-                "property": "minecraft:has_component",
-                "component": f"{NS}:attachment_{slot}",
-                "on_true": {
-                    "type": "minecraft:select",
-                    "property": "minecraft:component",
-                    "component": f"{NS}:attachment_{slot}",
-                    "cases": slot_cases,
-                    "fallback": {"type": "minecraft:empty"},
-                },
-                "on_false": {"type": "minecraft:empty"},
-            })
-        weapon_cases.append({
-            "when": {"weapon_id": f"{NS}:{weapon_id}"},
-            "model": {"type": "minecraft:composite", "models": [base_layer, *slot_layers]},
-        })
+    # items/weapon.json is `tools/models.py`'s own since FA-22 (DEC-018): it composites the cuboid
+    # base and part models, not these flat layers, so it is generated there, not here.
 
-    write_json(ITEMS / "weapon.json", {
-        "model": {
-            "type": "minecraft:select",
-            "property": "minecraft:component",
-            "component": f"{NS}:base",
-            "cases": weapon_cases,
-            "fallback": model_ref("item/weapon/m1911"),
-        }
-    })
-
-    print(f"wrote {len(written)} sampled paths; every base, attachment, cartridge and wiring file is under {ASSETS}")
+    print(f"wrote {len(written)} sampled paths; every attachment icon, cartridge and wiring file is under {ASSETS}")
 
 
 if __name__ == "__main__":
