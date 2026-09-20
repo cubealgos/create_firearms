@@ -13,7 +13,7 @@ category: "create_firearms"
 | Weapon data files (one per base weapon, keyed by class, calibre and base stats) | 1.0 | `domains/weapon.md` `WEAPON-DEC-003`; datapack-addable without new Java |
 | Attachment data files (one per attachment, keyed by slot and stat modifiers) | 1.0 | `domains/attach.md`; datapack-addable without new Java |
 | Cartridge items, one per calibre | 1.0 | `domains/ammo.md` |
-| Recipe serializer/type id for the shared attach recipe: `firearms:attach_smithing` (smithing, confirmed `FA-7`), `firearms:deploy_attach` (deploying, proposal, confirmed at `FA-8`) | 1.0 | `04-architecture.md` `ARCH-DEC-002`, `ARCH-DEC-003` |
+| Recipe serializer/type id for the shared attach recipe: `firearms:attach_smithing` (smithing, confirmed `FA-7`), `firearms:attach_deploying` (deploying, confirmed `FA-8`; supersedes the `firearms:deploy_attach` proposal) | 1.0 | `04-architecture.md` `ARCH-DEC-002`, `ARCH-DEC-003` |
 | Damage type id `firearms:bullet` | 1.0 | `domains/combat.md` |
 | The tag-merge files at `data/minecraft/tags/villager_trade/{weaponsmith,fletcher}/level_N.json` and the trade JSONs under `data/firearms/villager_trade/` | 1.0 | `domains/trade.md`; datapack-overridable the same way vanilla trade tags are |
 | The per-class slot table (which classes have which slots) | 1.0 | `domains/weapon.md` §3; a new weapon must use an existing class, or a new class is a code change, not data |

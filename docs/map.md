@@ -14,7 +14,7 @@ signature page before calling into a package you did not write.
 | package | project | types | what |
 |---|---|---|---|
 | `firearms` | root | Firearms |  |
-| `firearms.attach` | root | Attach, AttachRegistration, AttachSmithingRecipe | The shared attach function and the smithing front end over it (`FA-7`, `docs/spec/domains/attach.md`): firearms.attach.Attach reads and writes the Minecraft-typed firearms:base/firearms:attachment_ components, deferring the pure empty-slot-and-class-has-it decision to firearms.model.AttachRule; firearms.attach.AttachSmithingRecipe is the one SmithingRecipe implementor the vanilla smithing table finds with zero mixin (`docs/spec/04-architecture.md` `ARCH-DEC-002`). |
+| `firearms.attach` | root | Attach, AttachDeployingRecipe, AttachRegistration, AttachSmithingRecipe | The shared attach function and its two front ends (`FA-7`, `FA-8`, `docs/spec/domains/attach.md`): firearms.attach.Attach reads and writes the Minecraft-typed firearms:base/firearms:attachment_ components, deferring the pure empty-slot-and-class-has-it decision to firearms.model.AttachRule; firearms.attach.AttachSmithingRecipe is the one SmithingRecipe implementor the vanilla smithing table finds with zero mixin (`docs/spec/04-architecture.md` `ARCH-DEC-002`), and firearms.attach.AttachDeployingRecipe is the one Recipe implementor a Create deployer finds the same way, in both belt and world/depot mode (`ARCH-DEC-003`). |
 | `firearms.client` | root | FirearmsClient |  |
 | `firearms.client.combat` | root | BulletRenderState, BulletRenderer, CombatClient | The bullet's client-only tracer renderer (firearms.combat.BulletEntity, registered as firearms:bullet). |
 | `firearms.combat` | root | BulletEntity, BulletSpawner, CombatRegistration, SpreadMath | The bullet entity and the server-side combat resolution it drives: flight, hit testing, damage, knockback, pellets, and the spread maths the firing code (FA-6) rolls through (docs/spec/domains/combat.md). |
@@ -25,7 +25,7 @@ signature page before calling into a package you did not write.
 | `firearms.support` | root | Ids | Small helpers shared by more than one of this mod's own Minecraft-facing packages (firearms.component, firearms.item, firearms.data); not part of the pure firearms.model package FA-2 landed (docs/spec/operations/testing.md). |
 | `firearms` | root (test) | SourceSurfaceTest |  |
 | `firearms.combat` | root (test) | SpreadMathTest |  |
-| `firearms.gametest` | root (gametest) | AttachSmithingGameTest, BulletGameTest, ComponentCodecGameTest, CraftingRecipeGameTest, DataLoaderGameTest, ItemRegistrationGameTest, SmokeGameTest, StatDerivationGameTest, WeaponDurabilityAndAnvilGameTest |  |
+| `firearms.gametest` | root (gametest) | AttachDeployingGameTest, AttachSmithingGameTest, BulletGameTest, ComponentCodecGameTest, CraftingRecipeGameTest, DataLoaderGameTest, ItemRegistrationGameTest, SmokeGameTest, StatDerivationGameTest, WeaponDurabilityAndAnvilGameTest |  |
 | `firearms.model` | root (test) | AttachRuleTest, AttachmentModifierTest, LoadoutSlotValidationTest, StatDerivationClampTest, StatDerivationOrderTest, WeaponBaseStatsTest |  |
 
 | build script | what |
