@@ -1,7 +1,17 @@
 {
   "pulls": {
-    "at": 1789891598.625511,
+    "at": 1789891690.287943,
     "payload": [
+      {
+        "author": "scheeren",
+        "base": "development",
+        "ci": "",
+        "head": "documentation/fa-15-modrinth-assets",
+        "index": "2",
+        "state": "merged",
+        "title": "docs(firearms): Modrinth listing assets ahead of the release: navy badge icon, body and settings, gallery shot list (FA-15)",
+        "updated": "2026-09-20T08:06:50Z"
+      },
       {
         "author": "scheeren",
         "base": "development",

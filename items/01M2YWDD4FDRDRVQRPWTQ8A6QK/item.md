@@ -34,14 +34,14 @@ own territory, not this ticket's.
 
 ## Acceptance criteria
 
-- [ ] `verifyPurePackage` passes with zero Minecraft, Fabric or Create imports in `firearms.model`.
-- [ ] Unit tests cover the derivation function for every one of the six 1.0 weapons bare, and for
+- [x] `verifyPurePackage` passes with zero Minecraft, Fabric or Create imports in `firearms.model`.
+- [x] Unit tests cover the derivation function for every one of the six 1.0 weapons bare, and for
       every one of the 22 attachments applied singly and in combination, confirming the fixed
       slot-order application (`WEAPON-REQ-003`).
-- [ ] A unit test proves an out-of-range modifier (a negative magazine size, a zero fire-rate
+- [x] A unit test proves an out-of-range modifier (a negative magazine size, a zero fire-rate
       divide) clamps to the nearest valid value and logs once rather than crashing
       (`SURFACE-REQ-002`).
-- [ ] `just check` green.
+- [x] `just check` green.
 
 ## Constraints and prior findings
 
