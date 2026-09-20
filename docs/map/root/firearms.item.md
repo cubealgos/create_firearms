@@ -27,7 +27,7 @@ The one weapon item, firearms:weapon: every 1.0 base weapon is a stack of this s
 - `InteractionResult use(Level level, Player player, InteractionHand hand)`
 - `InteractionResult useOn(UseOnContext context)` — Funnels a block-targeted right click through #use, so firing point-blank at a block behaves identically to firing at open air or an entity.
 - `void onUseTick(Level level, LivingEntity livingEntity, ItemStack stack, int remainingUseDuration)` — The one server-authoritative fire-or-reload evaluation for this held tick (`FiringLogic#attempt`); client-side (and any non-ServerPlayer shooter) is a no-op, since every real decision needs the server-only weapon/attachment registries.
-- `ItemUseAnimation getUseAnimation(ItemStack stack)`
+- `ItemUseAnimation getUseAnimation(ItemStack stack)` — ItemUseAnimation.SPYGLASS while stack carries a magnifying optic, so the arm pose matches the vanilla spyglass's own while scoped; NONE otherwise.
 - `int getUseDuration(ItemStack stack, LivingEntity livingEntity)`
 - `boolean releaseUsing(ItemStack stack, Level level, LivingEntity livingEntity, int timeCharged)` — Firing/reload pacing all happens per-tick in #onUseTick, itself gated on ItemCooldowns; releasing the control early just ends the session (LivingEntity's own state machine already does that), so there is nothing further for this mod to do here.
 

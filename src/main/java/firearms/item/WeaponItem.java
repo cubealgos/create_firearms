@@ -1,5 +1,6 @@
 package firearms.item;
 
+import firearms.client.scope.ScopedWeapon;
 import firearms.component.Base;
 import firearms.component.ComponentRegistration;
 import firearms.fire.FiringLogic;
@@ -119,9 +120,19 @@ public final class WeaponItem extends Item {
         }
     }
 
+    /**
+     * {@code ItemUseAnimation.SPYGLASS} while {@code stack} carries a magnifying optic, so the arm
+     * pose matches the vanilla spyglass's own while scoped; {@code NONE} otherwise. This alone gets
+     * none of the zoom, the overlay, or the held-item suppression — those three all gate on {@code
+     * Player.isScoping()}, an exact item-identity check that never inspects this animation
+     * (`docs/spec/domains/combat.md` {@code COMBAT-REQ-006}; `firearms.mixin.client
+     * .PlayerScopingMixin`) — this only reproduces the pose vanilla's own spyglass use already has.
+     * {@link ScopedWeapon#hasZoomingOptic} is common-safe: it reads only this stack's own
+     * network-synchronized components, no client-only Minecraft API (`FA-10`).
+     */
     @Override
     public ItemUseAnimation getUseAnimation(ItemStack stack) {
-        return ItemUseAnimation.NONE;
+        return ScopedWeapon.hasZoomingOptic(stack) ? ItemUseAnimation.SPYGLASS : ItemUseAnimation.NONE;
     }
 
     @Override
