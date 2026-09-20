@@ -18,7 +18,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * The fire-control loop (`FA-6`, `docs/spec/domains/weapon.md` `WEAPON-REQ-004`, `007`-`013`;
@@ -30,9 +30,9 @@ import net.minecraft.world.level.GameType;
  */
 public final class FiringGameTest {
 
-    @GameTest
+    @GameTest(structure = "firearms_gametest:open_range")
     public void aLoadedWeaponFiresOnceAndMovesAmmoDurabilityAndCooldownTogether(GameTestHelper helper) {
-        ServerPlayer player = (ServerPlayer) helper.makeMockServerPlayer(GameType.SURVIVAL);
+        ServerPlayer player = mockShooter(helper);
         ItemStack stack = weaponStack(WeaponBase.M1911, 7);
         player.setItemInHand(InteractionHand.MAIN_HAND, stack);
 
@@ -51,9 +51,9 @@ public final class FiringGameTest {
         helper.succeed();
     }
 
-    @GameTest
+    @GameTest(structure = "firearms_gametest:open_range")
     public void anEmptyWeaponWithMatchingCartridgesReloadsToMagazineSizeAndConsumesThem(GameTestHelper helper) {
-        ServerPlayer player = (ServerPlayer) helper.makeMockServerPlayer(GameType.SURVIVAL);
+        ServerPlayer player = mockShooter(helper);
         ItemStack stack = weaponStack(WeaponBase.M1911, 0);
         player.setItemInHand(InteractionHand.MAIN_HAND, stack);
         player.getInventory().add(new ItemStack(ItemRegistration.cartridge(WeaponBase.M1911.caliber()), 10));
@@ -72,9 +72,9 @@ public final class FiringGameTest {
         helper.succeed();
     }
 
-    @GameTest
+    @GameTest(structure = "firearms_gametest:open_range")
     public void anEmptyWeaponWithNoMatchingCartridgesFiresNothingAndStaysEmpty(GameTestHelper helper) {
-        ServerPlayer player = (ServerPlayer) helper.makeMockServerPlayer(GameType.SURVIVAL);
+        ServerPlayer player = mockShooter(helper);
         ItemStack stack = weaponStack(WeaponBase.M1911, 0);
         player.setItemInHand(InteractionHand.MAIN_HAND, stack);
         // No cartridges of any calibre anywhere in inventory (WEAPON-FAIL-003).
@@ -96,9 +96,9 @@ public final class FiringGameTest {
      * == 2}) — driven directly through the same {@code WeaponItem} methods the vanilla "using item"
      * state machine calls, with {@code ItemCooldowns.tick()} advanced once per simulated tick.
      */
-    @GameTest
+    @GameTest(structure = "firearms_gametest:open_range")
     public void anAutoWeaponFiresNBulletsOverNTimesFireRateTicksOfHeldUse(GameTestHelper helper) {
-        ServerPlayer player = (ServerPlayer) helper.makeMockServerPlayer(GameType.SURVIVAL);
+        ServerPlayer player = mockShooter(helper);
         ItemStack stack = weaponStack(WeaponBase.MICRO_UZI, WeaponBase.MICRO_UZI.baseStats().magazineSize());
         player.setItemInHand(InteractionHand.MAIN_HAND, stack);
 
@@ -120,9 +120,9 @@ public final class FiringGameTest {
     }
 
     /** `WEAPON-REQ-004`: pump behaves as semi for cooldown purposes — a second attempt inside that same delay is refused. */
-    @GameTest
+    @GameTest(structure = "firearms_gametest:open_range")
     public void aPumpWeaponRefusesASecondShotInsideThePumpDelay(GameTestHelper helper) {
-        ServerPlayer player = (ServerPlayer) helper.makeMockServerPlayer(GameType.SURVIVAL);
+        ServerPlayer player = mockShooter(helper);
         ItemStack stack = weaponStack(WeaponBase.WINCHESTER_MODEL_1897, WeaponBase.WINCHESTER_MODEL_1897.baseStats().magazineSize());
         player.setItemInHand(InteractionHand.MAIN_HAND, stack);
 
@@ -140,9 +140,9 @@ public final class FiringGameTest {
     }
 
     /** `COMBAT-REQ-005`: one trigger pull, all 8 pellets, one round consumed. */
-    @GameTest
+    @GameTest(structure = "firearms_gametest:open_range")
     public void aShotgunTriggerPullSpawnsItsFullPelletCount(GameTestHelper helper) {
-        ServerPlayer player = (ServerPlayer) helper.makeMockServerPlayer(GameType.SURVIVAL);
+        ServerPlayer player = mockShooter(helper);
         ItemStack stack = weaponStack(WeaponBase.WINCHESTER_MODEL_1897, WeaponBase.WINCHESTER_MODEL_1897.baseStats().magazineSize());
         player.setItemInHand(InteractionHand.MAIN_HAND, stack);
 
@@ -169,6 +169,26 @@ public final class FiringGameTest {
                 "an unsuppressed shot must resolve to a different sound event than a suppressed one for " + weaponClass);
         }
         helper.succeed();
+    }
+
+    /**
+     * {@link GameTestHelper#makeMockServerPlayerInLevel()} is the only helper that gives the mock
+     * player a live (embedded-channel) connection — required since {@link FiringLogic#fire} sends a
+     * {@code RecoilPacket} to the shooter every shot, which needs one (`FA-20`; the older, unconnected
+     * {@code makeMockServerPlayer} NPEs the instant a shot starts a cooldown, since even that alone
+     * syncs the cooldown to the client). Two things it does *not* give a mock player, that this method
+     * corrects: {@code PlayerList.placeNewPlayer} spawns it at the level's real spawn point, nowhere
+     * near this test's own structure, so {@link FiringLogic#fire}'s {@code player.getEyePosition()}
+     * origin has to be moved into the structure by hand; and {@code GameTestHelper}'s own mock-player
+     * class hard-codes {@code gameMode() == CREATIVE}, which leaves {@code abilities.instabuild} set
+     * and makes every {@code hurtAndBreak} call a no-op (`ItemStack#processDurabilityChange`) —
+     * durability would never move without resetting it.
+     */
+    private static ServerPlayer mockShooter(GameTestHelper helper) {
+        ServerPlayer player = helper.makeMockServerPlayerInLevel();
+        player.setPos(helper.absoluteVec(new Vec3(0.5, 2.5, 0.5)));
+        player.getAbilities().instabuild = false;
+        return player;
     }
 
     private static ItemStack weaponStack(WeaponBase base, int ammoLoaded) {
