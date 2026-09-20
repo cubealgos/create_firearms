@@ -30,14 +30,14 @@ only its real-world designation (`operations/compliance.md`).
 
 ## Acceptance criteria
 
-- [ ] `just icon` renders `docs/modrinth/icon.png` on the cubealgos navy badge from an in-game
+- [x] `just icon` renders `docs/modrinth/icon.png` on the cubealgos navy badge from an in-game
       asset of this mod's own, no third-party or Mojang texture copied.
-- [ ] `docs/modrinth/body.md`'s "Body" section is written, covering the roster, the attach
+- [x] `docs/modrinth/body.md`'s "Body" section is written, covering the roster, the attach
       mechanism, and combat, with the proposed-numbers disclosure and the compliance statement.
-- [ ] A gallery shot list is recorded (crafting, attaching, firing, scoped view, a trade screen).
-- [ ] The Modrinth slug `firearms` is re-confirmed free (or `create-firearms` substituted if
+- [x] A gallery shot list is recorded (crafting, attaching, firing, scoped view, a trade screen).
+- [x] The Modrinth slug `firearms` is re-confirmed free (or `create-firearms` substituted if
       claimed in the meantime) before publish.
-- [ ] `just check` green.
+- [x] `just check` green.
 
 ## Constraints and prior findings
 
