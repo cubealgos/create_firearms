@@ -30,15 +30,15 @@ exactly as any consumable deploying recipe (e.g. planks into a cogwheel) does.
 
 ## Acceptance criteria
 
-- [ ] A real `DeployerBlockEntity.getRecipe()` result attaches an attachment identically to the
+- [x] A real `DeployerBlockEntity.getRecipe()` result attaches an attachment identically to the
       smithing path's own result for the same base weapon and attachment — byte-identical component
       output (`TEST-REQ-003`), proving both front ends call the one shared function.
-- [ ] The deployer's held attachment is consumed (`keep_held_item: false`) on a successful attach.
-- [ ] A deployer holding an attachment that does not fit the target weapon does nothing that cycle
+- [x] The deployer's held attachment is consumed (`keep_held_item: false`) on a successful attach.
+- [x] A deployer holding an attachment that does not fit the target weapon does nothing that cycle
       (`ATTACH-FAIL-004`).
-- [ ] A deployer on a real contraption belt visibly attaches an attachment to a weapon (client
+- [x] A deployer on a real contraption belt visibly attaches an attachment to a weapon (client
       checklist item, confirmed here functionally; the visible-model half is `FA-9`).
-- [ ] `just check` green.
+- [x] `just check` green.
 
 ## Constraints and prior findings
 
