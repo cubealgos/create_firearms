@@ -36,15 +36,15 @@ extra registration step is needed for correct highlighting.
 
 ## Acceptance criteria
 
-- [ ] A real `SmithingMenu` result attaches an attachment into the named empty slot and changes no
+- [x] A real `SmithingMenu` result attaches an attachment into the named empty slot and changes no
       other component (`ATTACH-REQ-001`, `003`).
-- [ ] The recipe never matches an already-occupied slot (`ATTACH-REQ-002`) — a game test proves
+- [x] The recipe never matches an already-occupied slot (`ATTACH-REQ-002`) — a game test proves
       re-offering a second attachment for an already-filled slot produces no result.
-- [ ] The recipe never matches a class/slot mismatch (e.g. a scope onto a shotgun) —
+- [x] The recipe never matches a class/slot mismatch (e.g. a scope onto a shotgun) —
       `ATTACH-FAIL-001`.
-- [ ] The shared attach function has no duplicated copy in the deploying recipe class once `FA-8`
+- [x] The shared attach function has no duplicated copy in the deploying recipe class once `FA-8`
       lands (proven together at `FA-8`'s own acceptance, `TEST-REQ-003`).
-- [ ] `just check` green.
+- [x] `just check` green.
 
 ## Constraints and prior findings
 
