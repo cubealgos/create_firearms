@@ -1,0 +1,81 @@
+{
+  "parent": "firearms:item/weapon/class/sniper_rifle",
+  "texture_size": [
+    32,
+    32
+  ],
+  "textures": {
+    "0": "firearms:item/weapon/part/optic_scope_15x",
+    "particle": "firearms:item/weapon/part/optic_scope_15x"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        10.4,
+        -2.0
+      ],
+      "to": [
+        9,
+        12.4,
+        6.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            20,
+            0,
+            22,
+            2
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            22,
+            0,
+            24,
+            2
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            4,
+            0,
+            12,
+            2
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            12,
+            0,
+            20,
+            2
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            2,
+            8
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            2,
+            0,
+            4,
+            8
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

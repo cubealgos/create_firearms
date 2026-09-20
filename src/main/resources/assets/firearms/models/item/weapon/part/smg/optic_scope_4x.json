@@ -1,0 +1,81 @@
+{
+  "parent": "firearms:item/weapon/class/smg",
+  "texture_size": [
+    32,
+    32
+  ],
+  "textures": {
+    "0": "firearms:item/weapon/part/optic_scope_4x",
+    "particle": "firearms:item/weapon/part/optic_scope_4x"
+  },
+  "elements": [
+    {
+      "from": [
+        7,
+        10,
+        -2.5
+      ],
+      "to": [
+        9,
+        12,
+        3.0
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            16,
+            0,
+            18,
+            2
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            18,
+            0,
+            20,
+            2
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            4,
+            0,
+            10,
+            2
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            10,
+            0,
+            16,
+            2
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            2,
+            6
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            2,
+            0,
+            4,
+            6
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}

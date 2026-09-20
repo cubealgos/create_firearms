@@ -11,7 +11,10 @@ signature is the contract; read the source only when the summary is not enough.
 - `void everyModelsTextureReferenceResolvesToAnExistingPng()`
 - `void everyBaseHasExactlyItsOwnClasssSlotLayersAndNoOther()`
 - `void everyAttachmentIdHasASpriteAModelAndIsWiredIntoItsOwnSlotsItemDefinition()`
-- `void baseWeaponAndLayerTexturesAre32x16AndAttachmentAndCartridgeIconsAre16x16()`
+- `void attachmentAndCartridgeIconsAre16x16()`
+- `void everyWeaponModelElementFaceUvLiesInsideItsDeclaredTextureSize()` — `WEAPON-REQ-016` (`FA-22`): every cuboid weapon or part model that declares a texture_size names at least one face, and every one of those faces' uv rectangles lies inside that declared size -- `tools/models.py`'s atlas packer's own contract, checked against the committed output rather than by loading Minecraft.
+- `void everyWeaponAtlasPngMatchesItsModelsDeclaredTextureSize()` — The atlas PNG a weapon or part model's textures block names is exactly the size that same model's texture_size declares -- the other half of the packer's contract, since an undersized or oversized PNG would make the in-bounds check above meaningless.
+- `void everyAttachmentHasAPartModelForEveryClassCarryingItsSlot()` — `WEAPON-REQ-016`: every attachment named in data/firearms/attachment/*.json has a cuboid part model under its own slot and name for every WeaponClass whose WeaponClass#hasSlot(Slot) includes that attachment's slot -- the cross product `tools/models.py`'s part-model loop is meant to have generated in full.
 
 ### `class SourceSurfaceTest` — `src/test/java/firearms/SourceSurfaceTest.java`
 Claims about the source tree, checked against the files themselves: the mod opens no socket of its own (COMP-REQ-001: no networking type is referenced outside Minecraft's own packet API), every translation key the code names — including a damage type's death message keys, e.g.

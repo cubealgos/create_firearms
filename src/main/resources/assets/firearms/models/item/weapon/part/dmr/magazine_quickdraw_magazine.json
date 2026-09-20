@@ -1,0 +1,81 @@
+{
+  "parent": "firearms:item/weapon/class/dmr",
+  "texture_size": [
+    32,
+    32
+  ],
+  "textures": {
+    "0": "firearms:item/weapon/part/magazine_quickdraw_magazine",
+    "particle": "firearms:item/weapon/part/magazine_quickdraw_magazine"
+  },
+  "elements": [
+    {
+      "from": [
+        7.3,
+        2.0,
+        -0.35
+      ],
+      "to": [
+        8.7,
+        4.5,
+        0.85
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            1,
+            2
+          ],
+          "texture": "#0"
+        },
+        "south": {
+          "uv": [
+            1,
+            0,
+            2,
+            2
+          ],
+          "texture": "#0"
+        },
+        "east": {
+          "uv": [
+            2,
+            0,
+            3,
+            2
+          ],
+          "texture": "#0"
+        },
+        "west": {
+          "uv": [
+            3,
+            0,
+            4,
+            2
+          ],
+          "texture": "#0"
+        },
+        "up": {
+          "uv": [
+            4,
+            0,
+            5,
+            1
+          ],
+          "texture": "#0"
+        },
+        "down": {
+          "uv": [
+            5,
+            0,
+            6,
+            1
+          ],
+          "texture": "#0"
+        }
+      }
+    }
+  ]
+}
