@@ -17,10 +17,11 @@ signature page before calling into a package you did not write.
 | `firearms.client` | root | FirearmsClient |  |
 | `firearms.client.combat` | root | BulletRenderState, BulletRenderer, CombatClient | The bullet's client-only tracer renderer (firearms.combat.BulletEntity, registered as firearms:bullet). |
 | `firearms.combat` | root | BulletEntity, BulletSpawner, CombatRegistration, SpreadMath | The bullet entity and the server-side combat resolution it drives: flight, hit testing, damage, knockback, pellets, and the spread maths the firing code (FA-6) rolls through (docs/spec/domains/combat.md). |
-| `firearms.model` | root |  | The pure part: the stat derivation function and the shared attach function, with no Minecraft imports (docs/spec/operations/testing.md). |
+| `firearms.model` | root | Attachment, Caliber, Clamp, FireMode, Loadout, Modifier, Op, Slot, Stat, StatDerivation, Stats, WeaponBase, WeaponClass | The pure part: the stat derivation function and the shared attach function, with no Minecraft imports (docs/spec/operations/testing.md). |
 | `firearms` | root (test) | SourceSurfaceTest |  |
 | `firearms.combat` | root (test) | SpreadMathTest |  |
 | `firearms.gametest` | root (gametest) | BulletGameTest, SmokeGameTest |  |
+| `firearms.model` | root (test) | AttachmentModifierTest, LoadoutSlotValidationTest, StatDerivationClampTest, StatDerivationOrderTest, WeaponBaseStatsTest |  |
 
 | build script | what |
 |---|---|
@@ -30,6 +31,7 @@ signature page before calling into a package you did not write.
 | tool | what | entry points |
 |---|---|---|
 | `tools/doctor.py` | Toolchain floors and the spec copy, per docs/spec/contracts/platform-matrix.md. | `run()`, `parse_version(text)`, `check_java()`, `check_wrapper()`, `check_tool(name, floor_key)`, `main_checkout()`, `check_spec_copy()`, `check_map()`, `main()` |
+| `tools/icon.py` | Render docs/modrinth/icon.png: a cartridge on the cubealgos navy badge Create add-ons share. | `cartridge_sprite()`, `badge()`, `subject(img, raw)`, `main()` |
 | `tools/map.py` | Generate the repository map from the source: docs/map.md locates every package, docs/map/.md lists every type's summary and non-private signatures. | `scan_java(src)`, `summary_of(javadoc)`, `squeeze(text)`, `strip_annotations(head)`, `parse_java(path)`, `parse_member(head, type_name, doc)`, `package_summary(package_info)`, `parse_kotlin(path)`, `parse_python(path)`, `project_of(rel)`, `walk(root)`, `collect(root)`, `page_of(pkg)`, `render_locator(tree)`, `render_package(pkg)`, `render_all(root)`, `write(root, files)`, `check(root, files)`, `main(argv)` |
 | `tools/release_notes.py` | Print the release notes for a version: its CHANGELOG.md section plus the jar's SHA-256 (REL-REQ-002). | `section(changelog, version)`, `main()` |
 | `tools/test_map.py` | The map generator, exercised as the command a person runs (rule 6 of the standard): a fixture tree in a temporary directory, `python3 tools/map.py` to write, `--check` to pass, an edit to the source, `--check` to fail. | `run(root)` |

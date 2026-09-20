@@ -39,7 +39,9 @@ client:
 spec-sync:
     rsync -a --delete "{{vault_spec}}/" docs/spec/
 
-# Render the Modrinth icon on the cubealgos navy badge (FA-15).
+# Render the Modrinth icon on the cubealgos navy badge (FA-15): our own hand-pixelled 16x16
+# cartridge sprite, since no weapon item sprite exists yet -- FA-9's real item models replace this
+# placeholder subject before release.
 icon:
     python3 tools/icon.py
 
