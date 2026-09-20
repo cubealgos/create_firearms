@@ -5,6 +5,13 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
+### `class AnvilCombineRefusalGameTest` — `src/gametest/java/firearms/gametest/AnvilCombineRefusalGameTest.java`
+`FA-4`: settles `WEAPON-FAIL-006` (`docs/spec/domains/weapon.md` §7's own open question, closed by Kevin's ruling recorded at `WEAPON-DEC-005`) — the anvil's same-item combine-repair path, independent of `DataComponents.REPAIRABLE`, closed for `firearms:weapon` specifically by `firearms.mixin.AnvilMenuMixin`, not by component omission.
+- `void twoDamagedWeaponStacksNeverCombineAtAnAnvil(GameTestHelper helper)`
+- `void twoDamagedIronPickaxesStillCombineAtAnAnvil(GameTestHelper helper)`
+- `void aWeaponAndAnIronIngotYieldNoAnvilResult(GameTestHelper helper)`
+- `void aRealEnchantingTableOffersNoEnchantmentForAWeapon(GameTestHelper helper)`
+
 ### `class AttachSmithingGameTest` — `src/gametest/java/firearms/gametest/AttachSmithingGameTest.java`
 A real SmithingMenu runs firearms.attach.AttachSmithingRecipe exactly as the vanilla smithing table would, proving the recipe is actually found by RecipeManager.getRecipeFor(RecipeType.SMITHING, ...) through a real data-loaded data/firearms/recipe/attach.json — zero mixin (`docs/spec/domains/attach.md` `ATTACH-REQ-001`, `002`, `003`; `docs/spec/04-architecture.md` `ARCH-DEC-002`).
 - `void aSuppressorAttachesToAMicroUziIntoTheMuzzleSlot(GameTestHelper helper)`
