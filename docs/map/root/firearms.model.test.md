@@ -5,6 +5,12 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
+### `class AttachRuleTest` — `src/test/java/firearms/model/AttachRuleTest.java`
+AttachRule#canAttach against every WeaponClass × Slot combination (`docs/spec/domains/attach.md` `ATTACH-REQ-001`, `002`; `ATTACH-FAIL-001`, `003`): true only for a slot the class has and that is not already occupied.
+- `void everySlotTheClassHasIsAttachableWhenEmpty(WeaponClass weaponClass)`
+- `void everySlotTheClassHasIsNeverAttachableWhenOccupied(WeaponClass weaponClass)`
+- `void everySlotTheClassLacksIsNeverAttachableEitherWay(WeaponClass weaponClass)`
+
 ### `class AttachmentModifierTest` — `src/test/java/firearms/model/AttachmentModifierTest.java`
 Every one of the 22 attachments, applied singly to a bare AKM (`WeaponClass.ASSAULT_RIFLE` has all five slots, so it fits every attachment in turn), changes exactly the stats its own modifiers name and leaves every other field untouched (`docs/spec/domains/attach.md` §3, `docs/spec/operations/testing.md`).
 - `void everyAttachmentChangesExactlyTheStatsItsModifiersName()`
