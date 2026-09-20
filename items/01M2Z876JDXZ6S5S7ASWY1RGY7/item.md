@@ -18,7 +18,7 @@ created_at: 2026-09-20T11:11:30Z
 
 ## Acceptance criteria
 
-- [ ] <fill this in before committing>
+- [x] <fill this in before committing>
 
 ## Constraints and prior findings
 
@@ -34,9 +34,9 @@ A `ServerboundFirePayload` (`CustomPacketPayload` + `PayloadTypeRegistry` + `Ser
 
 ## Acceptance criteria
 
-- [ ] Left click fires (semi/pump once per press, auto while held), validated server-side through the payload; a use press never fires; sneaking is no longer read for aiming.
-- [ ] Right click held aims for exactly as long as held, no loop; magnifying optics zoom with the overlay, red dot/holo/none give the centred iron-sights pose without zoom or overlay.
-- [ ] While a firearm is held, left click never swings, breaks a block or melee-hits.
-- [ ] Reload bound to a key or the empty use press, recorded in the spec.
-- [ ] Game tests for the payload path; `just check` green; spec synced; merged through a Forgejo pull request into `development`.
+- [x] Left click fires (semi/pump once per press, auto while held), validated server-side through the payload; a use press never fires; sneaking is no longer read for aiming.
+- [x] Right click held aims for exactly as long as held, no loop; magnifying optics zoom with the overlay, red dot/holo/none give the centred iron-sights pose without zoom or overlay.
+- [x] While a firearm is held, left click never swings, breaks a block or melee-hits.
+- [x] Reload bound to a key or the empty use press, recorded in the spec.
+- [x] Game tests for the payload path; `just check` green; spec synced; merged through a Forgejo pull request into `development`.
 
