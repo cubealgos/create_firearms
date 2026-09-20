@@ -139,3 +139,43 @@ loaded).
 kontor present, map current, spec copy identical).
 `kontor doctor`: 10 checks all passed except the merge-template check, skipped as expected (no
 remote default branch known yet before the first push).
+
+**Repo, second pass, after the first push.** `https://git.cubealgos.de/cubealgos/create_firearms`,
+id `19`, public, default branch `development` (auto-set by Forgejo on the first push, no separate
+`PATCH` needed for that field — confirmed again here). `PATCH` turned wiki/projects/packages/actions
+off, issues stayed on. Branch protection (`enable_push: false`) added on both `development` and
+`production`. GitHub mirror `https://github.com/cubealgos/create_firearms` created via `gh repo
+create --public --disable-wiki`, then `gh repo edit --enable-issues --enable-projects=false`; the
+push-mirror wiring itself and Woodpecker's enablement are Kevin's own, per this ticket's brief, not
+set up here.
+
+**PR #1 merge, a second data point on the vault's own "a merge the forge records but never lands"
+finding.** The bootstrap PR merged with `merged: true` and a `merge_commit_sha`, but the merge
+call itself first answered `405 {"message":"Please try again later"}` — polled `GET .../pulls/1`
+every two seconds; by the third poll `state` had flipped to `closed` and `merged: true` with the
+same commit sha the first (rejected) call would have produced, and `git ls-remote
+.../development` confirmed the same sha as the branch tip. Unlike the vault note's own worked
+example, no second PR was needed here — the 405 this time really was transient re-check latency,
+not the "recorded but never lands" failure mode; verified with `git ls-remote`, not the API alone,
+per the note's own rule.
+
+**`kontor doctor`'s merge-template check, closing the loop**: skipped before the first push (no
+`origin/HEAD`), then `git remote set-head origin -a` after the merge made it check for real —
+`all 3 present on origin/development (the default)`, all 10 checks passing.
+
+**gitkontor project id** `01M2YVXBNZJ54X3593TPSYJ0DJ`; milestone ids: M0 `01M2YVXBP0XP4SE92H939B8G3T`,
+M1 `01M2YW8TR56XZK7DF5KHHHABPJ`, M2 `01M2YW8TSYQ18TTW0MBH4S1AH1`, M3 `01M2YW8TVQXXXFV9YV2TQSB58X`,
+M4 `01M2YW8TXHNBNF2S5T8P0PVMW3`, M5 `01M2YW8TZB5YDG9EXPZYMVTBD9`, M6 `01M2YW8V18FXWSWBPMK20S6HX5`,
+M7 `01M2YW8V313F63ES9EJN2T2YWT`.
+
+**Local `chore/fa-1-bootstrap` needed no recreation at `kontor finish`**, unlike `SD-1`'s own
+experience: the worktree branch was still present locally (not yet deleted) when `kontor finish
+FA-1` ran, so containment verified against it directly; the worktree and branch were removed only
+after `finish` succeeded.
+
+**A repo-shape note for whoever bootstraps the sixth sibling**: the bootstrap files were authored
+directly in the main checkout (parked on `development` per the vault's own rule), then `rsync`'d
+into the `kontor branch new`-created worktree before the first commit, since `kontor branch new`
+always starts a worktree from a clean base branch rather than picking up the main checkout's own
+uncommitted tree. Worth doing the reverse next time — author directly inside the worktree once it
+exists — to skip the extra copy step.
