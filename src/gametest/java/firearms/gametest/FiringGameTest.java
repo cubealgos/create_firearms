@@ -7,10 +7,14 @@ import firearms.component.Base;
 import firearms.component.ComponentRegistration;
 import firearms.fire.FireSounds;
 import firearms.fire.FiringLogic;
+import firearms.fire.WeaponLoadouts;
 import firearms.item.ItemRegistration;
+import firearms.model.Loadout;
+import firearms.model.Slot;
 import firearms.model.WeaponBase;
 import firearms.model.WeaponClass;
 import firearms.support.Ids;
+import java.util.Optional;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -18,6 +22,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 
 /**
@@ -86,6 +91,28 @@ public final class FiringGameTest {
         Ammo ammo = stack.get(ComponentRegistration.AMMO);
         helper.assertTrue(ammo == null || ammo.loaded() == 0, "ammo must stay unchanged (still empty)");
         helper.assertEntitiesPresent(CombatRegistration.BULLET, 0);
+
+        helper.succeed();
+    }
+
+    /** `AMMO-FAIL-001`, `AMMO-REQ-004`: a wrong-calibre cartridge present is never matched, exactly as if no cartridge existed at all. */
+    @GameTest(structure = "firearms_gametest:open_range")
+    public void anEmptyWeaponWithOnlyWrongCalibreCartridgesFiresNothingAndLeavesThemUnconsumed(GameTestHelper helper) {
+        ServerPlayer player = mockShooter(helper);
+        ItemStack stack = weaponStack(WeaponBase.M1911, 0);
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+        // Micro Uzi's own 9mm, never M1911's .45 ACP (AMMO-FAIL-001).
+        player.getInventory().add(new ItemStack(ItemRegistration.cartridge(WeaponBase.MICRO_UZI.caliber()), 10));
+
+        FiringLogic.Outcome outcome = FiringLogic.attempt(helper.getLevel(), player, stack, InteractionHand.MAIN_HAND);
+        helper.assertTrue(outcome == FiringLogic.Outcome.EMPTY_CLICK,
+            "AMMO-REQ-004: a wrong-calibre cartridge must never match a reload, got " + outcome);
+
+        Ammo ammo = stack.get(ComponentRegistration.AMMO);
+        helper.assertTrue(ammo == null || ammo.loaded() == 0, "ammo must stay unchanged (still empty)");
+
+        int wrongCalibreRemaining = countCartridges(player, WeaponBase.MICRO_UZI);
+        helper.assertValueEqual(wrongCalibreRemaining, 10, "the wrong-calibre cartridges must be left untouched, not consumed");
 
         helper.succeed();
     }
@@ -168,6 +195,37 @@ public final class FiringGameTest {
             helper.assertTrue(unsuppressed != suppressed,
                 "an unsuppressed shot must resolve to a different sound event than a suppressed one for " + weaponClass);
         }
+        helper.succeed();
+    }
+
+    /** `WEAPON-FAIL-001`: not reachable in practice (nothing exposes firing on a non-weapon item), but `FiringLogic#attempt` still checks defensively. */
+    @GameTest(structure = "firearms_gametest:open_range")
+    public void attemptingToFireANonWeaponItemReportsNotAWeapon(GameTestHelper helper) {
+        ServerPlayer player = mockShooter(helper);
+        ItemStack stick = new ItemStack(Items.STICK);
+        player.setItemInHand(InteractionHand.MAIN_HAND, stick);
+
+        FiringLogic.Outcome outcome = FiringLogic.attempt(helper.getLevel(), player, stick, InteractionHand.MAIN_HAND);
+        helper.assertTrue(outcome == FiringLogic.Outcome.NOT_A_WEAPON, "a stack with no firearms:base must report NOT_A_WEAPON, got " + outcome);
+
+        helper.succeed();
+    }
+
+    /**
+     * `WEAPON-FAIL-004`: a slot component naming an attachment id a datapack has since removed is
+     * treated as absent by {@code WeaponLoadouts#of}, the resolver `FiringLogic#attempt` itself
+     * calls — no crash, that slot simply contributes nothing to the resolved {@link Loadout}.
+     */
+    @GameTest(structure = "firearms_gametest:open_range")
+    public void aRemovedAttachmentIdIsTreatedAsAnAbsentSlotNotACrash(GameTestHelper helper) {
+        ItemStack stack = weaponStack(WeaponBase.M1911, 0);
+        stack.set(ComponentRegistration.attachmentComponent(Slot.MUZZLE), Firearms.id("no_longer_exists"));
+
+        Optional<Loadout> resolved = WeaponLoadouts.of(stack);
+        helper.assertTrue(resolved.isPresent(), "a missing attachment id must not fail the whole weapon's resolution");
+        helper.assertTrue(resolved.get().attachment(Slot.MUZZLE).isEmpty(),
+            "a removed attachment id must be treated as an empty muzzle slot, not crash or carry a phantom value");
+
         helper.succeed();
     }
 

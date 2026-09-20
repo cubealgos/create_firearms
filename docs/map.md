@@ -35,7 +35,7 @@ signature page before calling into a package you did not write.
 | `firearms.client.fire` | root (test) | RecoilKickTest |  |
 | `firearms.client.scope` | root (test) | ScopeZoomTest |  |
 | `firearms.combat` | root (test) | SpreadMathTest |  |
-| `firearms.gametest` | root (gametest) | AnvilCombineRefusalGameTest, AttachDeployingGameTest, AttachSmithingGameTest, BulletGameTest, ComponentCodecGameTest, CraftingRecipeGameTest, DataLoaderGameTest, DebugCommandGameTest, FiringGameTest, ItemRegistrationGameTest, MasterBuyBackGameTest, NoDuplicateOfferGameTest, SmokeGameTest, StatDerivationGameTest, TradeFileGameTest, WeaponDurabilityAndAnvilGameTest, WeaponTooltipGameTest |  |
+| `firearms.gametest` | root (gametest) | AimSpreadSelectionGameTest, AmmoCartridgeGameTest, AnvilCombineRefusalGameTest, AttachDeployingGameTest, AttachSmithingGameTest, BulletGameTest, ComponentCodecGameTest, CraftingRecipeGameTest, DataLoaderGameTest, DebugCommandGameTest, FiringGameTest, ItemRegistrationGameTest, MasterBuyBackGameTest, NoDuplicateOfferGameTest, SmokeGameTest, StatDerivationGameTest, TradeFileGameTest, WeaponDurabilityAndAnvilGameTest, WeaponTooltipGameTest |  |
 | `firearms.model` | root (test) | AttachRuleTest, AttachmentModifierTest, LoadoutSlotValidationTest, StatDerivationClampTest, StatDerivationOrderTest, WeaponBaseStatsTest |  |
 
 | build script | what |

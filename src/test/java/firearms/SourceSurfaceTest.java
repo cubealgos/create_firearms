@@ -16,13 +16,23 @@ import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 /**
- * Three claims about the source tree, checked against the files themselves: the mod opens no
+ * Claims about the source tree, checked against the files themselves: the mod opens no
  * socket of its own (COMP-REQ-001: no networking type is referenced outside Minecraft's own packet
  * API), every translation key the code names — including a damage type's death message keys, e.g.
  * {@code firearms.combat.CombatRegistration}'s {@code death.attack.firearms.bullet[.player]}
- * (`COMBAT-REQ-004`) — has an {@code en_us} entry, and no source or resource file names PUBG, its
+ * (`COMBAT-REQ-004`) — has an {@code en_us} entry, no source or resource file names PUBG, its
  * weapon names, or its branding (COMP-REQ-002: every weapon here uses only its real-world
- * designation).
+ * designation), no source file imports `create_villager_customers` (`TRADE-REQ-006`: the master
+ * buy-back trades work standalone, with no dependency of any kind on that sibling mod — confirmed
+ * structurally alongside {@code build.gradle.kts}'s own dependency list, which names only
+ * `create` and Fabric), no source file imports a vanilla menu/screen-handler registration type
+ * (`UI-REQ-004`: the vanilla smithing table and Create's deployer are the only interaction
+ * surfaces this mod ever adds a recipe for; no screen of its own exists to register), no source
+ * file imports `VillagerProfession`/`PoiType` to register a new one (`TRADE-REQ-003`: only the two
+ * existing professions are ever touched, by tag-merge), and no cartridge recipe file's own `type`
+ * is a Create processing type (`AMMO-REQ-005`: the crafting-table recipe is the only path at 1.0,
+ * the deferred `create:pressing`/`create:mixing` automation path named in `domains/ammo.md` §3
+ * unbuilt).
  */
 final class SourceSurfaceTest {
     private static final Path MAIN = Path.of("src/main/java");
@@ -33,6 +43,17 @@ final class SourceSurfaceTest {
     private static final Pattern KEY = Pattern.compile(
         "\"((?:item|block|screen|tooltip|command)\\.firearms\\.[a-z_.]+|death\\.attack\\.firearms\\.[a-z_.]+)\"");
     private static final Pattern PUBG = Pattern.compile("pubg|playerunknown", Pattern.CASE_INSENSITIVE);
+    private static final Pattern VILLAGER_CUSTOMERS_IMPORT = Pattern.compile(
+        "^import\\s+[a-zA-Z0-9_.]*villager[a-zA-Z0-9_.]*customer[a-zA-Z0-9_.]*;", Pattern.CASE_INSENSITIVE | Pattern.MULTILINE);
+    private static final Pattern MENU_TYPE_IMPORT = Pattern.compile(
+        "^import\\s+net\\.minecraft\\.world\\.inventory\\.(MenuType|AbstractContainerMenu);", Pattern.MULTILINE);
+    private static final Pattern PROFESSION_OR_POI_IMPORT = Pattern.compile(
+        "^import\\s+net\\.minecraft\\.world\\.entity\\.npc\\.villager\\.VillagerProfession;"
+            + "|^import\\s+net\\.minecraft\\.world\\.entity\\.ai\\.village\\.poi\\.PoiType(s)?;",
+        Pattern.MULTILINE);
+    private static final Path RECIPE_DATA = Path.of("src/main/resources/data/firearms/recipe");
+    private static final Pattern CREATE_PROCESSING_RECIPE_TYPE = Pattern.compile(
+        "\"type\"\\s*:\\s*\"create:(mixing|pressing)\"");
 
     @Test
     void noNetworkingTypeIsReferencedByTheMod() throws IOException {
@@ -62,6 +83,64 @@ final class SourceSurfaceTest {
             }
         }
         assertTrue(missing.isEmpty(), "every key has an en_us entry, but " + missing);
+    }
+
+    @Test
+    void noSourceFileImportsCreateVillagerCustomers() throws IOException {
+        List<String> offenders = new ArrayList<>();
+        for (Path file : javaSources()) {
+            String text = Files.readString(file);
+            Matcher m = VILLAGER_CUSTOMERS_IMPORT.matcher(text);
+            if (m.find()) {
+                offenders.add(file + " imports " + m.group());
+            }
+        }
+        assertTrue(offenders.isEmpty(), "TRADE-REQ-006: no dependency of any kind on create_villager_customers, but " + offenders);
+    }
+
+    @Test
+    void noSourceFileImportsAVanillaMenuRegistrationType() throws IOException {
+        List<String> offenders = new ArrayList<>();
+        for (Path file : javaSources()) {
+            String text = Files.readString(file);
+            Matcher m = MENU_TYPE_IMPORT.matcher(text);
+            if (m.find()) {
+                offenders.add(file + " imports " + m.group());
+            }
+        }
+        assertTrue(offenders.isEmpty(), "UI-REQ-004: no screen of this mod's own, so nothing registers a MenuType, but " + offenders);
+    }
+
+    @Test
+    void noSourceFileRegistersANewVillagerProfessionOrPointOfInterest() throws IOException {
+        List<String> offenders = new ArrayList<>();
+        for (Path file : javaSources()) {
+            String text = Files.readString(file);
+            Matcher m = PROFESSION_OR_POI_IMPORT.matcher(text);
+            if (m.find()) {
+                offenders.add(file + " imports " + m.group());
+            }
+        }
+        assertTrue(offenders.isEmpty(),
+            "TRADE-REQ-003: no new villager profession, job-site block, or point-of-interest type, but " + offenders);
+    }
+
+    @Test
+    void noCartridgeRecipeUsesACreateProcessingType() throws IOException {
+        List<String> offenders = new ArrayList<>();
+        if (Files.isDirectory(RECIPE_DATA)) {
+            try (Stream<Path> walk = Files.walk(RECIPE_DATA)) {
+                for (Path file : walk.filter(p -> p.toString().endsWith(".json")).toList()) {
+                    String text = Files.readString(file);
+                    Matcher m = CREATE_PROCESSING_RECIPE_TYPE.matcher(text);
+                    if (m.find()) {
+                        offenders.add(file + " uses " + m.group());
+                    }
+                }
+            }
+        }
+        assertTrue(offenders.isEmpty(),
+            "AMMO-REQ-005: no Create automation recipe (pressing/mixing) for cartridges at 1.0, but " + offenders);
     }
 
     @Test

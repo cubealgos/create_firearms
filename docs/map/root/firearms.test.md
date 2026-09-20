@@ -17,8 +17,12 @@ signature is the contract; read the source only when the summary is not enough.
 - `void everyAttachmentHasAPartModelForEveryClassCarryingItsSlot()` — `WEAPON-REQ-016`: every attachment named in data/firearms/attachment/*.json has a cuboid part model under its own slot and name for every WeaponClass whose WeaponClass#hasSlot(Slot) includes that attachment's slot -- the cross product `tools/models.py`'s part-model loop is meant to have generated in full.
 
 ### `class SourceSurfaceTest` — `src/test/java/firearms/SourceSurfaceTest.java`
-Three claims about the source tree, checked against the files themselves: the mod opens no socket of its own (COMP-REQ-001: no networking type is referenced outside Minecraft's own packet API), every translation key the code names — including a damage type's death message keys, e.g.
+Claims about the source tree, checked against the files themselves: the mod opens no socket of its own (COMP-REQ-001: no networking type is referenced outside Minecraft's own packet API), every translation key the code names — including a damage type's death message keys, e.g.
 - `void noNetworkingTypeIsReferencedByTheMod()`
 - `void everyTranslationKeyNamedInCodeHasAnEnglishEntry()`
+- `void noSourceFileImportsCreateVillagerCustomers()`
+- `void noSourceFileImportsAVanillaMenuRegistrationType()`
+- `void noSourceFileRegistersANewVillagerProfessionOrPointOfInterest()`
+- `void noCartridgeRecipeUsesACreateProcessingType()`
 - `void noSourceOrResourceFileNamesPubgOrItsBranding()`
 
