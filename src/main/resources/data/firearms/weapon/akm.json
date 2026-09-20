@@ -1,0 +1,16 @@
+{
+  "class": "assault_rifle",
+  "caliber": "mm_7_62",
+  "base_stats": {
+    "damage": 4,
+    "muzzle_velocity": 6.0,
+    "spread": 3.5,
+    "spread_while_aiming": 3.5,
+    "fire_rate_ticks": 4,
+    "fire_mode": "auto",
+    "magazine_size": 30,
+    "reload_ticks": 50,
+    "recoil_vertical": 2.5,
+    "durability": 400
+  }
+}

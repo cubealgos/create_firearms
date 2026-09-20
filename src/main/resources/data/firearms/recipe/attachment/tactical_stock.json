@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": ["minecraft:stick","minecraft:stick","minecraft:iron_ingot"],
+  "result": {
+    "id": "firearms:attachment_stock",
+    "components": { "firearms:attachment_stock": "firearms:tactical_stock" }
+  }
+}

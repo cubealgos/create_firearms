@@ -5,7 +5,39 @@
 Every type with its summary and every non-private constructor, method and constant. The
 signature is the contract; read the source only when the summary is not enough.
 
+### `class ComponentCodecGameTest` — `src/gametest/java/firearms/gametest/ComponentCodecGameTest.java`
+All seven of this mod's own DataComponentTypes round-trip through their real registered codec, and a malformed value decodes to a graceful DataResult error rather than throwing — the precondition docs/spec/contracts/data-contract.md DATA-REQ-004 relies on: an item's own component-map deserialization drops exactly the one component whose codec errors, degrading that slot to absent (or ammo to "no ammo loaded") instead of failing the whole item.
+- `void baseRoundTripsAndMigratesAndDegrades(GameTestHelper helper)`
+- `void ammoRoundTripsAndDegrades(GameTestHelper helper)`
+- `void everyAttachmentSlotComponentRoundTripsAndDegrades(GameTestHelper helper)`
+
+### `class CraftingRecipeGameTest` — `src/gametest/java/firearms/gametest/CraftingRecipeGameTest.java`
+Every one of the six base weapons, 22 attachments and six cartridges crafts at a real crafting table via its own data file: a real RecipeManager lookup finds the recipe and assemble() produces the expected item, carrying the expected components (`docs/spec/domains/weapon.md` `WEAPON-REQ-006`, `docs/spec/domains/attach.md` `ATTACH-REQ-007`, `docs/spec/domains/ammo.md` `AMMO-REQ-001`).
+- `void everyBaseWeaponCraftsWithItsOwnGridAndMaxDamage(GameTestHelper helper)`
+- `void everyAttachmentCraftsWithItsOwnIngredients(GameTestHelper helper)`
+- `void everyCartridgeCraftsFourAtATime(GameTestHelper helper)`
+
+### `class DataLoaderGameTest` — `src/gametest/java/firearms/gametest/DataLoaderGameTest.java`
+The two data loaders (`WeaponDataLoader`, `AttachmentDataLoader`) produce exactly this mod's own 6 + 22 entries, with the model's own values (`docs/spec/domains/weapon.md` `WEAPON-DEC-003`) — this mod's own shipped data/firearms/weapon/*.json and data/firearms/attachment/*.json files ship the same numbers those constants do — and a weapon or attachment shipped by an entirely different namespace (the shape any real datapack addition takes) loads through the identical, unmodified loader with zero new Java (`SURFACE-REQ-003`; the gametest source set's own data/datapack_test/ files stand in for a third party's datapack).
+- `void theWeaponLoaderProducesExactlyTheSixBasesWithTheModelsValues(GameTestHelper helper)`
+- `void theAttachmentLoaderProducesExactlyThe22AttachmentsWithTheModelsValues(GameTestHelper helper)`
+- `void aDatapackAddedWeaponAndAttachmentInAnExistingClassAndSlotLoadWithZeroNewJava(GameTestHelper helper)`
+
+### `class ItemRegistrationGameTest` — `src/gametest/java/firearms/gametest/ItemRegistrationGameTest.java`
+Every item `FA-3` registers resolves at its own id: the one weapon item, the five attachment items, and the six cartridge items (`docs/spec/contracts/public-surface.md`).
+- `void everyRegisteredItemResolvesAtItsId(GameTestHelper helper)`
+
 ### `class SmokeGameTest` — `src/gametest/java/firearms/gametest/SmokeGameTest.java`
 M0: the mod loads beside Create Fly; everything else follows.
 - `void theModLoadsBesideCreateFly(GameTestHelper helper)`
+
+### `class StatDerivationGameTest` — `src/gametest/java/firearms/gametest/StatDerivationGameTest.java`
+A weapon stack carrying a firearms:base component reads its own base weapon back out of WeaponRegistry and derives its final stats through StatDerivation, matching the bare roster row exactly (`docs/spec/domains/weapon.md` `WEAPON-REQ-003`).
+- `void aWeaponStackReadsItsBaseAndDerivesStats(GameTestHelper helper)`
+
+### `class WeaponDurabilityAndAnvilGameTest` — `src/gametest/java/firearms/gametest/WeaponDurabilityAndAnvilGameTest.java`
+A weapon stack carries the max_damage its own base's recipe gives it (`docs/spec/domains/weapon.md` §3), is never enchantable and never accepts a material repair — closed by omitting repairable(...)/enchantable(...) at registration, not by a mixin (`WEAPON-REQ-014`, `015`; `decisions/DEC-017-no-detach-durability.md`) — proven against a real AnvilMenu#createResult(), the same menu class the smithing table's own repair path runs through.
+- `void anM1911StackHasTheRecipesOwnMaxDamage(GameTestHelper helper)`
+- `void aWeaponStackIsNeverEnchantableAndNeverAValidRepairTarget(GameTestHelper helper)`
+- `void aRealAnvilOffersNoMaterialRepairAndNoEnchantForADamagedWeapon(GameTestHelper helper)`
 

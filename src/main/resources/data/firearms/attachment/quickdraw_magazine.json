@@ -1,0 +1,3 @@
+{ "slot": "magazine", "modifiers": [
+  { "stat": "reload_ticks", "op": "multiply", "value": 0.8 }
+] }

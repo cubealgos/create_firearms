@@ -1,0 +1,16 @@
+{
+  "class": "dmr",
+  "caliber": "mm_5_56",
+  "base_stats": {
+    "damage": 5,
+    "muzzle_velocity": 7.0,
+    "spread": 2.0,
+    "spread_while_aiming": 2.0,
+    "fire_rate_ticks": 8,
+    "fire_mode": "semi",
+    "magazine_size": 20,
+    "reload_ticks": 45,
+    "recoil_vertical": 2.0,
+    "durability": 350
+  }
+}

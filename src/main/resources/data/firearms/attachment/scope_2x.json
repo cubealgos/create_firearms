@@ -1,0 +1,3 @@
+{ "slot": "optic", "modifiers": [
+  { "stat": "spread_while_aiming", "op": "multiply", "value": 0.75 }
+], "zoom": 2.0 }

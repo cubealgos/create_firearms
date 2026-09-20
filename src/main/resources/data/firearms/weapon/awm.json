@@ -1,0 +1,16 @@
+{
+  "class": "sniper_rifle",
+  "caliber": "magnum_300",
+  "base_stats": {
+    "damage": 12,
+    "muzzle_velocity": 10.0,
+    "spread": 0.5,
+    "spread_while_aiming": 0.5,
+    "fire_rate_ticks": 30,
+    "fire_mode": "semi",
+    "magazine_size": 5,
+    "reload_ticks": 60,
+    "recoil_vertical": 4.0,
+    "durability": 300
+  }
+}

@@ -1,0 +1,3 @@
+{ "slot": "stock", "modifiers": [
+  { "stat": "reload_ticks", "op": "multiply", "value": 0.85 }
+] }
