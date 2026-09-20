@@ -1,6 +1,7 @@
 package firearms.gametest;
 
 import firearms.Firearms;
+import firearms.combat.BulletEntity;
 import firearms.combat.CombatRegistration;
 import firearms.component.Ammo;
 import firearms.component.Base;
@@ -10,6 +11,7 @@ import firearms.fire.FireSounds;
 import firearms.fire.FiringLogic;
 import firearms.fire.WeaponLoadouts;
 import firearms.item.ItemRegistration;
+import firearms.item.WeaponStacks;
 import firearms.model.Loadout;
 import firearms.model.Slot;
 import firearms.model.WeaponBase;
@@ -329,6 +331,41 @@ public final class FiringGameTest {
                 "a suppressed shot must always resolve to the universal suppressed event for " + weaponClass);
             helper.assertTrue(unsuppressed != suppressed,
                 "an unsuppressed shot must resolve to a different sound event than a suppressed one for " + weaponClass);
+        }
+        helper.succeed();
+    }
+
+    /**
+     * `FA-26` (Kevin: "I can't shoot the AWM; shooting on the AKM works fine"): every one of the
+     * six 1.0 bases, fully loaded exactly the way {@code /firearms debug give} and the creative
+     * tab's own loaded example build a stack ({@link WeaponStacks#loaded}), must fire once through
+     * the real {@link FireNetworking#handleFire} entry point — one bullet spawned, one round of
+     * ammo consumed — with no base singled out. Each base gets its own fresh mock shooter (rather
+     * than firing all six through one player) so one base's own fire-rate cooldown group can never
+     * mask or interfere with the next base's attempt.
+     */
+    @GameTest(structure = "firearms_gametest:open_range")
+    public void everySixBasesFiresOnceThroughHandleFireWithAFullyLoadedWeaponFromWeaponStacks(GameTestHelper helper) {
+        for (WeaponBase base : WeaponBase.ALL) {
+            ServerPlayer player = mockShooter(helper);
+            ItemStack bare = WeaponStacks.bare(Firearms.id(base.id()), base);
+            ItemStack stack = WeaponStacks.loaded(bare, base, Loadout.bare(base));
+            player.setItemInHand(InteractionHand.MAIN_HAND, stack);
+
+            Ammo beforeAmmo = stack.get(ComponentRegistration.AMMO);
+            helper.assertTrue(beforeAmmo != null && beforeAmmo.loaded() == base.baseStats().magazineSize(),
+                base.id() + ": WeaponStacks.loaded must load to full magazine capacity before firing, got " + beforeAmmo);
+
+            FireNetworking.handleFire(player);
+
+            Ammo afterAmmo = stack.get(ComponentRegistration.AMMO);
+            helper.assertTrue(afterAmmo != null && afterAmmo.loaded() == base.baseStats().magazineSize() - 1,
+                base.id() + ": handleFire on a fully loaded, off-cooldown weapon must consume exactly one round, got " + afterAmmo);
+            helper.assertEntitiesPresent(CombatRegistration.BULLET, base.baseStats().pellets());
+
+            // Clean up before the next base's assertion, since assertEntitiesPresent above checks a
+            // fixed count and every base shares the one open_range structure/test instance.
+            helper.killAllEntitiesOfClass(BulletEntity.class);
         }
         helper.succeed();
     }
