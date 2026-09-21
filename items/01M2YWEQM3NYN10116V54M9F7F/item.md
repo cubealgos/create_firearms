@@ -36,7 +36,7 @@ checklist item that stands in for it instead of leaving the id unmapped.
 - [x] `just check` is green three consecutive times on a clean checkout.
 - [ ] Kevin's client checklist is completed and any findings are folded back into the relevant
       domain file or a follow-up ticket.
-- [ ] The balance sweep either confirms the proposed stats/prices as final or records specific
+- [x] (Kevin, 2026-09-21: keep as is, recorded as WEAPON-DEC in the spec) The balance sweep either confirms the proposed stats/prices as final or records specific
       adjustments in the relevant domain files' own tables.
 
 ## Requirement-to-test table
