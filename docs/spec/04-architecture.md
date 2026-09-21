@@ -47,23 +47,28 @@ front end), one entity class (the bullet), eight data component types, and the J
 parametrize weapons, attachments, cartridges and trades. The only client-side code is the three
 scope mixins and ordinary item-model/tooltip rendering.
 
-## `ARCH-DEC-001` — a Fabric mod on Create Fly, one jar, Java 25, three client mixin targets
+## `ARCH-DEC-001` — a Fabric mod on Create Fly, one jar, Java 25, five mixin targets
 
 Same toolchain as the four siblings (`decisions/DEC-004-toolchain.md`): Loom 1.17, Gradle 9.5.1,
 Kotlin DSL with a version catalog, one Gradle project — the pure surface (the stat derivation
 function, the attach function, the spread/weighted-pick math) is small enough that a
 package-purity check gives the same guarantee a second module would (`operations/testing.md`).
 
-**Every mixin this mod carries is client-side and scoped to one shared gate**: `Player.isScoping()`
+**The three scope mixins are client-side and scoped to one shared gate**: `Player.isScoping()`
 (widened to also cover an aiming firearm with a zoom-bearing optic), the FOV zoom constant inside
 `AbstractClientPlayer.getFieldOfViewModifier` (read per-optic instead of the spyglass's hardcoded
 `0.1f`), and the overlay texture read inside the HUD's spyglass-overlay draw (swapped per-optic).
 All three exist only because `isScoping()` is an exact `Items.SPYGLASS` identity check that never
 inspects the use-animation (research `smithing-and-item-model-layers-26-2.md` §C.1–C.2): reporting
 a spyglass-like use animation from a custom weapon reproduces the arm pose but none of the zoom,
-the overlay, or the held-item suppression, since all three gate on that one method. **No
-server-side mixin exists anywhere in this mod** — both recipe front ends and the villager-trade
-extension are found through ordinary registry mechanics (`ARCH-DEC-002`–`ARCH-DEC-005` below).
+the overlay, or the held-item suppression, since all three gate on that one method. **Amended
+2026-09-20 (spec hygiene after FA-4 and FA-24):** two further mixins exist, each with its own
+gate. `AnvilMenuMixin` is server-side, cancelling the anvil's same-item combine-repair path when
+both inputs are weapons (`WEAPON-DEC-005`, `WEAPON-FAIL-006`); `AttackControlMixin` is client-side,
+cancelling `Minecraft.startAttack`/`continueAttack` while the main hand holds a firearm so the
+attack control fires instead of swinging (`decisions/DEC-019-controls.md`, `WEAPON-REQ-018`). Both
+recipe front ends and the villager-trade extension are still found through ordinary registry
+mechanics (`ARCH-DEC-002`–`ARCH-DEC-005` below).
 **Cost if wrong:** a Minecraft client-rendering change moving `isScoping()`'s call sites is the one
 upstream this mod is exposed to that none of the four siblings are.
 
