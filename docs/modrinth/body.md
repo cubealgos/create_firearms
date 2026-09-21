@@ -14,7 +14,7 @@
 | Loaders | Fabric |
 | Game versions | 26.2 |
 | Dependencies | Create Fly (required), Fabric API (required) |
-| Icon | `icon.png` in this folder: a 16x16 pixel-art cartridge (our own art, no game's sprite) on the cubealgos navy badge (`just icon` regenerates it; `cartridge-badge-sprite.png` is the sprite on its own; FA-9's real weapon item sprites replace this placeholder subject before release, FA-15) |
+| Icon | `icon.png` in this folder: a real 3D render of the AKM, this mod's own weapon item model (`akm.json` + its own 32x32 texture atlas), tilted to the model's own `gui` display transform, on the cubealgos navy grid badge (`just icon` regenerates it; FA-27, Kevin's 2026-09-21 ruling, replaces the earlier 16x16 pixel-art cartridge placeholder from FA-15) |
 | Links | Source `https://github.com/cubealgos/create_firearms` · Issues `https://github.com/cubealgos/create_firearms/issues` · Origin `https://git.cubealgos.de/cubealgos/create_firearms` |
 
 ## Version settings
