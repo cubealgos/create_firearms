@@ -5,7 +5,7 @@
 | Field | Value |
 |---|---|
 | Name | Create: Firearms |
-| Slug | `firearms` |
+| Slug | `create-firearms` |
 | Summary | A roster of modern firearms under real-world designations, built from a base weapon plus attachments at the smithing table or by deployers, with dynamic stats, traded by weaponsmiths and fletchers. |
 | Categories | Equipment, Technology, Utility (secondary: Adventure, Game-Mechanics, Management, Optimization) |
 | Licence | MIT |

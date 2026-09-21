@@ -17,3 +17,5 @@ same reason every sibling gives: a Create add-on is found by what it does.
 
 No domain registered, no six-TLD availability check run: there is no standalone web presence at
 1.0. Revisit trigger: a website for the mod, as for all four siblings.
+
+**Amended (2026-09-21, FA-28):** the Modrinth slug is `create-firearms`; `firearms` was already taken on Modrinth when the draft was created (no public project answers at it, so a private or reserved one). The display name stays "Create: Firearms".
